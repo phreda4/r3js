@@ -8,44 +8,33 @@
   }
   
   function Execute(what) {
-  console.log(what);
+    Say(what);
+    console.log(what);
   }
 
+  function Run(code) {
+    return Execute(Compile(code));
+  }
 
+  function Say(what) {
+    const createNewDiv = () => document.body.appendChild(document.createElement('div'));
+    const [firstDiv = createNewDiv()] = document.getElementsByTagName('div');
+    firstDiv.appendChild(document.createTextNode(what));
+  }
+  
   function Init() {
-    var tags = document.getElementsByTagName('script');
-    var count = 0;
-    for (var t = 0; t < tags.length; ++t) {
-      if (tags[t].type != 'text/r3') {
-        continue;
-      }
-      ++count;
-    }
-    var full_window = count == 1 && document.body.innerText == '';
-    for (var t = 0; t < tags.length; ++t) {
-      if (tags[t].type != 'text/r3') {
-        continue;
-      }
-      var tag = tags[t];
-      if (tags[t].src) {
-        var request = new XMLHttpRequest();
-        request.addEventListener('load', function(e) {
-          Execute(Compile(request.responseText));
-        }, false);
-        request.open('GET', tag.src);
-        request.send();
-      } else {
-        Execute(Compile(tag.text));
-      }
-    }
+      Array
+      .from(document.getElementsByTagName('script'))
+      .filter(({type}) => type === 'text/r3')
+      .forEach(({text}) => Run(text));
   }
 
   function Main() {
     if (typeof window !== 'undefined') {
       window.addEventListener('load', Init);
-      window.R3 = function (code) { return Execute(Compile(code)); };
+      window.R3 = function (code) { return Run(code); };
     } else {
-      exports.R3 = function (code) { return Execute(Compile(code)); };
+      exports.R3 = function (code) { return Run(code); };
     }
   }
 
