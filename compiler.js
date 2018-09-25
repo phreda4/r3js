@@ -2,12 +2,17 @@
 GPITTAU PHREDA 
 */
 
-var tokenmem[];
 var tok;
 var nro=0;
 var bas=0;
 var wor=0;
+var dic=0;
 
+var dicc=
+var memc=0;
+var memcode=new Int32Array(0xffff); // 256kb
+var memd=0;
+var memdata=new Int32Array(0xffff); // 256kb
 
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
@@ -18,16 +23,16 @@ var r3base=[
 "AND","OR","XOR","NOT","NEG",								// 42
 "+","-","*","/","*/",										// 47
 "/MOD","MOD","ABS","SQRT","CLZ",							// 52
-"<<",">>","0>>","*>>","<</",	//57
-"@","C@","D@","@+","C@+","D@+", //65
-"!","C!","D!","!+","C!+","D!+", // 71
-"+!","C+!","D+!", // 74
-">A","A>","A@","A!","A+","A@+","A!+",	//81
-">B","B>","B@","B!","B+","B@+","B!+",	//88
-"MOVE","MOVE>","FILL",	//91
-"CMOVE","CMOVE>","CFILL",	//94
-"DMOVE","DMOVE>","DFILL",	//97
-"SYSCALL","SYSMEM",	// 99
+"<<",">>","0>>","*>>","<</",								// 57
+"@","C@","D@","@+","C@+","D@+", 							// 65
+"!","C!","D!","!+","C!+","D!+", 							// 71
+"+!","C+!","D+!", 											// 74
+">A","A>","A@","A!","A+","A@+","A!+",						// 81
+">B","B>","B@","B!","B+","B@+","B!+",						// 88
+"MOVE","MOVE>","FILL",										// 91
+"CMOVE","CMOVE>","CFILL",									// 94
+"DMOVE","DMOVE>","DFILL",									// 97
+"SYSCALL","SYSMEM",											// 99
 0 ];
 
 ////////////////////////////////////////////////////////////////////////
@@ -35,7 +40,9 @@ var r3base=[
 ////////////////////////////////////////////////////////////////////////
 /*
 ::r3token | str -- 'str tok/-error
-	( dup c@ $ff and 33 <? )( 0? ( nip ; ) drop 1+ )	| quitar espacios
+	( dup c@ $ff and 33 <? )(
+		0? ( nip ; ) 
+		drop 1+ )	| quitar espacios
 	$5e =? ( drop pINC ; )		| $5e ^  Include
 	$7c =? ( drop pCOM ; )		| $7c |	 Comentario
 	$3A =? ( drop pCOD ; )		| $3a :  Definicion
@@ -51,11 +58,13 @@ var r3base=[
  	-1 ;
 */
 
+while ( jf ds hjfk=22 && 3>1 ) { jfhdsk jfs }
+( jf ds hjfk=22?  jh djfhf 3 1 >? jfhdsk jfs )
 
 function isNro() { 
 var nro=tok.match(/^([0-9]*([.][0-9]*)?([eE][+-]?[0-9]+)?[#]?)/); // falta $hexa y %binario
 if (nro===null) { return false; }
-nro=nro[1];
+nro=nro[1];	// ojo, punto fijo, no flotante
 return true;  
 }
 
@@ -66,13 +75,13 @@ return true;
 }
 
 function isWor(tok) { 
-var wor=r3base.indexOf(tok);
+var wor=dicc.indexOf(tok);
 if (wor<0) { return false; }
 return true;
 }
 
 function r3token(tok) {
-tok.trim().toUpperCase();
+tok.trim();
 switch (tok.charAt(0)) {
 	case 0x5e:// =? ( drop pINC ; )		| $5e ^  Include
 		return;
@@ -90,6 +99,7 @@ switch (tok.charAt(0)) {
 		return -2;		
 	}
 if isNro(tok) { return; }
+tok.Uppercase();
 if isBas(tok) { return; }
 if isWor(tok) { return; }
 return -1;
@@ -98,6 +108,7 @@ return -1;
 
 function r3tokenizer(str)
 {
+memc=0;memd=0;
 while((tok=nextword(str))!='') {
 	if (r3token(tok)<0) break;
 	}
@@ -114,9 +125,18 @@ while((tok=nextword(str))!='') {
 		) 2drop ;
 */
 
+var ip=0;
+var TOS=0;
+var NOS=0;
+var RTOS=0;
+var dpila=new Int32Array(256);//Float64Array
+var rpila=new Int32Array(256);//Float64Array con cast?
+
 function r3op(op) {
 switch(op) {
-	case 0: IP=rpila[RTOS];RTOS--;break; //FIN
+	case 0: break
+	case 0x10: ip=rpila[RTOS];RTOS--;w=0;break; // ;
+	
 	case 1: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//LIT
 	case 2: NOS++;dpila[NOS]=TOS;TOS=mem.getInt32(prog.getInt32(IP));IP+=4;break;//ADR
 	case 3: RTOS++;rpila[RTOS]=IP+4;IP=prog.getInt32(IP);break;// call
@@ -189,14 +209,14 @@ switch(op) {
 	}
 }
 
-function r3run()
+//var memc=0;
+function r3step()
 {
-	w=tok[ip];
-	while (w!=0) {
+while (w!=0) {
 		r3op(w&0x7f);
 		w>>=8;
 		}
-	if (w==0) return;
+	if (ip==0) return;
 	ip++;
 
 }
