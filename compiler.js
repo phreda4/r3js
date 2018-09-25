@@ -72,7 +72,7 @@ return true;
 }
 
 function r3token(tok) {
-tok.trim().toUpperCase();
+tok.trim();
 switch (tok.charAt(0)) {
 	case 0x5e:// =? ( drop pINC ; )		| $5e ^  Include
 		return;
@@ -89,6 +89,7 @@ switch (tok.charAt(0)) {
 		if isWor(tok) { return; }			
 		return -2;		
 	}
+tok.toUpperCase();
 if isNro(tok) { return; }
 if isBas(tok) { return; }
 if isWor(tok) { return; }
