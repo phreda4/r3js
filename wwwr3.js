@@ -4,7 +4,7 @@
 
 
   function Compile(code) {
-    return code;
+    return r3tokenizer(code);
   }
   
   function Execute(what) {
