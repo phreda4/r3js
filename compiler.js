@@ -206,86 +206,126 @@ var rpila=new Int32Array(256);//Float64Array con cast?
 
 function r3op(op) {
 	switch(op&0x7f) {
-		case 0: break
-		case 0x10: ip=rpila[RTOS];RTOS--;w=0;break; // ;
-		
-		
-		case 1: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//LIT
-		case 2: NOS++;dpila[NOS]=TOS;TOS=mem.getInt32(prog.getInt32(IP));IP+=4;break;//ADR
-		case 3: RTOS++;rpila[RTOS]=IP+4;IP=prog.getInt32(IP);break;// call
-		case 4: IP=prog.getInt32(IP);break;//JMP
-		case 5: IP+=prog.getInt8(IP);break;//JMPR
-		case 6: W=TOS;TOS=dpila[NOS];NOS--;if (W!=0) { RTOS++;rpila[RTOS]=IP;IP=W; };break;//EXEC
-
-
 		case 7: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LIT9
+		case 8: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LITres
+		case 9: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LITreg neg
+		case 10: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//LITcte
+		case 11: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//str
+		case 12: RTOS++;rpila[RTOS]=IP+4;IP=prog.getInt32(IP);break;// call
+		case 13: NOS++;dpila[NOS]=TOS;TOS=mem.getInt32(prog.getInt32(IP));IP+=4;break;//ADR
+		case 14: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//DWoRD
+		case 15: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//DVAR
+		case 16: ip=rpila[RTOS];RTOS--;w=0;break; // ;
+		case 17: 
+		case 18: IP=prog.getInt32(IP);break;//JMP
+		case 19:
+		case 20: IP+=prog.getInt8(IP);break;//JMPR
+		case 21: W=TOS;TOS=dpila[NOS];NOS--;if (W!=0) { RTOS++;rpila[RTOS]=IP;IP=W; };break;//EXEC
+		case 22:W=prog.getInt8(IP);IP++;if (TOS!=0) IP+=W; break;//ZIF
+		case 23:W=prog.getInt8(IP);IP++;if (TOS==0) IP+=W; break;//UIF
+		case 24: W=prog.getInt8(IP);IP++;if (TOS<=0) IP+=W; break;//PIF
+		case 25: W=prog.getInt8(IP);IP++;if (TOS>=0) IP+=W; break;//NIF
+		case 26:W=prog.getInt8(IP);IP++;if (TOS!=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFN
+		case 27:W=prog.getInt8(IP);IP++;if (TOS==dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNO
+		case 28:W=prog.getInt8(IP);IP++;if (TOS<=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFL
+		case 29:W=prog.getInt8(IP);IP++;if (TOS>=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFG
+		case 30:W=prog.getInt8(IP);IP++;if (TOS<dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFLE
+		case 31:W=prog.getInt8(IP);IP++;if (TOS>dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFGE
+		case 32:W=prog.getInt8(IP);IP++;if (!(TOS&dpila[NOS])) IP+=W;TOS=dpila[NOS];NOS--;break;//IFAND
+		case 33:W=prog.getInt8(IP);IP++;if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNAND
+		case 34:W=prog.getInt8(IP);IP++;if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//BETWEEN
 
-		case 8: W=prog.getInt8(IP);IP++;if (TOS<=0) IP+=W; break;//PIF
-		case 9: W=prog.getInt8(IP);IP++;if (TOS>=0) IP+=W; break;//NIF
-		case 10:W=prog.getInt8(IP);IP++;if (TOS==0) IP+=W; break;//UIF
-		case 11:W=prog.getInt8(IP);IP++;if (TOS!=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFN
-		case 12:W=prog.getInt8(IP);IP++;if (TOS==dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNO
-		case 13:W=prog.getInt8(IP);IP++;if (TOS<=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFL
-		case 14:W=prog.getInt8(IP);IP++;if (TOS>=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFG
-		case 15:W=prog.getInt8(IP);IP++;if (TOS<dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFLE
-		case 16:W=prog.getInt8(IP);IP++;if (TOS>dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFGE
-		case 17:W=prog.getInt8(IP);IP++;if (!(TOS&dpila[NOS])) IP+=W;TOS=dpila[NOS];NOS--;break;//IFAND
-		case 18:W=prog.getInt8(IP);IP++;if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNAND
-		//--- pila de datos
-		case 19:NOS++;dpila[NOS]=TOS;break;//DUP
-		case 20:TOS=dpila[NOS];NOS--;break;//DROP
-		case 21:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-1];break;//OVER
-		case 22:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-2];break;//PICK2
-		case 23:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];break;//PICK3
-		case 24:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-4];break;//PICK4
-		case 25:W=dpila[NOS];dpila[NOS]=TOS;TOS=W;break;//SWAP
-		case 26:NOS--;break; //NIP
-		case 27:W=TOS;TOS=dpila[NOS-1];dpila[NOS-1]=dpila[NOS];dpila[NOS]=W;break;//ROT
-		case 28:W=dpila[NOS];NOS++;dpila[NOS]=TOS;NOS++;dpila[NOS]=W;break;//DUP2
-		case 29:NOS--;TOS=dpila[NOS];NOS--;break;//DROP2
-		case 30:NOS-=2;TOS=dpila[NOS];NOS--;break;//DROP3
-		case 31:NOS-=3;TOS=dpila[NOS];NOS--;break;//DROP4
-		case 32:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];break;//OVER2
-		case 33:W=dpila[NOS];dpila[NOS]=dpila[NOS-2];dpila[NOS-2]=W;W=TOS;TOS=dpila[NOS-1];dpila[NOS-1]=W;break;//SWAP2
-		case 34:RTOS++;rpila[RTOS]=TOS;TOS=dpila[NOS];NOS--;break;//>r
-		case 35:NOS++;dpila[NOS]=TOS;TOS=rpila[RTOS];RTOS--;break;//r>
-		case 36:NOS++;dpila[NOS]=TOS;TOS=rpila[RTOS];break;//ERRE
-		case 37:rpila[RTOS]+=TOS;TOS=dpila[NOS];NOS--;break;//ERREM:
-		case 38:NOS++;dpila[NOS]=TOS;TOS=mem[rpila[RTOS]];rpila[RTOS]+=4;break;//ERRFM
-		case 39:mem[rpila[RTOS]]=TOS;TOS=dpila[NOS];NOS--;rpila[RTOS]+=4;break;//ERRSM
-		case 40:RTOS--;break;//ERRDR
-		case 41:TOS&=dpila[NOS];NOS--;break;//AND
-		case 42:TOS|=dpila[NOS];NOS--;break;//OR
-		case 43:TOS^=dpila[NOS];NOS--;break;//XOR
-		case 44:TOS=~TOS;break;//NOT
-		
-		case 58:TOS=dpila[NOS]+TOS;NOS--;break;//SUMA
-		
-		case 46:TOS=dpila[NOS]-TOS;NOS--;break;//RESTA
-		case 47:TOS=dpila[NOS]*TOS;NOS--;break;//MUL
-		case 48:TOS=dpila[NOS]/TOS;NOS--;break;//DIV
-		case 49:TOS=(dpila[NOS-1]*dpila[NOS])/TOS;NOS-=2;break;//MULDIV
-		case 50:TOS=(dpila[NOS-1]*dpila[NOS])>>TOS;NOS-=2;break;//MULSHR
-		case 51:W=dpila[NOS]%TOS;dpila[NOS]=dpila[NOS]/TOS;TOS=W;break;//DIVMOD
-		case 52:TOS=dpila[NOS]%TOS;NOS--;break;//MOD
-		case 53:W=(TOS>>31);TOS=(TOS+W)^W;break;//ABS
-		case 54:TOS=isqrt32(TOS);break;//CSQRT
-		case 55:TOS=iclz32(TOS);break;//CLZ
-		case 56:TOS=(dpila[NOS-1]<<TOS)/dpila[NOS];NOS-=2;break;//CDIVSH
+		case 34:NOS++;dpila[NOS]=TOS;break;//DUP
+		case 35:TOS=dpila[NOS];NOS--;break;//DROP
+		case 36:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-1];break;//OVER
+		case 37:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-2];break;//PICK2
+		case 38:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];break;//PICK3
+		case 39:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-4];break;//PICK4
+		case 40:W=dpila[NOS];dpila[NOS]=TOS;TOS=W;break;//SWAP
+		case 41:NOS--;break; //NIP
+		case 42:W=TOS;TOS=dpila[NOS-1];dpila[NOS-1]=dpila[NOS];dpila[NOS]=W;break;//ROT
+		case 43:W=dpila[NOS];NOS++;dpila[NOS]=TOS;NOS++;dpila[NOS]=W;break;//DUP2
+		case 44:NOS--;TOS=dpila[NOS];NOS--;break;//DROP2
+		case 45:NOS-=2;TOS=dpila[NOS];NOS--;break;//DROP3
+		case 46:NOS-=3;TOS=dpila[NOS];NOS--;break;//DROP4
+		case 47:NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];NOS++;dpila[NOS]=TOS;TOS=dpila[NOS-3];break;//OVER2
+		case 48:W=dpila[NOS];dpila[NOS]=dpila[NOS-2];dpila[NOS-2]=W;W=TOS;TOS=dpila[NOS-1];dpila[NOS-1]=W;break;//SWAP2
+		case 49:RTOS++;rpila[RTOS]=TOS;TOS=dpila[NOS];NOS--;break;//>r
+		case 50:NOS++;dpila[NOS]=TOS;TOS=rpila[RTOS];RTOS--;break;//r>
+		case 51:NOS++;dpila[NOS]=TOS;TOS=rpila[RTOS];break;//ERRE
+		case 52:TOS&=dpila[NOS];NOS--;break;//AND
+		case 53:TOS|=dpila[NOS];NOS--;break;//OR
+		case 54:TOS^=dpila[NOS];NOS--;break;//XOR
+		case 56:TOS=~TOS;break;//NOT
 		case 57:TOS=-TOS;break;//NEG
-		case 61:TOS>>=1;break;//DIV2
-		case 62:TOS<<=1;break;//MUL2
-		case 63:TOS=dpila[NOS]<<TOS;NOS--;break;//SHL
-		case 64:TOS=dpila[NOS]>>TOS;NOS--;break;//SHR
-		case 65:TOS=mem.getInt32(TOS);break;//FECH
-		case 66:TOS=mem.getInt8(TOS);break;//CFECH
-		case 67:TOS=mem.getInt16(TOS);break;//WFECH
-		case 68:W=dpila[NOS];mem[TOS]=W&0xff;mem[TOS+1]=(W>>8)&0xff;mem[TOS+2]=(W>>16)&0xff;mem[TOS+3]=(W>>24)&0xff;
-				NOS--;TOS=dpila[NOS];NOS--;break;//STOR
-		case 69:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//CSTOR
-		case 70:W=dpila[NOS];mem[TOS]=W&0xff;mem[TOS+1]=(W>>8)&0xff;NOS--;TOS=dpila[NOS];NOS--;break;//WSTOR
+		case 58:TOS=dpila[NOS]+TOS;NOS--;break;//SUMA
+		case 59:TOS=dpila[NOS]-TOS;NOS--;break;//RESTA
+		case 60:TOS=dpila[NOS]*TOS;NOS--;break;//MUL
+		case 61:TOS=dpila[NOS]/TOS;NOS--;break;//DIV
+		case 62:TOS=(dpila[NOS-1]*dpila[NOS])/TOS;NOS-=2;break;//MULDIV
+		case 63:W=dpila[NOS]%TOS;dpila[NOS]=dpila[NOS]/TOS;TOS=W;break;//DIVMOD
+		case 64:TOS=dpila[NOS]%TOS;NOS--;break;//MOD
+		case 65:W=(TOS>>31);TOS=(TOS+W)^W;break;//ABS
+		case 66:TOS=isqrt32(TOS);break;//CSQRT
+		case 67:TOS=iclz32(TOS);break;//CLZ
+		case 68:TOS=dpila[NOS]<<TOS;NOS--;break;//SAR
+		case 69:TOS=dpila[NOS]>>TOS;NOS--;break;//SAL
+		case 70:TOS=dpila[NOS]>>TOS;NOS--;break;//SHL
+		case 71:TOS=(dpila[NOS-1]*dpila[NOS])>>TOS;NOS-=2;break;//MULSHR
+		case 72:TOS=(dpila[NOS-1]<<TOS)/dpila[NOS];NOS-=2;break;//CDIVSH
+		case 73:TOS=mem.getInt32(TOS);break;//FECH
+		case 74:TOS=mem.getInt8(TOS);break;//CFECH
+		case 75:TOS=mem.getInt64(TOS);break;//DFECH	
+		
+		
+		/*
+		case 76TOS=mem.getInt32(TOS);break;//FECH+
+		case 77:TOS=mem.getInt8(TOS);break;//CFECH+
+		case 78:TOS=mem.getInt64(TOS);break;//DFECH+		
+				
+		case 79:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//STOR
+		case 80:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//CSTOR
+		case 81:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR
+		
+		case 82:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//STOR+
+		case 83:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//CSTOR+
+		case 84:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+
+		
+		case 85:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//STOR+!
+		case 86:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//CSTOR+!
+		case 87:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+!
+		
+		case 88:REGA=TOS;TOS=dpila[NOS];NOS--;break; //>A
+		case 89:NOS++;dpila[NOS]=TOS;TOS=REGA;break; // A> 
+		case 90:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iA@ 
+		case 91:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iA! 
+		case 92:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iA+ 
+		case 93:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iA@+ 
+		case 94:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iA!+
+		case 95:REGB=TOS;TOS=dpila[NOS];NOS--;break; //>B	
+		case 96:NOS++;dpila[NOS]=TOS;TOS=REGB;break; // B> 
+		case 97:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iB@ 
+		case 98:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iB! 
+		case 99:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iB+ 
+		case 100:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iB@+ 
+		case 101:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iB!+
+
+		case 102:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iMOVE 
+		case 103:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iMOVE> 
+		case 104:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iFILL
+		case 105:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iCMOVE 
+		case 106:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iCMOVE> 
+		case 107:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iCFILL
+		case 108:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iDMOVE 
+		case 109:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iDMOVE> 
+		case 110:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iDFILL
+
+		case 111:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iSYSCALL
+		case 112:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iSYSMEM		
+		*/
 	}
 }
+
 
 //var memc=0;
 function r3reset(){

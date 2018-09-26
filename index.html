@@ -2,10 +2,41 @@
 <html>
   <head>
     <script src="./compiler.js"></script>
-    <script src="./wwwr3.js"></script>
-    <script type="text/r3">
+    <script src="./r3www.js"></script>    
+<!--    <script type="text/r3">
 		"Hello Word" 1 2 +
 		| comentario puto
+    </script> -->
+    <script>
+    function r3Compile() {
+      var code = document.getElementById("srccode").textContent;
+      r3tokenizer(code);
+    }
+    function dumpVM() {
+      const setDiv = (id, value) => document.getElementById(id).innerText = value;
+      setDiv("ip", ip);
+      setDiv("ds", [TOS, ...(dpila.slice(1, NOS))].join(","));
+      setDiv("cs", rpila.slice(1, RTOS).join(","));
+      setDiv("mc", memcode.slice(0, memc).join(","));
+      setDiv("md", memdata.slice(0, memd).join(","));
+    }
     </script>
   </head>
+  <body>
+    <H2>r3</H2>
+    <textarea id="srccode">1 2 3 + - 
+:cua dup * ;
+5 cua 
+    </textarea><br>
+    <button onclick="r3Compile();dumpVM();">COMPILE</button>    
+    <button onclick="r3step();dumpVM();">Step</button>
+    <br><br>
+    DATA STACK:<div id="ds"></div><br>
+    CODE STACK:<div id="cs"></div><br>
+    <br>    
+    IP:<div id="ip"></div><br>    
+    MEMCODE:<div id="mc"></div><br>
+    MEMDATA:<div id="md"></div><br>
+
+  </body>
 </html>
