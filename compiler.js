@@ -140,38 +140,40 @@ function r3tokenData(tok) {
 }
 
 function* asWords (str) {
-	var result = "";
-	var nextstop = false;
-	var spacelast = false;
-	//for (let currchar of str) {
-	var nextchar = 0;
+	var next= 0;
 	var start;
-	var currchar;
-	while(nextchar < str.length) {
-		currchar = str[nextchar];
+	var findIndexFrom = (from, pred) => {
+		let charindex = from;
+		while(charindex < str.length && !pred(str[charindex])) {
+			charindex++;
+		}
+		return charindex;
+	};
+	const isSpaceChar = char => char.charCodeAt(0) < 33 || char === "\n";
+	while(next < str.length) {
+		let charcode = str.charCodeAt(next);
 		
-		if(currchar.charCodeAt(0) < 33) {
-			nextchar++;
+		if(charcode < 33) {
+			next = findIndexFrom(next, isSpaceChar) + 1;
 			continue;
 		}
-		if(currchar === "|") {
-			nextchar = str.indexOf("\n", nextchar) + 1;
-			continue;
+		
+		switch (charcode) {
+			case 0x7c: 
+				next = findIndexFrom(next, char => char === "\n") + 1;
+				break;
+			case 0x22: 
+				start = next;
+				next = findIndexFrom(next + 1, char => char === "\"");
+				yield str.slice(start, next);
+				next++;
+				next++;
+				break;
+			default:
+				start = next;
+				next = findIndexFrom(next + 1, isSpaceChar);
+				yield str.slice(start, next);
 		}
-		if(currchar === "\"") {
-			start = nextchar;
-			nextchar = str.indexOf("\"", nextchar + 1);
-			yield str.slice(start, nextchar);
-			nextchar++;
-			nextchar++;
-			continue;
-		}
-		start = nextchar;
-		const nextspace = str.indexOf(" ", nextchar);
-		const nextnl = str.indexOf("\n", nextchar);
-		const safe = unsafe => unsafe < 0 ? +Infinity : unsafe;
-		nextchar = Math.min(safe(nextspace), safe(nextnl));
-		yield str.slice(start, nextchar);
 	}
 }
 function r3tokenizer(str)
@@ -179,7 +181,6 @@ function r3tokenizer(str)
 	memc=0;
 	memd=0;
 	for (tok of asWords(str)) {
-		//console.log(tok);
 		if (tokenMode(tok) < 0) {
 			break;
 		}
