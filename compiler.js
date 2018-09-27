@@ -11,8 +11,13 @@ var dic=0;
 var memc=0;
 var memcode=new Int32Array(0xffff); // 256kb
 var memd=0;
-var memdata=new Int32Array(0xffff); // 256kb
+var memdata=new Int8Array(0xfffff); // 1Mb
 
+/*
+i0 i: i:: i# i: i| i^		| 0 1 2 3 4 5 6
+idec ihex ibin ifix istr    | 7 8 9 a b
+iwor ivar idwor idvar		| c d e f
+*/
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
 "<?",">?","=?",">=?","<=?","<>?","A?","N?","B?",			// 19
@@ -60,7 +65,10 @@ var r3base=[
 var dicc = [];
 
 function pcom() { }
-function pstr() { }
+
+function pstr(str) { 
+console.log(str);
+}
 
 function pvar() {
 	dicc[tok.slice(1)] = {
@@ -72,7 +80,7 @@ function pvar() {
 
 function pcod() {
 	dicc[tok.slice(1)] = {
-		addre: memd,
+		addre: memc,
 		info: 1
 	};
 	tokenMode = r3tokenCode;
@@ -92,7 +100,7 @@ function isBas() {
 }
 
 function isWor(tok) { 
-	return dicc[tok] !== undefined;
+	return true;
 }
 
 function lit9(nro) {
@@ -105,33 +113,32 @@ function mac(nro) {
 	memc++;
 }
 
+function call(nro) {
+	memcode[memc] = nro<<7 | 12;
+	memc++;
+}
+
 function r3tokenCode(tok) {
 	switch (tok.charCodeAt(0)) {
 		case 0x5e:// =? ( drop pINC ; )		| $5e ^  Include
-			return;
+			return 0;
 		case 0x7c:// =? ( drop pCOM ; )		| $7c |	 Comentario
-			pcom();return;	
+			pcom();return 0;	
 		case 0x3A:// =? ( drop pCOD ; )		| $3a :  Definicion
-			pcod();return;		
+			pcod();return 0;		
 		case 0x23:// =? ( drop pVAR ; )		| $23 #  Variable
-			pvar();return;		
+			pvar();return 0;		
 		case 0x22:// =? ( drop pSTR ; )		| $22 "	 Cadena
-			pstr();return;		
+			pstr(tok);return 0;		
 		case 0x27:// =? ( drop 1+ dup dup	| $27 ' Direccion
 			tok=tok.substr(1);
-			if (isWor(tok)) { return; }			
+			if (isWor(tok)) { return 0; }			
 			return -2;		
 		}
 	tok.toUpperCase();
-	if (isNro(tok)) {
-		lit9(nro);
-		return 0;
-	}
-	if (isBas(tok)) { 
-		mac(nro);
-		return 0;
-	}
-	if (isWor(tok)) { return; }
+	if (isNro(tok)) { lit9(nro);return 0; }
+	if (isBas(tok)) { mac(nro);return 0; }
+	if (isWor(tok)) { call(nro);return 0; }
 	return -1;
 }
 var tokenMode = r3tokenCode;
@@ -139,11 +146,8 @@ var tokenMode = r3tokenCode;
 function r3tokenData(tok) {
 }
 
+
 function* asWords (str) {
-	var result = "";
-	var nextstop = false;
-	var spacelast = false;
-	//for (let currchar of str) {
 	var nextchar = 0;
 	var start;
 	var currchar;
@@ -160,16 +164,15 @@ function* asWords (str) {
 		}
 		if(currchar === "\"") {
 			start = nextchar;
-			nextchar = str.indexOf("\"", nextchar + 1);
+			nextchar = str.indexOf("\"", nextchar + 1) + 1;
 			yield str.slice(start, nextchar);
-			nextchar++;
 			nextchar++;
 			continue;
 		}
 		start = nextchar;
 		const nextspace = str.indexOf(" ", nextchar);
 		const nextnl = str.indexOf("\n", nextchar);
-		const safe = unsafe => unsafe < 0 ? +Infinity : unsafe;
+		const safe = unsafe => unsafe < 0 ? str.length : unsafe;
 		nextchar = Math.min(safe(nextspace), safe(nextnl));
 		yield str.slice(start, nextchar);
 	}
@@ -179,11 +182,11 @@ function r3tokenizer(str)
 	memc=0;
 	memd=0;
 	for (tok of asWords(str)) {
-		//console.log(tok);
 		if (tokenMode(tok) < 0) {
 			break;
 		}
 	}
+	ip=0;
 }
 
 /*
@@ -205,14 +208,15 @@ var dpila=new Int32Array(256);//Float64Array
 var rpila=new Int32Array(256);//Float64Array con cast?
 
 function r3op(op) {
+while(op!=0) {
 	switch(op&0x7f) {
 		case 7: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LIT9
 		case 8: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LITres
-		case 9: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LITreg neg
-		case 10: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//LITcte
-		case 11: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//str
-		case 12: RTOS++;rpila[RTOS]=IP+4;IP=prog.getInt32(IP);break;// call
-		case 13: NOS++;dpila[NOS]=TOS;TOS=mem.getInt32(prog.getInt32(IP));IP+=4;break;//ADR
+		case 9: NOS++;dpila[NOS]=TOS;TOS=-(op>>7);break;//LITreg neg
+		case 10: NOS++;dpila[NOS]=TOS;TOS=memcode(op>>7);break;//LITcte
+		case 11: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//str
+		case 12: RTOS++;rpila[RTOS]=IP;IP=memcode[op>>7];break;// call
+		case 13: NOS++;dpila[NOS]=TOS;TOS=memcode[op>>7];break;//ADR
 		case 14: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//DWoRD
 		case 15: NOS++;dpila[NOS]=TOS;TOS=prog.getInt32(IP);IP+=4;break;//DVAR
 		case 16: ip=rpila[RTOS];RTOS--;w=0;break; // ;
@@ -220,20 +224,20 @@ function r3op(op) {
 		case 18: IP=prog.getInt32(IP);break;//JMP
 		case 19:
 		case 20: IP+=prog.getInt8(IP);break;//JMPR
-		case 21: W=TOS;TOS=dpila[NOS];NOS--;if (W!=0) { RTOS++;rpila[RTOS]=IP;IP=W; };break;//EXEC
-		case 22:W=prog.getInt8(IP);IP++;if (TOS!=0) IP+=W; break;//ZIF
-		case 23:W=prog.getInt8(IP);IP++;if (TOS==0) IP+=W; break;//UIF
-		case 24: W=prog.getInt8(IP);IP++;if (TOS<=0) IP+=W; break;//PIF
-		case 25: W=prog.getInt8(IP);IP++;if (TOS>=0) IP+=W; break;//NIF
-		case 26:W=prog.getInt8(IP);IP++;if (TOS!=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFN
-		case 27:W=prog.getInt8(IP);IP++;if (TOS==dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNO
-		case 28:W=prog.getInt8(IP);IP++;if (TOS<=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFL
-		case 29:W=prog.getInt8(IP);IP++;if (TOS>=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFG
-		case 30:W=prog.getInt8(IP);IP++;if (TOS<dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFLE
-		case 31:W=prog.getInt8(IP);IP++;if (TOS>dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFGE
-		case 32:W=prog.getInt8(IP);IP++;if (!(TOS&dpila[NOS])) IP+=W;TOS=dpila[NOS];NOS--;break;//IFAND
-		case 33:W=prog.getInt8(IP);IP++;if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNAND
-		case 34:W=prog.getInt8(IP);IP++;if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//BETWEEN
+		case 21: W=TOS;TOS=dpila[NOS];NOS--;RTOS++;rpila[RTOS]=IP;IP=W;break;//EXEC
+		case 22: if (TOS!=0) IP+=(op>>7); break;//ZIF
+		case 23: if (TOS==0) IP+=W; break;//UIF
+		case 24: if (TOS<=0) IP+=W; break;//PIF
+		case 25: if (TOS>=0) IP+=W; break;//NIF
+		case 26: if (TOS!=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFN
+		case 27: if (TOS==dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNO
+		case 28: if (TOS<=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFL
+		case 29: if (TOS>=dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFG
+		case 30: if (TOS<dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFLE
+		case 31: if (TOS>dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFGE
+		case 32: if (!(TOS&dpila[NOS])) IP+=W;TOS=dpila[NOS];NOS--;break;//IFAND
+		case 33: if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//IFNAND
+		case 34: if (TOS&dpila[NOS]) IP+=W;TOS=dpila[NOS];NOS--;break;//BETWEEN
 
 		case 34:NOS++;dpila[NOS]=TOS;break;//DUP
 		case 35:TOS=dpila[NOS];NOS--;break;//DROP
@@ -279,7 +283,7 @@ function r3op(op) {
 		
 		
 		/*
-		case 76TOS=mem.getInt32(TOS);break;//FECH+
+		case 76: TOS=memdata[TOS];break;//FECH+
 		case 77:TOS=mem.getInt8(TOS);break;//CFECH+
 		case 78:TOS=mem.getInt64(TOS);break;//DFECH+		
 				
@@ -324,6 +328,7 @@ function r3op(op) {
 		case 112:mem[TOS]=dpila[NOS];NOS--;TOS=dpila[NOS];NOS--;break;//DSTOR+! iSYSMEM		
 		*/
 	}
+op>>=8;}
 }
 
 
