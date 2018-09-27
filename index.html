@@ -15,7 +15,7 @@
     function dumpVM() {
       const setDiv = (id, value) => document.getElementById(id).innerText = value;
       setDiv("ip", ip);
-      setDiv("ds", [TOS, ...(dpila.slice(1, NOS))].join(","));
+      setDiv("ds", [TOS, ...(dpila.slice(2, NOS+1))].join(","));
       setDiv("cs", rpila.slice(1, RTOS).join(","));
       setDiv("mc", memcode.slice(0, memc).join(","));
       setDiv("md", memdata.slice(0, memd).join(","));

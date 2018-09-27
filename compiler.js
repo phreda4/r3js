@@ -18,6 +18,11 @@ i0 i: i:: i# i: i| i^		| 0 1 2 3 4 5 6
 idec ihex ibin ifix istr    | 7 8 9 a b
 iwor ivar idwor idvar		| c d e f
 */
+var r3machine=[
+"0",":","::","#","##","|","^",			// 6
+"LIT9","LITR","LITNR","LITC","STR",		// b
+"CALL","VAR","DCODE","DDATA"];			// f
+
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
 "<?",">?","=?",">=?","<=?","<>?","A?","N?","B?",			// 19
@@ -189,6 +194,35 @@ function r3tokenizer(str)
 	ip=0;
 }
 
+
+function tokenizer2(str) {
+memc=0;
+memd=0;
+var now=0;
+var ini;
+var car;
+while(now<str.length) {
+	while ((car=str.charCodeAt(now))<33&&car>0) { now++; }
+	if (car===0) return;
+	if(str[now]==="|") {
+		now=str.indexOf("\n",now)+1;
+		continue; }
+		
+	if(str[now]=== "\"") {
+		ini=now;
+		now=str.indexOf("\"",now+1)+1;
+		ntoken=str.slice(ini,now);now++;
+	} else {
+		ini=now;
+		const nextspace = str.indexOf(" ", nextchar);
+		const nextnl = str.indexOf("\n", nextchar);
+		const safe = unsafe => unsafe < 0 ? str.length : unsafe;
+		now= Math.min(safe(nextspace), safe(nextnl));
+		ntoken=str.slice(ini,now);
+		}
+	}
+}
+
 /*
 :vmstep
 	$7f and 2 << 'vml + @ exec ;
@@ -340,7 +374,26 @@ function r3reset(){
 function r3step() {
 	r3op(memcode[ip++]);
 }
+////////////////////////////////////////////////////////////////////
 
-//code="1 2 3 + -";
-//r3tokenizer(code);
-//console.info(code);
+function num9(tok) // 9 bits
+{ return ((tok<<16)>>7); }
+function numr(tok) // r bits
+{ return (tok>>7);}
+function numrn(tok) // r bits neg
+{ return -(tok>>7);}
+function numct(tok) // cte
+{ return memcode[(tok>>7)];}
+
+function lstr(tok) // sting
+{ retunr tok>>7; }
+function jrel(tok) // jump rel
+{ return tok>>7; }
+
+function printmr3(tok)
+{
+if ((tok&0x7f)>15) { return r3base[(tok&0x7f)-16]; }
+return r3machine[(tok&0x7f)-16];
+}
+
+}
