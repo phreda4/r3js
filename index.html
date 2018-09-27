@@ -6,16 +6,15 @@
     <script>
     function r3Compile() {
       var code = document.getElementById("srccode").value;
-      //r3tokenizer(code);
-	  tokenizer2(code);
+	  r3token(code);
     }
     function dumpVM() {
       const setDiv = (id, value) => document.getElementById(id).innerText = value;
       setDiv("ip", ip);
-      setDiv("ds", [TOS, ...(dpila.slice(2, NOS+1))].join(" "));
+      setDiv("ds", [TOS, ...(dpila.slice(2, NOS+1).reverse())].join(" "));
       setDiv("cs", rpila.slice(1, RTOS+1).join(" "));
-      setDiv("mc", memcode.slice(0, memc).join(","));
-      setDiv("md", memdata.slice(0, memd).join(","));
+      setDiv("mc", memcode.slice(0,memc).join(" "));
+      //setDiv("md", mem.slice(0,memd).join(","));
 	  setDiv("dic",dicc.join(","));
     }
     </script>
@@ -24,10 +23,11 @@
     <H2>r3</H2>
     <textarea id="srccode" rows="10">| comentario
 :cua dup * ;
-5 cua 
+5 cua ;
     </textarea><br>
     <button onclick="r3Compile();dumpVM();">COMPILE</button>    
     <button onclick="r3step();dumpVM();">Step</button>
+    <button onclick="r3run();dumpVM();">Run</button>	
     <br><br>
     DATA STACK:<div id="ds"></div><br>
     CODE STACK:<div id="cs"></div><br>
