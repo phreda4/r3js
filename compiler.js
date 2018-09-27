@@ -2,11 +2,10 @@
 GPITTAU PHREDA 
 */
 
-var tok;
-var nro=0;
-var bas=0;
-var wor=0;
-var dic=0;
+var dicc=[];
+var dicca=[];
+var dicci=[];
+var ndicc=0;
 
 var memc=0;
 var memcode=new Int32Array(0xffff); // 256kb
@@ -67,9 +66,8 @@ var r3base=[
  	-1 ;
 */
 
-var dicc = [];
-
-function pcom() { }
+var tok;
+var nro = 0;
 
 function pstr(str) { 
 console.log(str);
@@ -90,8 +88,8 @@ function pcod() {
 	};
 	tokenMode = r3tokenCode;
 }
-var nro = 0;
-function isNro() { 
+
+function isNro(tok) { 
 	nro=tok.match(/^([0-9]+([\.][0-9]+)?)$/); // falta $hexa y %binario
 	if (nro===null) { return false; }
 	nro=Number(nro[1]);	// ojo, punto fijo, no flotante
@@ -104,8 +102,12 @@ function isBas() {
 	return true;
 }
 
-function isWor(tok) { 
-	return true;
+function isWord(tok) { 
+var i=dicc.length;
+while (i--) {
+	if (dicc[i]===tok) { break; }
+	}
+return i;
 }
 
 function lit9(nro) {
@@ -128,7 +130,7 @@ function r3tokenCode(tok) {
 		case 0x5e:// =? ( drop pINC ; )		| $5e ^  Include
 			return 0;
 		case 0x7c:// =? ( drop pCOM ; )		| $7c |	 Comentario
-			pcom();return 0;	
+			return 0;	
 		case 0x3A:// =? ( drop pCOD ; )		| $3a :  Definicion
 			pcod();return 0;		
 		case 0x23:// =? ( drop pVAR ; )		| $23 #  Variable
@@ -193,33 +195,113 @@ function r3tokenizer(str)
 	}
 	ip=0;
 }
+//-------------------------------------
+// V2 tokenizer
+// modo oscurantista
+//-------------------------------------
+var nro=0;
+var modo=0; // 0-imm 1-code 2-data
 
+function error() {}
+function codetok(nro) { memcode[memc++]=nro; }
+function datanro(nro) { memdata[memd++]=nro&0xff;memdata[memd++]=(nro>>8)&0xff;memdata[memd++]=(nro>>16)&0xff;memdata[memd++]=(nro>>24)&0xff; }
+
+function datasave(str) { 
+for(var i=0;i<str.length;i++)
+	memdata[memd++]=str.charCodeAt(i);
+memdata[memd++]=0;
+}
+
+function compilaSTR(str) {
+ini=datasave(str.slice(1,str.length-1));	
+if (modo<2) {codetok((ini<<7)+11);}
+}
+
+function compilaCODE(name) {
+var ex=0;
+if (name[1]==":") { ex=1; }
+dicc.push(name.slice(ex+1,name.length));
+dicca.push(memc);
+dicci.push(ex);
+modo=1;	
+}
+
+function compilaDATA(name) {
+var ex=0;
+if (name[1]=="#") { ex=1; }
+dicc.push(name.slice(ex+1,name.length));
+dicca.push(memd);
+dicci.push(ex+0x10);	// 0x10 es dato
+modo=2;
+}
+
+function compilaADDR(nro) {
+if (modo==2) { datanro(nro);return; }
+codetok((nro<<7)+13); 
+}
+
+function compilaLIT(nro) {
+if (modo==2) { datanro(nro);return; }
+codetok((nro<<7)+7); // falta
+}
+
+function compilaMAC(nro) {
+	
+codetok(nro+16);	
+}
+
+function compilaWORD(nro) {
+	
+codetok((nro<<7)+12);
+}
 
 function tokenizer2(str) {
 memc=0;
 memd=0;
+ip=0;
 var now=0;
 var ini;
-var car;
+var ntoken;
+str=str.trim();
 while(now<str.length) {
-	while ((car=str.charCodeAt(now))<33&&car>0) { now++; }
-	if (car===0) return;
+	while (str.charCodeAt(now)<33) { now++; }
+// comments	
 	if(str[now]==="|") {
 		now=str.indexOf("\n",now)+1;
+		if (now<0) now=str.length;
 		continue; }
-		
+// strings		
 	if(str[now]=== "\"") {
 		ini=now;
 		now=str.indexOf("\"",now+1)+1;
-		ntoken=str.slice(ini,now);now++;
+//		now++;while (str.charCodeAt(now)!=43) { now++; } now++;
+
+		compilaSTR(str.slice(ini,now));
+		now++;
 	} else {
 		ini=now;
-		const nextspace = str.indexOf(" ", nextchar);
-		const nextnl = str.indexOf("\n", nextchar);
-		const safe = unsafe => unsafe < 0 ? str.length : unsafe;
-		now= Math.min(safe(nextspace), safe(nextnl));
+		while (str.charCodeAt(now)>32) { now++; }			
 		ntoken=str.slice(ini,now);
-		}
+
+// genera tokens
+		switch (ntoken.charCodeAt(0)) {
+			case 0x3A:// $3a :  Definicion
+				compilaCODE(ntoken);break;
+			case 0x23:// $23 #  Variable
+				compilaDATA(ntoken);break;
+			case 0x27:// $27 ' Direccion
+				ntoken=ntoken.substr(1);
+				nro=isWord(ntoken);if (nro<0) { error();break; }			
+				compilaADDR(nro);break;		
+			default:
+				ntoken.toUpperCase();
+				if (isNro(ntoken)) { compilaLIT(nro);break; }
+				if (isBas(ntoken)) { compilaMAC(nro);break; }
+				nro=isWord(ntoken);if (nro<0) { error();break; }
+				compilaWORD(nro);
+				break;
+			}
+		}		
 	}
 }
 
@@ -244,7 +326,7 @@ var rpila=new Int32Array(256);//Float64Array con cast?
 function r3op(op) {
 while(op!=0) {
 	switch(op&0x7f) {
-		case 7: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LIT9
+		case 7: NOS++;dpila[NOS]=TOS;TOS=op>>7;op>>=16;break;//LIT9
 		case 8: NOS++;dpila[NOS]=TOS;TOS=op>>7;break;//LITres
 		case 9: NOS++;dpila[NOS]=TOS;TOS=-(op>>7);break;//LITreg neg
 		case 10: NOS++;dpila[NOS]=TOS;TOS=memcode(op>>7);break;//LITcte
@@ -374,6 +456,7 @@ function r3reset(){
 function r3step() {
 	r3op(memcode[ip++]);
 }
+
 ////////////////////////////////////////////////////////////////////
 
 function num9(tok) // 9 bits
@@ -385,15 +468,13 @@ function numrn(tok) // r bits neg
 function numct(tok) // cte
 { return memcode[(tok>>7)];}
 
-function lstr(tok) // sting
-{ retunr tok>>7; }
+function lstr(tok) // string
+{ return (tok>>7); }
 function jrel(tok) // jump rel
-{ return tok>>7; }
+{ return (tok>>7); }
 
 function printmr3(tok)
 {
 if ((tok&0x7f)>15) { return r3base[(tok&0x7f)-16]; }
 return r3machine[(tok&0x7f)-16];
-}
-
 }

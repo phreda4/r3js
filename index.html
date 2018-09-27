@@ -9,8 +9,9 @@
     </script> -->
     <script>
     function r3Compile() {
-      var code = document.getElementById("srccode").textContent;
-      r3tokenizer(code);
+      var code = document.getElementById("srccode").value;
+      //r3tokenizer(code);
+	  tokenizer2(code);
     }
     function dumpVM() {
       const setDiv = (id, value) => document.getElementById(id).innerText = value;
