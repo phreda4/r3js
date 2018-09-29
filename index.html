@@ -17,17 +17,20 @@
       //setDiv("md", mem.slice(0,memd).join(","));
 	  setDiv("dic",dicc.join(","));
     }
+	
     </script>
   </head>
   <body>
-    <H2>r3</H2>
+	<table><tr><td>
+    <h4>r3</h4>
     <textarea id="srccode" rows="10">| comentario
 :cua dup * ;
 5 cua ;
     </textarea><br>
-    <button onclick="r3Compile();dumpVM();">COMPILE</button>    
+    <button onclick="r3Compile();dumpVM();">Comp</button>    
     <button onclick="r3step();dumpVM();">Step</button>
-    <button onclick="r3run();dumpVM();">Run</button>	
+    <button onclick="r3run();dumpVM();">Run</button><br>
+	<button onclick="r3Compile();r3run();dumpVM();">Comp+Run</button>	
     <br><br>
     DATA STACK:<div id="ds"></div><br>
     CODE STACK:<div id="cs"></div><br>
@@ -35,5 +38,48 @@
     MEMCODE:<div id="mc"></div><br>
     MEMDATA:<div id="md"></div><br>
 	DICC:<div id="dic"></div><br>
+	</td><td>
+	<canvas id="canvas" width="640" height="480" style="border:1px solid #000000;"></canvas>
+	
+	<button id='invertbtn'>i</button>
+	<button id='grayscalebtn'>i</button>
+  
+	</td>
+	</tr></table>
+<script>	
+function draw() {
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  var data = imageData.data;
+    
+  var invert = function() {
+    for (var i = 0; i < data.length; i += 4) {
+      data[i]     = 225 - data[i];     // red
+      data[i + 1] = 254 - data[i + 1]; // green
+      data[i + 2] = 215 - data[i + 2]; // blue
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
+
+  var grayscale = function() {
+    for (var i = 0; i < data.length; i += 4) {
+      var avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      data[i]     = avg; // red
+      data[i + 1] = 255; // green
+      data[i + 2] = avg; // blue
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
+
+  var invertbtn = document.getElementById('invertbtn');
+  invertbtn.addEventListener('click', invert);
+  var grayscalebtn = document.getElementById('grayscalebtn');
+  grayscalebtn.addEventListener('click', grayscale);
+}
+
+draw();
+</script>
+
   </body>
 </html>
