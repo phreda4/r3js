@@ -5,17 +5,36 @@
     <script src="./r3www.js"></script>    
 
 <script>
-function r3Compile() { r3token(document.getElementById("srccode").value); }
+function dumpmd() {
+var s="";
+for(var i=0;i<memd;i++) {
+	s=s+" "+mem.getInt8(i);
+	}
+return s;
+}
+
+function dumpmc() {
+var s="";
+for(var i=0;i<memc;i++) {
+	if (i==ip) { s+=" >"; } else { s+=" "; } 
+	s+=printmr3(memcode[i]);
+	if (i==ip) { s+="<"; }
+	}
+return s;
+}
+
 function dumpVM() {
 	const setDiv = (id, value) => document.getElementById(id).innerText = value;
-      setDiv("ip", ip);
-      setDiv("ds", [TOS, ...(dpila.slice(2, NOS+1).reverse())].join(" "));
-      setDiv("cs", rpila.slice(1, RTOS+1).join(" "));
-      setDiv("mc", memcode.slice(0,memc).join(" "));
-      //setDiv("md", mem.slice(0,memd).join(","));
-	  setDiv("dic",dicc.join(","));
+	setDiv("ip", ip);
+	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
+    setDiv("cs", stack.slice(RTOS,256).join(" "));
+    setDiv("mc", dumpmc());
+    setDiv("md", dumpmd());
+	setDiv("dic",dicc.join(" "));
     }
 	
+function r3Compile() { r3reset();r3token(document.getElementById("srccode").value);dumpVM(); }
+function r3Run() { r3reset();r3token(document.getElementById("srccode").value);r3run();dumpVM(); }
 </script>
 
 <style>	
@@ -23,30 +42,34 @@ table td, table td * { vertical-align: top; }
 </style>
 
   </head>
-  <body>
-r3 personal computer | 
-NONAME |
-<button onclick="">Load</button>
-<button onclick="">Save</button>
-<button onclick="">Copy</button>
+<body bgcolor="#333"><font face="Arial" color="#fff">
+r3)
+<button onclick=""> NONAME </button>
+
+<button onclick="r3Compile();">Compile</button>    
+<button onclick="r3step();dumpVM();">Step</button>
+<button onclick="r3Run();">Run</button>
+
  <br>
 	<table><tr><td>
 
-<textarea id="srccode" rows="10">| comentario
+<textarea id="srccode" rows="20" style="color:#fff;background-color:#666;">| comentario
+#v $ff00
 :cua dup * ;
-5 cua ;
-</textarea><br>
-<button onclick="r3Compile();dumpVM();">Comp</button>    
-<button onclick="r3step();dumpVM();">Step</button>
-<button onclick="r3run();dumpVM();">Run</button><br>
-<button onclick="r3Compile();r3run();dumpVM();">Comp+Run</button>
-<br><br>
+
+5 cua 
+v 0 !
+;
+</textarea>
+
 <!--
 <input type="text" value=""><br>
 <button onclick="r3run();dumpVM();">Run</button><br>
 -->
+
 	</td><td>
-<canvas id="ex1" width="512" height="512" style="border:1px solid #000000;"></canvas>
+<canvas id="canvas" height="512" width="512"></canvas>
+
 	</td><td>
 DATA STACK:<div id="ds"></div><br>
 CODE STACK:<div id="cs"></div><br>
@@ -54,14 +77,15 @@ IP:<div id="ip"></div><br>
 MEMCODE:<div id="mc"></div><br>
 MEMDATA:<div id="md"></div><br>
 DICC:<div id="dic"></div><br>
-ERR:<div id=""logerror"></div><br>
+ERR:<div id="logerror"></div><br>
 </td></tr>
 	
 	</table>
 <script>	
-
+r3init();
+/*
 function animate() {
-reqAnimFrame = window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame||window.oRequestAnimationFrame;
+reqAnimFrame=window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame||window.oRequestAnimationFrame;
 reqAnimFrame(animate);
 
 draw();
@@ -71,23 +95,25 @@ var canvas  = document.getElementById("ex1");
 var context = canvas.getContext("2d"); // alpha:false;
 var imageData = context.createImageData(512,512);
 
-
 function draw() {
 var pixelIndex=513*4;
-imageData.data[pixelIndex    ] = 0;  // red   color
-imageData.data[pixelIndex + 1] =   0;  // green color
-imageData.data[pixelIndex + 2] =   0;  // blue  color
-imageData.data[pixelIndex + 3] = 255;	
-pixelIndex=1026*4;
-imageData.data[pixelIndex    ] = 0;  // red   color
-imageData.data[pixelIndex + 1] =   0;  // green color
-imageData.data[pixelIndex + 2] =   0;  // blue  color
-imageData.data[pixelIndex + 3] = 255;	
-	
-context.putImageData(imageData,0,0);
+imageData.data[pixelIndex] = 0;imageData.data[pixelIndex + 1] =   0;imageData.data[pixelIndex + 2] =   0;
+imageData.data[pixelIndex+3] =255;context.putImageData(imageData,0,0);
 }
 
 animate();
+
+//////////////////////////////////////////////////////////////
+for (var y = 0; y < canvasHeight; ++y) {
+    for (var x = 0; x < canvasWidth; ++x) {
+        var value = x ^ y & 0xff;
+        data32[y * canvasWidth + x] =(255<<24)|(value<<16)|(value<<8)|value;
+    }
+}
+
+imageData.data.set(buf8);    
+ctx.putImageData(imageData, 0, 0);
+*/      
 </script>
 
   </body>
