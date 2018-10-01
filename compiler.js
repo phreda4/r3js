@@ -1,4 +1,5 @@
 /* r3www 2018 - GPITTAU PHREDA */
+"use strict";
 
 var dicc=[];
 var dicca=[];
@@ -6,7 +7,19 @@ var dicci=[];
 var ndicc=0;
 
 var modo=0; // 0-imm 1-code 2-data
+
+
 var level=0;
+
+var clevel=0;	// cnt
+var nlevel;		// now
+var elevel;		// label
+
+var stackbl=[];
+var stacka=[];
+
+
+	
 var boot=-1;
 var nro=0;
 
@@ -17,24 +30,12 @@ var memd=0;
 var memdata=new ArrayBuffer(0xfffffff); // 256Mb
 var mem=new DataView(memdata);
 
-function r3init()
-{
-var canvas = document.getElementById('canvas');
-var canvasWidth  = canvas.width;
-var canvasHeight = canvas.height;
-var ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
-
-var imageData=ctx.getImageData(0,0,canvasWidth, canvasHeight);
-var data=imageData.data;
-var buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
-var data32=new Uint32Array(memdata,0,imageData.data.length>>2);
-}
-
-
 var r3machine=[
-"nop",":","::","#","##","|","^",			// 6
-"lit","lit","lit","lit","str",		// b
-"call","var","dcode","ddata"];			// f
+"nop",":","::","#","##","|","^",	// 6
+"lit","lit","lit","lit","str",		// 11
+"call","var","dcode","ddata",		// 15
+";","jmp","jmpw","[","]"
+];
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
 "<?",">?","=?",">=?","<=?","<>?","A?","N?","B?",			// 19
@@ -71,8 +72,9 @@ function isNro(tok) {
 		tok=tok.slice(1);nro=tok.match(/^[0-9A-F]+$/);
 		if (nro!=null) { nro=parseInt(tok,16);return true; }; 
 		break;
-	case "%":  // %bin
-		tok=tok.slice(1);nro=tok.match(/^[0-1]+$/);
+	case "%":  // %bin %..1.1 allow
+		tok=tok.split('.').join('0');		// convert . or 0
+		tok=tok.slice(1);nro=tok.match(/^[0-1]+$/); 
 		if (nro!=null) { nro=parseInt(tok,2);return true; }; 
 		break;
 	}
@@ -83,164 +85,198 @@ function isBas(tok) {
 	nro=r3base.indexOf(tok);
 	if (nro<0) { return false; }
 	return true;
-}
-
-function isWord(tok) { 
-var i=dicc.length;
-while (i--) {
-	if (dicc[i]===tok) { break; }
 	}
-return i;
-}
 
+function isWord(tok) { var i=dicc.length;
+	while (i--) { if (dicc[i]===tok) { break; } }
+	return i;
+	}
 
-function error() {
-document.getElementById("logerror").innerText = "Error: palabra no encontrada en :"+dicc[ndicc];
-}
 
 function codetok(nro) { 
-if (modo==0 && boot==-1) { boot=memc; }
-memcode[memc++]=nro; 
-}
+	if (modo==0 && boot==-1) { boot=memc; }
+	memcode[memc++]=nro; 
+	}
 
 function datanro(nro) { 
-if (modo==2) { mem.setInt32(memd,nro);memd+=4; }
-if (modo==4) { mem.setInt8(memd,nro);memd+=1; }
-if (modo==5) { mem.setInt64(memd,nro);memd+=8; }
-}
+	if (modo==2) { mem.setInt32(memd,nro,true);memd+=4; }
+	if (modo==4) { mem.setInt8(memd,nro);memd+=1; }
+	if (modo==5) { mem.setInt64(memd,nro);memd+=8; }
+	}
 
 function datasave(str) { 
-for(var i=0;i<str.length;i++)
-	memdata[memd++]=str.charCodeAt(i);
-memdata[memd++]=0;
-}
+	for(var i=0;i<str.length;i++) { mem.setInt8(memd++,str.charCodeAt(i)); }
+	mem.setInt8(memd++,0);	
+	}
 
 function compilaSTR(str) {
-ini=datasave(str);	
-if (modo<2) {codetok((ini<<7)+11);}
-}
+	ini=datasave(str);	
+	if (modo<2) {codetok((ini<<7)+11);}
+	}
 
-function compilaCODE(name) {
-var ex=0;
-if (name[1]==":") { ex=1; }
-dicc.push(name.slice(ex+1,name.length).toUpperCase());
-dicca.push(memc);
-dicci.push(ex);
-modo=1;	
-}
+function compilaCODE(name) { var ex=0;
+	if (name[1]==":") { ex=1; }
+	dicc.push(name.slice(ex+1,name.length).toUpperCase());
+	dicca.push(memc);
+	dicci.push(ex);
+	modo=1;	
+	}
 
-function compilaDATA(name) {
-var ex=0;
-if (name[1]=="#") { ex=1; }
-dicc.push(name.slice(ex+1,name.length).toUpperCase());
-dicca.push(memd);
-dicci.push(ex+0x10);	// 0x10 es dato
-modo=2;
-}
+function compilaDATA(name) { var ex=0;
+	if (name[1]=="#") { ex=1; }
+	dicc.push(name.slice(ex+1,name.length).toUpperCase());
+	dicca.push(memd);
+	dicci.push(ex+0x10);	// 0x10 es dato
+	modo=2;
+	}
 
 function compilaADDR(n) {
-if (modo>1) { datanro(n);return; }
-codetok((n<<7)+13); 
-}
+	if (modo>1) { datanro(n);return; }
+	codetok((n<<7)+13); 
+	}
 
 function compilaLIT(n) {
-if (modo>1) { datanro(n);return; }
-if (n>-257 && n<256) { codetok(((n<<7)&0xff8)+7);return; }
-codetok((n<<7)+8);// falta
-}
+	if (modo>1) { datanro(n);return; }
+	if (n>-257 && n<256) { codetok(((n<<7)&0xff8)+7);return; }
+	codetok((n<<7)+8);// falta
+	}
 
 function dataMAC(n){
-if (n==45) {modo=3;} // * reserva bytes
-if (n==17) {modo=4;} // (	bytes
-if (n==18) {modo=2;} // )
-if (n==19) {modo=5;} // [	qwords
-if (n==20) {modo=2;} // ]
+	if (n==45) {modo=3;} // * reserva bytes
+	if (n==1) {modo=4;} // (	bytes
+	if (n==2) {modo=2;} // )
+	if (n==3) {modo=5;} // [	qwords
+	if (n==4) {modo=2;} // ]
+	}
+
+
+function blockIn(){
+	stackbl.push(level);
+	stacka.push(memc);
+	nlevel=clevel;
+	level++;
+	}
+
+function blockOut(){
+	nlevel=stackbl.pop();
+	elevel=stacka.pop();
+
+// if resuelve salto
+
+// salta
+// while resuelve saltos
+
+	}
+
+function blockCond() {
+	/*
+	if (nextok()=="(") {	//if
+	
+	} else {				//rep
+		saltos.push(memc);
+	}
+	*/
 }
 
 function compilaMAC(n) {
-if(modo>1) { dataMAC(n);return; }
-if (n==17) { } //(	etiqueta
-if (n==18) { } //)	salto
-if (n==19) { } //[	salto:etiqueta
-if (n==20) { } //]	etiqueta;push
-codetok(n+16);	
-if (n==0) { if (level==0) {modo=0;} } //;
-}
+	if(modo>1) { dataMAC(n);return; }
+	if (n==1) { blockIn();return; }		//(	etiqueta
+	if (n==2) { blockOut();return; }	//)	salto
+	if (n==3) { anonIn();return; }		//[	salto:etiqueta
+	if (n==4) { annonOut();return; }	//]	etiqueta;push
+	if (n>5 && n<19) { blockCond(); }	//?? conditional
+	codetok(n+16);	
+	if (n==0) { if (level==0) {modo=0;} } // ;
+	}
 
 function compilaWORD(n) {
-if (modo>1) { datanro(n);return; }
-codetok((dicca[n]<<7)+12+((dicci[n]>>4)&1));
-}
+	if (modo>1) { datanro(n);return; }
+	codetok((dicca[n]<<7)+12+((dicci[n]>>4)&1));
+	}
 
 function r3token(str) {
-memc=1;
-memd=0;
+	memc=1;
+	memd=0;
 
-boot=-1;
-level=0;
-var now=0;
-var ini;
-var ntoken;
-str=str.trim();
-while(now<str.length) {
-	while (str.charCodeAt(now)<33) { now++; }
-// comments	
-	if(str[now]==="|") {
-		now=str.indexOf("\n",now)+1;
-		if (now<0) { now=str.length;}
-		continue; }
-// strings		
-	if(str[now]=== "\"") {
-		ini=now;
-		now=str.indexOf("\"",now+1)+1;
-//		now++;while(str.charCodeAt(now)!=43) { now++; } now++;
+	boot=-1;
+	level=0;
+	var now=0;
+	var ini;
+	var ntoken;
+	str=str.trim();
+	while(now<str.length) {
+		while (str.charCodeAt(now)<33) { now++; }
+		if(str[now]==="|") {					// comments	
+			now=str.indexOf("\n",now)+1;
+			if (now<0) { now=str.length;}
+			continue; }
 
-		compilaSTR(str.slice(ini+1,now-1));
-		now++;
-	} else {
-		ini=now;
-		while (str.charCodeAt(now)>32) { now++; }			
-		ntoken=str.slice(ini,now);
-
-// genera tokens
-		switch (ntoken.charCodeAt(0)) {
-			case 0x3A:// $3a :  Definicion
-				compilaCODE(ntoken);break;
-			case 0x23:// $23 #  Variable
-				compilaDATA(ntoken);break;
-			case 0x27:// $27 ' Direccion
-				ntoken=ntoken.substr(1);
-				nro=isWord(ntoken);if (nro<0) { error();break; }			
-				compilaADDR(nro);break;		
-			default:
-				ntoken=ntoken.toUpperCase();
-				if (isNro(ntoken)) { compilaLIT(nro);break; }
-				if (isBas(ntoken)) { compilaMAC(nro);break; }
-				nro=isWord(ntoken);if (nro<0) { error();break; }
-				compilaWORD(nro);
-				break;
-			}
-		}		
+		if(str[now]=== "\"") {					// strings		
+			ini=now;
+			now=str.indexOf("\"",now+1)+1;
+	//		now++;while(str.charCodeAt(now)!=43) { now++; } now++;
+	
+			compilaSTR(str.slice(ini+1,now-1));
+			now++;
+		} else {
+			ini=now;
+			while (str.charCodeAt(now)>32) { now++; }			
+			ntoken=str.slice(ini,now);
+			switch (ntoken.charCodeAt(0)) {	// genera tokens
+				case 0x3A:// $3a :  Definicion	// :CODE
+					compilaCODE(ntoken);break;
+				case 0x23:// $23 #  Variable	// #DATA
+					compilaDATA(ntoken);break;	
+				case 0x27:// $27 ' Direccion	// 'ADR
+					ntoken=ntoken.substr(1);
+					nro=isWord(ntoken);if (nro<0) { error();break; }			
+					compilaADDR(nro);break;		
+				default:
+					ntoken=ntoken.toUpperCase();
+					if (isNro(ntoken)) { 
+						compilaLIT(nro);break; }
+					if (isBas(ntoken)) { 
+						compilaMAC(nro);break; }
+					nro=isWord(ntoken);if (nro<0) { error();break; }
+					compilaWORD(nro);
+					break;
+				}
+			}		
+		}
+	ip=boot;	
 	}
-ip=boot;	
-}
 
-/*------RUNER------
-:vmstep
-	$7f and 2 << 'vml + @ exec ;
-::vmrun | adr --
-	( @+ 1? )( ( dup vmstep 8 0>> 0? ) drop 0? ( drop ; ) ) 2drop ;
-*/
+function error() {
+	document.getElementById("logerror").innerText = "Error: palabra no encontrada en :"+dicc[ndicc];
+	}
+
+
+/*------RUNER------*/
 
 var ip;
+
 var TOS=0;
 var NOS=0;
 var RTOS=256;
+
 var stack=new Int32Array(256);
+
+var canvas;
+var ctx;
+var imageData;
+var buf8;
+
+function r3init() {
+	canvas = document.getElementById('canvas');
+	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
+	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
+	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
+	}
 
 function redraw() { 
 	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
 	}
+
 
 function r3op(op) { var W;
 	while(op!=0){switch(op&0x7f){
@@ -390,6 +426,26 @@ function r3run() {
 	}
 
 ////////////////////////////////////////////////////////////////////
+function animate() {
+	reqAnimFrame=
+	window.mozRequestAnimationFrame||
+	window.webkitRequestAnimationFrame||
+	window.msRequestAnimationFrame||
+	window.oRequestAnimationFrame;
+	reqAnimFrame(animate);
+	//ex(byname("show"));
+	}
+
+function r3boot() {
+	r3init();
+	//animate();
+	}	
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+window.onload=r3boot;	
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 function num9(tok) // 9 bits
 { return ((tok<<16)>>23); }
@@ -400,39 +456,20 @@ function numrn(tok) // r bits neg
 function numct(tok) // cte
 { return memcode[(tok>>7)];}
 
-function lstr(tok) // string
-{ return (tok>>7); }
-function jrel(tok) // jump rel
-{ return (tok>>7); }
-
 function printmr3(tok) {
 var s="";
 switch(tok&0x7f){
-		case 7:s+=num9(tok);break
-		case 8:s+=numr(tok);break
-		case 9:s+=numnr(tok);break
-		case 10:s+=numct(tok);break
+		case 7:s+="("+num9(tok)+")";break
+		case 8:	
+		case 17:case 18:
+		case 22:case 23:case 24:case 25:
+		case 26:case 27:case 28:case 29:case 30:case 31:
+		case 32:case 33:case 34:
+			s+="["+numr(tok)+"]";break
+		case 9:s+="("+numnr(tok)+")";break
+		case 10:s+="("+numct(tok)+")";break
 //		default:
 	}
-if ((tok&0x7f)>15) { return r3base[(tok&0x7f)-16]+s; }
+if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }
 return r3machine[tok&0x7f]+s;
 }
-
-/////////////////////////// LIB //////////////////////////////////////
-// from https://stackoverflow.com/questions/18600895/resize-arraybuffer
-/*
-copymem(oldBuffer, newByteLength) {
-var srcBuffer = Object(oldBuffer);
-var destBuffer = new ArrayBuffer(newByteLength);
-
-var copylen=Math.min(srcBuffer.byteLength,destBuffer.byteLength);
-
-var length=copylen>>6;
-(new Float64Array(destBuffer,0,length)).set(new Float64Array(srcBuffer,0,length));
-
-//var offset = length<<6;//length=copylen-offset;
-length=copylen&0x3f;
-(new Uint8Array(srcBuffer,offset,length)).set(new Uint8Array(destBuffer,offset,length));
-return destBuffer;
-};
-*/

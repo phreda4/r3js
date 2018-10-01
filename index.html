@@ -5,24 +5,29 @@
     <script src="./r3www.js"></script>    
 
 <script>
-function dumpmd() {
-var s="";
-for(var i=0;i<memd;i++) {
-	s=s+" "+mem.getInt8(i);
+function dumpmd() { var s="";
+	for(var i=0;i<memd;i++) {
+		s=s+" "+mem.getInt8(i);
+		}
+	return s;
 	}
-return s;
-}
 
-function dumpmc() {
-var s="";
-for(var i=0;i<memc;i++) {
-	if (i==ip) { s+=" >"; } else { s+=" "; } 
-	s+=printmr3(memcode[i]);
-	if (i==ip) { s+="<"; }
+function dumpmc() {	var s="";
+	for(var i=0;i<memc;i++) {
+		if (i==ip) { s+=" >"; } else { s+=" "; } 
+		s+=printmr3(memcode[i]);
+		if (i==ip) { s+="<"; }
+		}
+	return s;
 	}
-return s;
-}
 
+function dumpblock(){ var s="";
+	for (var i=0;i<stackbl.length;i++) {
+		s+=" "+stackbl[i]+"("+stacka[i]+")";
+		}
+	return s;
+	}	
+	
 function dumpVM() {
 	const setDiv = (id, value) => document.getElementById(id).innerText = value;
 	setDiv("ip", ip);
@@ -30,11 +35,17 @@ function dumpVM() {
     setDiv("cs", stack.slice(RTOS,256).join(" "));
     setDiv("mc", dumpmc());
     setDiv("md", dumpmd());
+    setDiv("bl", dumpblock());
 	setDiv("dic",dicc.join(" "));
     }
+
+function r3Compile() { 
+	r3reset();r3token(document.getElementById("srccode").value);dumpVM(); 
+	}
 	
-function r3Compile() { r3reset();r3token(document.getElementById("srccode").value);dumpVM(); }
-function r3Run() { r3reset();r3token(document.getElementById("srccode").value);r3run();dumpVM(); }
+function r3Run() { 
+	r3reset();r3token(document.getElementById("srccode").value);r3run();dumpVM(); 
+	}
 </script>
 
 <style>	
@@ -47,28 +58,38 @@ r3)
 <button onclick=""> NONAME </button>
 
 <button onclick="r3Compile();">Compile</button>    
-<button onclick="r3step();dumpVM();">Step</button>
-<button onclick="r3Run();">Run</button>
+<button onclick="r3step();dumpVM();redraw();">Step</button>
+<button onclick="r3Run();redraw();">Run</button>
 
- <br>
+<br>
 	<table><tr><td>
 
 <textarea id="srccode" rows="20" style="color:#fff;background-color:#666;">| comentario
-#v $ff00
-:cua dup * ;
 
-5 cua 
-v 0 !
-;
+#v $ff00 $ff
+
+:cua 
+ dup * ;
+ 
+:line
+ 0 ( $1ff <? 
+  $ff00 over !
+  1 + ) drop ;
+
+ %..1..  
+ %.111.
+ %..1..
+ line ;
+
 </textarea>
 
 <!--
 <input type="text" value=""><br>
 <button onclick="r3run();dumpVM();">Run</button><br>
--->
+--> 
 
 	</td><td>
-<canvas id="canvas" height="512" width="512"></canvas>
+<canvas id="canvas" height="640" width="480"></canvas>
 
 	</td><td>
 DATA STACK:<div id="ds"></div><br>
@@ -77,44 +98,10 @@ IP:<div id="ip"></div><br>
 MEMCODE:<div id="mc"></div><br>
 MEMDATA:<div id="md"></div><br>
 DICC:<div id="dic"></div><br>
+(stack):<div id="bl"></div><br>
 ERR:<div id="logerror"></div><br>
 </td></tr>
-	
 	</table>
-<script>	
-r3init();
-/*
-function animate() {
-reqAnimFrame=window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame||window.oRequestAnimationFrame;
-reqAnimFrame(animate);
-
-draw();
-}
-
-var canvas  = document.getElementById("ex1");
-var context = canvas.getContext("2d"); // alpha:false;
-var imageData = context.createImageData(512,512);
-
-function draw() {
-var pixelIndex=513*4;
-imageData.data[pixelIndex] = 0;imageData.data[pixelIndex + 1] =   0;imageData.data[pixelIndex + 2] =   0;
-imageData.data[pixelIndex+3] =255;context.putImageData(imageData,0,0);
-}
-
-animate();
-
-//////////////////////////////////////////////////////////////
-for (var y = 0; y < canvasHeight; ++y) {
-    for (var x = 0; x < canvasWidth; ++x) {
-        var value = x ^ y & 0xff;
-        data32[y * canvasWidth + x] =(255<<24)|(value<<16)|(value<<8)|value;
-    }
-}
-
-imageData.data.set(buf8);    
-ctx.putImageData(imageData, 0, 0);
-*/      
-</script>
-
+	
   </body>
 </html>
