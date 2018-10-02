@@ -1,25 +1,21 @@
-/* r3www 2018 - GPITTAU PHREDA */
+/* r3www 20138 - GPITTAU PHREDA */
 "use strict";
+
+
+/*------COMPILER------*/
+
+// 0-imm 1-code 2-data 3-reserve 4-bytes 5-qwords
+var modo=0; 
 
 var dicc=[];
 var dicca=[];
 var dicci=[];
 var ndicc=0;
 
-var modo=0; // 0-imm 1-code 2-data
-
-
 var level=0;
-
-var clevel=0;	// cnt
-var nlevel;		// now
-var elevel;		// label
-
 var stackbl=[];
 var stacka=[];
 
-
-	
 var boot=-1;
 var nro=0;
 
@@ -64,7 +60,11 @@ function isNro(tok) {
 	nro=tok.match(/^\d+.\d+$/); // fixed.point
 	if (nro!=null) { 
 		n=tok.split(".");
-		nro=(parseInt(n[0])<<16)|(parseInt("1"+n[1])&0xffff);
+		var n1=parseInt(n[0]),v=1;
+		for (var i=0;i<n[1].length;i++) { v*=10; }
+		//n2=parseInt("1"+n[1]);
+		n2=0xffff*parseInt(n[1])/v;
+		nro=(n1<<16)|(n2&0xffff);// falta
 		return true; 
 		}
 	switch (tok[0]) {
@@ -99,7 +99,14 @@ function codetok(nro) {
 	}
 
 function datanro(nro) { 
+	switch(modo){
+		case 2:mem.setInt32(memd,nro,true);memd+=4;break;
+		case 3:memd+=nro;break;
+		case 4:mem.setInt8(memd,nro);memd+=1;break;
+		case 5:mem.setInt64(memd,nro);memd+=8;break;
+		}
 	if (modo==2) { mem.setInt32(memd,nro,true);memd+=4; }
+	if (modo==3) { memd+=nro; }
 	if (modo==4) { mem.setInt8(memd,nro);memd+=1; }
 	if (modo==5) { mem.setInt64(memd,nro);memd+=8; }
 	}
@@ -109,18 +116,6 @@ function datasave(str) {
 	mem.setInt8(memd++,0);	
 	}
 
-function compilaSTR(str) {
-	ini=datasave(str);	
-	if (modo<2) {codetok((ini<<7)+11);}
-	}
-
-function compilaCODE(name) { var ex=0;
-	if (name[1]==":") { ex=1; }
-	dicc.push(name.slice(ex+1,name.length).toUpperCase());
-	dicca.push(memc);
-	dicci.push(ex);
-	modo=1;	
-	}
 
 function compilaDATA(name) { var ex=0;
 	if (name[1]=="#") { ex=1; }
@@ -128,17 +123,6 @@ function compilaDATA(name) { var ex=0;
 	dicca.push(memd);
 	dicci.push(ex+0x10);	// 0x10 es dato
 	modo=2;
-	}
-
-function compilaADDR(n) {
-	if (modo>1) { datanro(n);return; }
-	codetok((n<<7)+13); 
-	}
-
-function compilaLIT(n) {
-	if (modo>1) { datanro(n);return; }
-	if (n>-257 && n<256) { codetok(((n<<7)&0xff8)+7);return; }
-	codetok((n<<7)+8);// falta
 	}
 
 function dataMAC(n){
@@ -149,34 +133,63 @@ function dataMAC(n){
 	if (n==4) {modo=2;} // ]
 	}
 
+	
+function compilaCODE(name) { var ex=0;
+	if (name[1]==":") { ex=1; }
+	dicc.push(name.slice(ex+1,name.length).toUpperCase());
+	dicca.push(memc);
+	dicci.push(ex);
+	modo=1;	
+	}
+
+function compilaADDR(n) {
+	if (modo>1) { datanro(n);return; }
+	codetok((n<<7)+13); 
+	}
+
+function compilaLIT(n) {
+	if (modo>1) { datanro(n);return; }
+	if (n>-257 && n<256) { codetok(((n<<7)&0xff8)+7);return; }
+	if (n==(n<<6)>>6) { // un bit mas por signo (token 8 y 9)
+		codetok((n<<7)+8+((n>>25)&1));
+		return;
+		} 
+	codetok((n<<7)+10);
+	}
+
+function compilaSTR(str) {
+	ini=datasave(str);	
+	if (modo<2) {codetok((ini<<7)+11);}
+	}
+	
 
 function blockIn(){
-	stackbl.push(level);
 	stacka.push(memc);
-	nlevel=clevel;
 	level++;
 	}
 
+function solvejmp(from,to) {
+	var whi=false;
+	for (var i=from;i<to;i++) {
+		var op=memcode[i]&0x7f;
+		if (op>21 && op<35 && (memcode[i]>>7)==0) {
+			memcode[i]+=(memc-i)<<7;	// patch while
+			whi=true;
+			}
+		}
+	return whi;
+	}
+
 function blockOut(){
-	nlevel=stackbl.pop();
-	elevel=stacka.pop();
-
-// if resuelve salto
-
-// salta
-// while resuelve saltos
-
+	var from=stacka.pop();
+	var dist=memc-from;
+	if (solvejmp(from,memc)) { // salta
+		codetok((-(dist+1)<<7)+18); 	// jmpr
+	} else {
+		memcode[from-1]+=(dist<<7);		// patch if
 	}
-
-function blockCond() {
-	/*
-	if (nextok()=="(") {	//if
-	
-	} else {				//rep
-		saltos.push(memc);
+	level--;
 	}
-	*/
-}
 
 function compilaMAC(n) {
 	if(modo>1) { dataMAC(n);return; }
@@ -184,7 +197,6 @@ function compilaMAC(n) {
 	if (n==2) { blockOut();return; }	//)	salto
 	if (n==3) { anonIn();return; }		//[	salto:etiqueta
 	if (n==4) { annonOut();return; }	//]	etiqueta;push
-	if (n>5 && n<19) { blockCond(); }	//?? conditional
 	codetok(n+16);	
 	if (n==0) { if (level==0) {modo=0;} } // ;
 	}
@@ -242,7 +254,7 @@ function r3token(str) {
 					break;
 				}
 			}		
-		}
+		}	        
 	ip=boot;	
 	}
 
@@ -251,15 +263,7 @@ function error() {
 	}
 
 
-/*------RUNER------*/
-
-var ip;
-
-var TOS=0;
-var NOS=0;
-var RTOS=256;
-
-var stack=new Int32Array(256);
+/*------CANVAS------*/
 
 var canvas;
 var ctx;
@@ -276,10 +280,20 @@ function r3init() {
 function redraw() { 
 	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
 	}
+	
+/*------RUNER------*/
 
+var ip;
+
+var TOS=0;
+var NOS=0;
+var RTOS=256;
+var stack=new Int32Array(256); 
+// TOS..DSTACK--> <--RSTACK
 
 function r3op(op) { var W;
-	while(op!=0){switch(op&0x7f){
+	//while(op!=0){
+		switch(op&0x7f){
 	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;op>>=16;break;//LIT9
 	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;op=0;break;			//LITres
 	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);op=0;break;		//LITreg neg
@@ -290,24 +304,24 @@ function r3op(op) { var W;
 	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;ip+=4;op=0;break;	// DWORD
 	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;ip+=4;op=0;break;	// DVAR
 	case 16:ip=stack[RTOS];RTOS++;op=0;break; 					// ;
-	case 17:break;
-	case 18:ip=(op>>7);break;//JMP
+	case 17:ip=(op>>7);break;//JMP
+	case 18:ip+=(op>>7);break;//JMPR
 	case 19:break;
-	case 20:ip+=(op>>7);break;//JMPR
+	case 20:break;
 	case 21:W=TOS;TOS=stack[NOS];NOS--;RTOS--;stack[RTOS]=ip;ip=W;break;//EX
 
-	case 22:if (TOS!=0) {ip+=(op>>7);}; break;//ZIF
-	case 23:if (TOS==0) {ip+=(op>>7);}; break;//UIF
-	case 24:if (TOS<=0) {ip+=(op>>7);}; break;//PIF
-	case 25:if (TOS>=0) {ip+=(op>>7);}; break;//NIF
-	case 26:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
-	case 27:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
-	case 28:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
-	case 29:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
-	case 30:if (TOS<stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
-	case 31:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
-	case 32:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAND
-	case 33:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNAND
+	case 22:if (TOS==0) {ip+=(op>>7);}; break;//ZIF
+	case 23:if (TOS!=0) {ip+=(op>>7);}; break;//UIF
+	case 24:if (TOS>=0) {ip+=(op>>7);}; break;//PIF
+	case 25:if (TOS<=0) {ip+=(op>>7);}; break;//NIF
+	case 26:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
+	case 27:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
+	case 28:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
+	case 29:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
+	case 30:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
+	case 31:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
+	case 32:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAND
+	case 33:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNAND
 	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS-1];NOS-=2;break;//BETWEEN
 
 	case 35:NOS++;stack[NOS]=TOS;break;						//DUP
@@ -400,8 +414,9 @@ function r3op(op) { var W;
 	case 110:break;//QFILL
 	
 	case 111:break;//SYSCALL | n -- v
-	case 112:break;//SYSMEM | n -- v
-	}op>>=8;}
+	case 112:break;//SYSMEM | -- ini
+	}
+	//op>>=8;}
 	}
 
 
@@ -448,13 +463,13 @@ window.onload=r3boot;
 ////////////////////////////////////////////////////////////////////
 
 function num9(tok) // 9 bits
-{ return ((tok<<16)>>23); }
+{ return (tok<<16)>>23; }
 function numr(tok) // r bits
 { return (tok>>7);}
 function numrn(tok) // r bits neg
 { return -(tok>>7);}
 function numct(tok) // cte
-{ return memcode[(tok>>7)];}
+{ return memcode[tok>>7];}
 
 function printmr3(tok) {
 var s="";
@@ -465,7 +480,7 @@ switch(tok&0x7f){
 		case 22:case 23:case 24:case 25:
 		case 26:case 27:case 28:case 29:case 30:case 31:
 		case 32:case 33:case 34:
-			s+="["+numr(tok)+"]";break
+			s+="("+numr(tok)+")";break
 		case 9:s+="("+numnr(tok)+")";break
 		case 10:s+="("+numct(tok)+")";break
 //		default:
