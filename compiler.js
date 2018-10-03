@@ -1,7 +1,6 @@
 /* r3www 20138 - GPITTAU PHREDA */
 "use strict";
 
-
 /*------COMPILER------*/
 
 // 0-imm 1-code 2-data 3-reserve 4-bytes 5-qwords
@@ -13,7 +12,6 @@ var dicci=[];
 var ndicc=0;
 
 var level=0;
-var stackbl=[];
 var stacka=[];
 
 var boot=-1;
@@ -23,6 +21,7 @@ var memc=0;
 var memcode=new Int32Array(0xffff); // 256kb
 
 var memd=0;
+var meminidata=0;
 var memdata=new ArrayBuffer(0xfffffff); // 256Mb
 var mem=new DataView(memdata);
 
@@ -34,7 +33,7 @@ var r3machine=[
 ];
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
-"<?",">?","=?",">=?","<=?","<>?","A?","N?","B?",			// 19
+"<?",">?","=?",">=?","<=?","<>?","AND?","NAND?","BTW?",		// 19
 "DUP","DROP","OVER","PICK2","PICK3","PICK4","SWAP","NIP",	// 27
 "ROT","2DUP","2DROP","3DROP","4DROP","2OVER","2SWAP",		// 34
 ">R","R>","R@",												// 37
@@ -60,15 +59,15 @@ function isNro(tok) {
 	nro=tok.match(/^\d+.\d+$/); // fixed.point
 	if (nro!=null) { 
 		n=tok.split(".");
-		var n1=parseInt(n[0]),v=1;
+		var n1=parseInt(n[0]),v=1;	//n2=parseInt("1"+n[1]);...
 		for (var i=0;i<n[1].length;i++) { v*=10; }
-		//n2=parseInt("1"+n[1]);
 		n2=0xffff*parseInt(n[1])/v;
 		nro=(n1<<16)|(n2&0xffff);// falta
 		return true; 
 		}
 	switch (tok[0]) {
 	case "$":	// $hex
+		tok=tok.split('.').join('0');		// convert . or 0
 		tok=tok.slice(1);nro=tok.match(/^[0-9A-F]+$/);
 		if (nro!=null) { nro=parseInt(tok,16);return true; }; 
 		break;
@@ -100,15 +99,11 @@ function codetok(nro) {
 
 function datanro(nro) { 
 	switch(modo){
-		case 2:mem.setInt32(memd,nro,true);memd+=4;break;
+		case 2:mem.setInt32(memd,nro);memd+=4;break;
 		case 3:memd+=nro;break;
 		case 4:mem.setInt8(memd,nro);memd+=1;break;
 		case 5:mem.setInt64(memd,nro);memd+=8;break;
 		}
-	if (modo==2) { mem.setInt32(memd,nro,true);memd+=4; }
-	if (modo==3) { memd+=nro; }
-	if (modo==4) { mem.setInt8(memd,nro);memd+=1; }
-	if (modo==5) { mem.setInt64(memd,nro);memd+=8; }
 	}
 
 function datasave(str) { 
@@ -143,13 +138,13 @@ function compilaCODE(name) { var ex=0;
 	}
 
 function compilaADDR(n) {
-	if (modo>1) { datanro(n);return; }
-	codetok((n<<7)+13); 
+	if (modo>1) { datanro(dicca[n]);return; }
+	codetok((dicca[n]<<7)+14+((dicci[n]>>4)&1)); 
 	}
 
 function compilaLIT(n) {
 	if (modo>1) { datanro(n);return; }
-	if (n>-257 && n<256) { codetok(((n<<7)&0xff8)+7);return; }
+	if (n>-257 && n<256) { codetok(((n<<7)&0xff80)+7);return; }
 	if (n==(n<<6)>>6) { // un bit mas por signo (token 8 y 9)
 		codetok((n<<7)+8+((n>>25)&1));
 		return;
@@ -196,7 +191,7 @@ function compilaMAC(n) {
 	if (n==1) { blockIn();return; }		//(	etiqueta
 	if (n==2) { blockOut();return; }	//)	salto
 	if (n==3) { anonIn();return; }		//[	salto:etiqueta
-	if (n==4) { annonOut();return; }	//]	etiqueta;push
+	if (n==4) { anonOut();return; }		//]	etiqueta;push
 	codetok(n+16);	
 	if (n==0) { if (level==0) {modo=0;} } // ;
 	}
@@ -208,7 +203,7 @@ function compilaWORD(n) {
 
 function r3token(str) {
 	memc=1;
-	memd=0;
+	memd=meminidata;
 
 	boot=-1;
 	level=0;
@@ -220,7 +215,7 @@ function r3token(str) {
 		while (str.charCodeAt(now)<33) { now++; }
 		if(str[now]==="|") {					// comments	
 			now=str.indexOf("\n",now)+1;
-			if (now<0) { now=str.length;}
+			if (now<=0) { now=str.length;}
 			continue; }
 
 		if(str[now]=== "\"") {					// strings		
@@ -240,8 +235,8 @@ function r3token(str) {
 				case 0x23:// $23 #  Variable	// #DATA
 					compilaDATA(ntoken);break;	
 				case 0x27:// $27 ' Direccion	// 'ADR
-					ntoken=ntoken.substr(1);
-					nro=isWord(ntoken);if (nro<0) { error();break; }			
+					ntoken=ntoken.substr(1).toUpperCase();
+					nro=isWord(ntoken);if (nro<0) { error(now);return 2; }			
 					compilaADDR(nro);break;		
 				default:
 					ntoken=ntoken.toUpperCase();
@@ -249,45 +244,30 @@ function r3token(str) {
 						compilaLIT(nro);break; }
 					if (isBas(ntoken)) { 
 						compilaMAC(nro);break; }
-					nro=isWord(ntoken);if (nro<0) { error();break; }
+					nro=isWord(ntoken);if (nro<0) { error(now);return 1; }
 					compilaWORD(nro);
 					break;
 				}
 			}		
 		}	        
-	ip=boot;	
+	ip=boot;	 
+	if (memcode[memc-1]!=16) { memcode[memc++]=16; } // last;
+	return 0;
 	}
 
-function error() {
-	document.getElementById("logerror").innerText = "Error: palabra no encontrada en :"+dicc[ndicc];
+function error(e) {
+	document.getElementById("logerror").innerText = "Not Word in:"+e;
 	}
 
 
-/*------CANVAS------*/
-
-var canvas;
-var ctx;
-var imageData;
-var buf8;
-
-function r3init() {
-	canvas = document.getElementById('canvas');
-	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
-	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
-	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
-	}
-
-function redraw() { 
-	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
-	}
-	
 /*------RUNER------*/
 
 var ip;
 
 var TOS=0;
 var NOS=0;
-var RTOS=256;
+var REGA,REGB;
+var RTOS=254;
 var stack=new Int32Array(256); 
 // TOS..DSTACK--> <--RSTACK
 
@@ -295,25 +275,25 @@ function r3op(op) { var W;
 	//while(op!=0){
 		switch(op&0x7f){
 	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;op>>=16;break;//LIT9
-	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;op=0;break;			//LITres
-	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);op=0;break;		//LITreg neg
-	case 10:NOS++;stack[NOS]=TOS;TOS=memcode(op>>7);op=0;break;// LITcte
-	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;op=0;break;			// STR
-	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;op=0;break;			// CALL
-	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);op=0;break;	// VAR
-	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;ip+=4;op=0;break;	// DWORD
-	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;ip+=4;op=0;break;	// DVAR
-	case 16:ip=stack[RTOS];RTOS++;op=0;break; 					// ;
+	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;			//LITres
+	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;//op=0;break;		//LITreg neg
+	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;//op=0;break;// LITcte
+	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;			// STR
+	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;//op=0;break;			// CALL
+	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);break;//op=0;break;	// VAR
+	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;	// DWORD
+	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;	// DVAR
+	case 16:ip=stack[RTOS];RTOS++;break;//op=0;break; 					// ;
 	case 17:ip=(op>>7);break;//JMP
 	case 18:ip+=(op>>7);break;//JMPR
 	case 19:break;
 	case 20:break;
 	case 21:W=TOS;TOS=stack[NOS];NOS--;RTOS--;stack[RTOS]=ip;ip=W;break;//EX
 
-	case 22:if (TOS==0) {ip+=(op>>7);}; break;//ZIF
-	case 23:if (TOS!=0) {ip+=(op>>7);}; break;//UIF
-	case 24:if (TOS>=0) {ip+=(op>>7);}; break;//PIF
-	case 25:if (TOS<=0) {ip+=(op>>7);}; break;//NIF
+	case 22:if (TOS!=0) {ip+=(op>>7);}; break;//ZIF
+	case 23:if (TOS==0) {ip+=(op>>7);}; break;//UIF
+	case 24:if (TOS<0) {ip+=(op>>7);}; break;//PIF
+	case 25:if (TOS>=0) {ip+=(op>>7);}; break;//NIF
 	case 26:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
 	case 27:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
 	case 28:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
@@ -322,7 +302,8 @@ function r3op(op) { var W;
 	case 31:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
 	case 32:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAND
 	case 33:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNAND
-	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS-1];NOS-=2;break;//BETWEEN
+	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} 
+				TOS=stack[NOS-1];NOS-=2;break;//BETWEEN (need bit trick)
 
 	case 35:NOS++;stack[NOS]=TOS;break;						//DUP
 	case 36:TOS=stack[NOS];NOS--;break;						//DROP
@@ -371,9 +352,9 @@ function r3op(op) { var W;
 	case 74:TOS=mem.getInt8(TOS);break;//C@
 	case 75:TOS=mem.getInt64(TOS);break;//Q@	
 
-	case 76:NOS++;stack[NOS]=TOS+8;TOS=mem.getInt32(TOS);break;//@+
+	case 76:NOS++;stack[NOS]=TOS+4;TOS=mem.getInt32(TOS);break;//@+
 	case 77:NOS++;stack[NOS]=TOS+1;TOS=mem.getInt8(TOS);break;// C@+
-	case 78:NOS++;stack[NOS]=TOS+4;TOS=mem.getInt64(TOS);break;//Q@+		
+	case 78:NOS++;stack[NOS]=TOS+8;TOS=mem.getInt64(TOS);break;//Q@+		
 			
 	case 79:mem.setInt32(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;// !
 	case 80:mem.setInt8(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C!
@@ -414,14 +395,21 @@ function r3op(op) { var W;
 	case 110:break;//QFILL
 	
 	case 111:break;//SYSCALL | n -- v
-	case 112:break;//SYSMEM | -- ini
+	case 112:TOS=getsystem(TOS);break;//SYSMEM | -- ini
+	
 	}
 	//op>>=8;}
 	}
 
 
+function getsystem(TOS)	{
+switch(TOS) {
+	case 0:return 0;
+	case 1:return canvas.width;
+	case 2:return canvas.height;	
+	}
+}
 function r3reset(){
-	TOS=0;NOS=0;RTOS=256;
 	boot=-1
 	dicc.splice(0,dicc.length);
 	dicca.splice(0,dicca.length);
@@ -436,9 +424,37 @@ function r3step() {
 
 function r3run() {
 	if (boot==-1) { return; }
+	TOS=0;NOS=0;
+	RTOS=255;stack[255]=0;
 	ip=boot;
 	while(ip!=0) { r3op(memcode[ip++]); }
 	}
+
+function r3runa(adr) {
+	ip=adr;
+	while(ip!=0) { r3op(memcode[ip++]); }
+	}
+	
+/*------CANVAS------*/
+
+var canvas;
+var ctx;
+var imageData;
+var buf8;
+
+function r3init() {
+	canvas = document.getElementById('canvas');
+	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
+	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
+	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
+	
+	meminidata=imageData.data.length;// dinamic???
+	}
+
+function redraw() { 
+	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
+	}
+	
 
 ////////////////////////////////////////////////////////////////////
 function animate() {
@@ -453,6 +469,7 @@ function animate() {
 
 function r3boot() {
 	r3init();
+
 	//animate();
 	}	
 
@@ -474,15 +491,16 @@ function numct(tok) // cte
 function printmr3(tok) {
 var s="";
 switch(tok&0x7f){
-		case 7:s+="("+num9(tok)+")";break
+		case 7:s+="."+num9(tok);break
 		case 8:	
+		case 12:case 13:case 14:case 15:
 		case 17:case 18:
 		case 22:case 23:case 24:case 25:
 		case 26:case 27:case 28:case 29:case 30:case 31:
 		case 32:case 33:case 34:
-			s+="("+numr(tok)+")";break
-		case 9:s+="("+numnr(tok)+")";break
-		case 10:s+="("+numct(tok)+")";break
+			s+="."+numr(tok);break
+		case 9:s+="."+numnr(tok);break
+		case 10:s+="."+numct(tok);break
 //		default:
 	}
 if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }

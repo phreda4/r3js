@@ -6,7 +6,7 @@
 
 <script>
 function dumpmd() { var s="";
-	for(var i=0;i<memd;i++) {
+	for(var i=meminidata;i<memd;i++) {
 		s=s+" "+mem.getInt8(i);
 		}
 	return s;
@@ -14,37 +14,47 @@ function dumpmd() { var s="";
 
 function dumpmc() {	var s="";
 	for(var i=0;i<memc;i++) {
-		if (i==ip) { s+=" >"; } else { s+=" "; } 
+//		if (i==ip) { s+=" >"; } else { s+=" "; } 
 		s+=printmr3(memcode[i]);
-		if (i==ip) { s+="<"; }
+		if (i==ip) { s+=" <--"; }
+		s+="\n";
+		}
+	return s;
+	}
+function dumpdicc() { var s="";
+	for (var i=0;i<dicc.length;i++) {
+		s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n";
 		}
 	return s;
 	}
 
-function dumpblock(){ var s="";
-	for (var i=0;i<stackbl.length;i++) {
-		s+=" "+stackbl[i]+"("+stacka[i]+")";
-		}
-	return s;
-	}	
-	
 function dumpVM() {
 	const setDiv = (id, value) => document.getElementById(id).innerText = value;
 	setDiv("ip", ip);
 	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
-    setDiv("cs", stack.slice(RTOS,256).join(" "));
+    setDiv("cs", stack.slice(RTOS,255).join(" "));
     setDiv("mc", dumpmc());
     setDiv("md", dumpmd());
-    setDiv("bl", dumpblock());
-	setDiv("dic",dicc.join(" "));
+	setDiv("dic",dumpdicc());
     }
 
 function r3Compile() { 
-	r3reset();r3token(document.getElementById("srccode").value);dumpVM(); 
+	r3reset();
+	if (r3token(document.getElementById("src").value)!=0) {
+		}
+	dumpVM(); 
 	}
 	
 function r3Run() { 
-	r3reset();r3token(document.getElementById("srccode").value);r3run();dumpVM(); 
+	r3reset();
+	if (r3token(document.getElementById("src").value)!=0) {
+		dumpVM(); 
+		return;
+		}
+	// error
+	r3run();
+	redraw();
+	dumpVM(); 
 	}
 </script>
 
@@ -57,55 +67,99 @@ table td, table td * { vertical-align: top; }
 r3)
 <button onclick=""> NONAME </button>
 
+<button onclick="r3Run();">Run</button>
+ | 
+<button onclick="document.getElementById('src').value=ex2;"> Ex 2 </button>
+ | 
 <button onclick="r3Compile();">Compile</button>    
 <button onclick="r3step();dumpVM();redraw();">Step</button>
-<button onclick="r3Run();redraw();">Run</button>
 
 <br>
 	<table><tr><td>
 
-<textarea id="srccode" rows="20" style="color:#fff;background-color:#666;">| comentario
+<textarea id="src" cols="30" rows="25" style="color:#fff;background-color:#666;">| Example 1
 
-#v $ff00 $ff
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
 
-:cua 
- dup * ;
+:patternxor
+ vframe >a
+ sh ( 1? 1 -
+  sw ( 1? 1 -
+    2dup xor 16 << a!+
+    ) drop
+  ) drop ;
  
-:line
- 3 
- 4 <? ( 1 + )
- 5 >? ( 1 + )
- drop
- 
- 0 ( $1ff <? 
-  $ff00 over !
-  1 + ) drop ;
-
- %..1..  
- %.111.
- %..1..
- line ;
-
+ patternxor 
+| 'patternxor onshow 
 </textarea>
 
-<!--
-<input type="text" value=""><br>
-<button onclick="r3run();dumpVM();">Run</button><br>
---> 
+<script>
+var ex3=`| Example 2
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+:drawline 
+ 8 ( 1?
+  swap dup 
+  1 and 7 << a!+
+  1 >> swap 1 - ) 2drop ;
+
+vframe >a
+$ff drawline
+sw 8 - 2 << a+
+$f0f drawline
+`;
+
+var ex2=`| Example 2
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+#bit (
+%........
+%..1111..
+%.11..11.
+%.1....1.
+%.111111.
+%.1....1.
+%.1....1.
+%........ )
+
+:drawline 
+ 8 ( 1?
+  swap dup 
+  1 and 23 << a!+
+  1 >> swap 1 - ) 2drop ;
+  
+:drawbit | n --
+ vframe >a
+ 8 ( 1? swap
+   c@+ drawline
+   sw 8 - 2 << a+
+   swap 1 - ) 2drop ;
+
+ 'bit drawbit 
+`;
+</script>
 
 	</td><td>
-<canvas id="canvas" height="640" width="480"></canvas>
-
+<canvas id="canvas" width="512" height="512" ></canvas>
+<div id="in"></div>
+<div id="out"></div>
 	</td><td>
 DATA STACK:<div id="ds"></div><br>
 CODE STACK:<div id="cs"></div><br>
-IP:<div id="ip"></div><br>    
-MEMCODE:<div id="mc"></div><br>
+
 MEMDATA:<div id="md"></div><br>
 DICC:<div id="dic"></div><br>
-(stack):<div id="bl"></div><br>
-ERR:<div id="logerror"></div><br>
-</td></tr>
+IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
+
+	</td><td>
+MEMCODE:<div id="mc"></div><br>
+	</td></tr>
 	</table>
 	
   </body>
