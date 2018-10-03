@@ -1,4 +1,4 @@
-/* r3www 20138 - GPITTAU PHREDA */
+/* r3www 2018 - GPITTAU PHREDA */
 "use strict";
 
 /*------COMPILER------*/
@@ -25,6 +25,8 @@ var meminidata=0;
 var memdata=new ArrayBuffer(0xfffffff); // 256Mb
 var mem=new DataView(memdata);
 
+var r3echo="";
+
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
 "lit","lit","lit","lit","str",		// 11
@@ -33,7 +35,7 @@ var r3machine=[
 ];
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
-"<?",">?","=?",">=?","<=?","<>?","AND?","NAND?","BTW?",		// 19
+"<?",">?","=?",">=?","<=?","<>?","AN?","NA?","BTW?",		// 19
 "DUP","DROP","OVER","PICK2","PICK3","PICK4","SWAP","NIP",	// 27
 "ROT","2DUP","2DROP","3DROP","4DROP","2OVER","2SWAP",		// 34
 ">R","R>","R@",												// 37
@@ -59,9 +61,9 @@ function isNro(tok) {
 	nro=tok.match(/^\d+.\d+$/); // fixed.point
 	if (nro!=null) { 
 		n=tok.split(".");
-		var n1=parseInt(n[0]),v=1;	//n2=parseInt("1"+n[1]);...
+		var n1=parseInt(n[0]),v=1;
 		for (var i=0;i<n[1].length;i++) { v*=10; }
-		n2=0xffff*parseInt(n[1])/v;
+		n2=0x10000*parseInt(n[1])/v;
 		nro=(n1<<16)|(n2&0xffff);// falta
 		return true; 
 		}
@@ -106,9 +108,15 @@ function datanro(nro) {
 		}
 	}
 
-function datasave(str) { 
+function datasave(str) {  var r=memd;
 	for(var i=0;i<str.length;i++) { mem.setInt8(memd++,str.charCodeAt(i)); }
 	mem.setInt8(memd++,0);	
+	return r;
+	}
+	
+function datastr(n) { var s="";
+	while (mem.getInt8(n)!=0) { s+=String.fromCharCode(mem.getInt8(n++)); }
+	return s;
 	}
 
 
@@ -153,7 +161,7 @@ function compilaLIT(n) {
 	}
 
 function compilaSTR(str) {
-	ini=datasave(str);	
+	var ini=datasave(str);	
 	if (modo<2) {codetok((ini<<7)+11);}
 	}
 	
@@ -269,7 +277,9 @@ var NOS=0;
 var REGA,REGB;
 var RTOS=254;
 var stack=new Int32Array(256); 
-// TOS..DSTACK--> <--RSTACK
+//---------------------------//
+// TOS..DSTACK--> <--RSTACK  //
+//---------------------------//
 
 function r3op(op) { var W;
 	//while(op!=0){
@@ -300,10 +310,10 @@ function r3op(op) { var W;
 	case 29:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
 	case 30:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
 	case 31:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
-	case 32:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAND
-	case 33:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNAND
+	case 32:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAN
+	case 33:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNA
 	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} 
-				TOS=stack[NOS-1];NOS-=2;break;//BETWEEN (need bit trick)
+				TOS=stack[NOS-1];NOS-=2;break;//BTW (need bit trick)
 
 	case 35:NOS++;stack[NOS]=TOS;break;						//DUP
 	case 36:TOS=stack[NOS];NOS--;break;						//DROP
@@ -394,21 +404,26 @@ function r3op(op) { var W;
 	case 109:break;//MOVE> 
 	case 110:break;//QFILL
 	
-	case 111:break;//SYSCALL | n -- v
-	case 112:TOS=getsystem(TOS);break;//SYSMEM | -- ini
+	case 111:systemcall(TOS,stack[NOS]);TOS=stack[NOS-1];NOS-=2;break; //SYSCALL | nro int -- 
+	case 112:TOS=systemmem(TOS);break;//SYSMEM | nro -- ini
 	
 	}
 	//op>>=8;}
 	}
 
-
-function getsystem(TOS)	{
-switch(TOS) {
+function systemcall(TOS,NOS) {
+	switch(TOS) {
+	case 0:r3echo+=datastr(NOS);break;	// "hola" 0 systemcall // echo
+		}
+	}
+	
+function systemmem(TOS)	{
+	switch(TOS) {
 	case 0:return 0;
 	case 1:return canvas.width;
 	case 2:return canvas.height;	
-	}
-}
+		}
+	}	
 function r3reset(){
 	boot=-1
 	dicc.splice(0,dicc.length);
@@ -442,7 +457,7 @@ var ctx;
 var imageData;
 var buf8;
 
-function r3init() {
+function canvasini() {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
 	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
@@ -456,6 +471,12 @@ function redraw() {
 	}
 	
 
+/*------DOM------*/
+
+function redom() {
+	document.getElementById('r3dom').value=r3echo;
+	}
+
 ////////////////////////////////////////////////////////////////////
 function animate() {
 	reqAnimFrame=
@@ -468,7 +489,7 @@ function animate() {
 	}
 
 function r3boot() {
-	r3init();
+	canvasini();
 
 	//animate();
 	}	

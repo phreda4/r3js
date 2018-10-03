@@ -28,8 +28,8 @@ function dumpdicc() { var s="";
 	return s;
 	}
 
+const setDiv = (id, value) => document.getElementById(id).innerText = value;	
 function dumpVM() {
-	const setDiv = (id, value) => document.getElementById(id).innerText = value;
 	setDiv("ip", ip);
 	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
     setDiv("cs", stack.slice(RTOS,255).join(" "));
@@ -46,6 +46,7 @@ function r3Compile() {
 	}
 	
 function r3Run() { 
+	r3echo="";
 	r3reset();
 	if (r3token(document.getElementById("src").value)!=0) {
 		dumpVM(); 
@@ -55,7 +56,34 @@ function r3Run() {
 	r3run();
 	redraw();
 	dumpVM(); 
+	document.getElementById("r3dom").innerHTML=r3echo;
 	}
+	
+function r3Go(a) {	
+	r3echo="";
+	r3Runa(a);
+	document.getElementById("r3dom").innerHTML=r3echo;
+	}
+	
+function r3Load(readFile) {
+	loadFile(readFile);
+	}	
+
+function loadFile(name) {
+	var d=new Date(2018,1,1,1,1,1,1);
+	var file=new File(["Cargando..."],name,{type:"text/plain",lastModified:d})
+	var reader = new FileReader();
+	reader.onload = function(e) { 
+		var contents = e.target.result;
+		setDiv("ttt",contents);
+		};
+	reader.readAsText(file);
+}
+	
+function loaded(evt) {
+	document.getElementById('src').value=evt.target.result;
+	}
+
 </script>
 
 <style>	
@@ -70,6 +98,7 @@ r3)
 <button onclick="r3Run();">Run</button>
  | 
 <button onclick="document.getElementById('src').value=ex2;"> Ex 2 </button>
+<button onclick="r3Load('fonti.r3');"> load </button>
  | 
 <button onclick="r3Compile();">Compile</button>    
 <button onclick="r3step();dumpVM();redraw();">Step</button>
@@ -96,22 +125,6 @@ r3)
 </textarea>
 
 <script>
-var ex3=`| Example 2
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
-
-:drawline 
- 8 ( 1?
-  swap dup 
-  1 and 7 << a!+
-  1 >> swap 1 - ) 2drop ;
-
-vframe >a
-$ff drawline
-sw 8 - 2 << a+
-$f0f drawline
-`;
 
 var ex2=`| Example 2
 :vframe 0 sysmem ;
@@ -143,14 +156,40 @@ var ex2=`| Example 2
 
  'bit drawbit 
 `;
+
+var ex3=`| Example 3
+:.s 0 syscall ;
+
+:.d
+ ;
+
+:<br> 
+ "<br" .s ;
+ 
+:<btn> 
+ "<button onclick='r3runa(" .s swap .d ");'>" .s .s "</button>" .s ;
+ 
+#var
+
+:suma1 1 'var +! ;
+
+:dom
+	var .d <br>
+	'suma1 "+1" <btn>
+	;
+
+ dom 
+;
+
 </script>
 
 	</td><td>
-<canvas id="canvas" width="512" height="512" ></canvas>
-<div id="in"></div>
-<div id="out"></div>
+
+	<canvas id="canvas" width="512" height="512" ></canvas>
+<div id="r3dom"></div>
+
 	</td><td>
-DATA STACK:<div id="ds"></div><br>
+DATA STACK:<div idt="ds"></div><br>
 CODE STACK:<div id="cs"></div><br>
 
 MEMDATA:<div id="md"></div><br>
@@ -159,6 +198,9 @@ IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
 
 	</td><td>
 MEMCODE:<div id="mc"></div><br>
+<div id="ttt"></div><br>
+
+
 	</td></tr>
 	</table>
 	
