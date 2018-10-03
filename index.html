@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>r3</title>
+    <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/nuclear/bulmaswatch.min.css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
     <script src="./compiler.js"></script>
     <script src="./r3www.js"></script>    
 
@@ -58,26 +63,81 @@ function r3Run() {
 	}
 </script>
 
-<style>	
-table td, table td * { vertical-align: top; }	
-</style>
-
   </head>
-<body bgcolor="#333"><font face="Arial" color="#fff">
-r3)
-<button onclick=""> NONAME </button>
+  <body>
+    
+  <nav class="navbar" role="navigation">
+    <div class="navbar-brand">
+      <h1 class="title">
+        <a class="navbar-item" href="https://github.com/r3www/r3">r3)</a>
+      </h1>
+  
+      <a role="button" class="navbar-burger burger" data-target="navbarMenu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+  
+    <div id="navbarMenu" class="navbar-menu">
+      <div class="navbar-start">
+        <a class="navbar-item">
+          Home
+        </a>
+  
+        <a class="navbar-item">
+          Docs
+        </a>
+  
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            More
+          </a>
+  
+          <div class="navbar-dropdown">
+            <a class="navbar-item">
+              About
+            </a>
+            <a class="navbar-item">
+              Contact
+            </a>
+            <hr class="navbar-divider">
+            <a class="navbar-item">
+              Report an issue
+            </a>
+          </div>
+        </div>
+      </div>
+  
+      <div class="navbar-end">
+        <div class="navbar-item">
+          <div class="buttons">
+            <button class="button is-small is-disabled" onclick=""> NONAME </button>
+            
+            <button class="button is-primary is-large is-rounded is-success" onclick="r3Run();">Run</button>
+             | 
+            <button class="button is-info" onclick="document.getElementById('src').value=ex2;"> Ex 2 </button>
+             | 
+            <button class="button is-primary is-large is-rounded" onclick="r3Compile();">Compile</button>    
+            <button class="button is-primary is-large is-rounded is-success" onclick="r3step();dumpVM();redraw();">Step</button>
+            <a class="button is-primary">
+              <strong>Sign up</strong>
+            </a>
+            <a class="button is-light">
+              Log in
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
 
-<button onclick="r3Run();">Run</button>
- | 
-<button onclick="document.getElementById('src').value=ex2;"> Ex 2 </button>
- | 
-<button onclick="r3Compile();">Compile</button>    
-<button onclick="r3step();dumpVM();redraw();">Step</button>
-
-<br>
-	<table><tr><td>
-
-<textarea id="src" cols="30" rows="25" style="color:#fff;background-color:#666;">| Example 1
+  <div class="columns">
+    <div class="column">
+      <div class="panel">
+        <div class="field">
+          <div class="control">
+        <textarea id="src" cols="30" rows="25" class="textarea is-primary is-medium">| Example 1
 
 :vframe 0 sysmem ;
 :sw 1 sysmem ; 
@@ -93,9 +153,8 @@ r3)
  
  patternxor 
 | 'patternxor onshow 
-</textarea>
-
-<script>
+    </textarea>
+        <script>
 var ex3=`| Example 2
 :vframe 0 sysmem ;
 :sw 1 sysmem ; 
@@ -143,24 +202,32 @@ var ex2=`| Example 2
 
  'bit drawbit 
 `;
-</script>
+        </script>
+          </div>
+        </div>
+      </div>
+    </div>
 
-	</td><td>
-<canvas id="canvas" width="512" height="512" ></canvas>
-<div id="in"></div>
-<div id="out"></div>
-	</td><td>
-DATA STACK:<div id="ds"></div><br>
-CODE STACK:<div id="cs"></div><br>
-
-MEMDATA:<div id="md"></div><br>
-DICC:<div id="dic"></div><br>
-IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
-
-	</td><td>
-MEMCODE:<div id="mc"></div><br>
-	</td></tr>
-	</table>
+    <div class="column">
+      <canvas id="canvas" width="512" height="512" ></canvas>
+      <div id="in"></div>
+      <div id="out"></div>
+    </div>
+      
+    <div class="column">
+      <div class="panel">
+      DATA STACK:<div id="ds"></div><br>
+      CODE STACK:<div id="cs"></div><br>
+      
+      MEMDATA:<div id="md"></div><br>
+      DICC:<div id="dic"></div><br>
+      IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
+      </div>
+      <div class="panel">
+      MEMCODE:<div id="mc"></div><br>
+      </div>
+    </div>
+  </div>
 	
   </body>
 </html>
