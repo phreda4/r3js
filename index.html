@@ -86,11 +86,8 @@ function loaded(evt) {
 
 </script>
 
-<style>	
-table td, table td * { vertical-align: top; }	
-</style>
-
   </head>
+<<<<<<< HEAD
 <body bgcolor="#333"><font face="Arial" color="#fff">
 r3)
 <button onclick=""> NONAME </button>
@@ -122,9 +119,30 @@ r3)
  
  patternxor 
 | 'patternxor onshow 
+<<<<<<< HEAD
 </textarea>
 
 <script>
+=======
+    </textarea>
+        <script>
+var ex3=`| Example 2
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+:drawline 
+ 8 ( 1?
+  swap dup 
+  1 and 7 << a!+
+  1 >> swap 1 - ) 2drop ;
+
+vframe >a
+$ff drawline
+sw 8 - 2 << a+
+$f0f drawline
+`;
+>>>>>>> a4344543fe7175a1ed84e3aff3d8fa4c9af85256
 
 var ex2=`| Example 2
 :vframe 0 sysmem ;
@@ -156,6 +174,7 @@ var ex2=`| Example 2
 
  'bit drawbit 
 `;
+<<<<<<< HEAD
 
 var ex3=`| Example 3
 :.s 0 syscall ;
@@ -203,6 +222,34 @@ MEMCODE:<div id="mc"></div><br>
 
 	</td></tr>
 	</table>
+=======
+        </script>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="column">
+      <canvas id="canvas" width="512" height="512" ></canvas>
+      <div id="in"></div>
+      <div id="out"></div>
+    </div>
+      
+    <div class="column">
+      <div class="panel">
+      DATA STACK:<div id="ds"></div><br>
+      CODE STACK:<div id="cs"></div><br>
+      
+      MEMDATA:<div id="md"></div><br>
+      DICC:<div id="dic"></div><br>
+      IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
+      </div>
+      <div class="panel">
+      MEMCODE:<div id="mc"></div><br>
+      </div>
+    </div>
+  </div>
+>>>>>>> a4344543fe7175a1ed84e3aff3d8fa4c9af85256
 	
   </body>
 </html>
