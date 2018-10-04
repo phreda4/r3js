@@ -102,7 +102,7 @@ function codetok(nro) {
 function datanro(nro) { 
 	switch(modo){
 		case 2:mem.setInt32(memd,nro);memd+=4;break;
-		case 3:memd+=nro;break;
+		case 3:for(var i=0;i<nro;i++) { mem.setInt8(memd++,0); };break;
 		case 4:mem.setInt8(memd,nro);memd+=1;break;
 		case 5:mem.setInt64(memd,nro);memd+=8;break;
 		}
@@ -129,7 +129,7 @@ function compilaDATA(name) { var ex=0;
 	}
 
 function dataMAC(n){
-	if (n==45) {modo=3;} // * reserva bytes
+	if (n==44) {modo=3;} // * reserva bytes
 	if (n==1) {modo=4;} // (	bytes
 	if (n==2) {modo=2;} // )
 	if (n==3) {modo=5;} // [	qwords

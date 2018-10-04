@@ -3331,7 +3331,7 @@
 )
 
 :setpix | val mask -- val
-	and? ( ink a!+ ; )
+	an? ( ink a!+ ; )
 	4 a+ ;
 
 ::char8i | c --

@@ -97,9 +97,7 @@ function loaded(evt) {
     
   <nav class="navbar" role="navigation">
     <div class="navbar-brand">
-      <h1 class="title">
-        <a class="navbar-item" href="https://github.com/r3www/r3">r3)</a>
-      </h1>
+        <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
   
       <a role="button" class="navbar-burger burger" data-target="navbarMenu">
         <span aria-hidden="true"></span>
@@ -107,68 +105,65 @@ function loaded(evt) {
         <span aria-hidden="true"></span>
       </a>
     </div>
-  
+
+	
     <div id="navbarMenu" class="navbar-menu">
+	
       <div class="navbar-start">
-        <a class="navbar-item">
-          Home
-        </a>
-  
-        <a class="navbar-item">
-          Docs
-        </a>
-  
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">
-            More
-          </a>
-  
-          <div class="navbar-dropdown">
-            <a class="navbar-item">
-              About
-            </a>
-            <a class="navbar-item">
-              Contact
-            </a>
-            <hr class="navbar-divider">
-            <a class="navbar-item">
-              Report an issue
-            </a>
-          </div>
-        </div>
-      </div>
-  
-      <div class="navbar-end">
         <div class="navbar-item">
           <div class="buttons">
             <button class="button is-small is-disabled" onclick=""> NONAME </button>
             
-            <button class="button is-primary is-large is-rounded is-success" onclick="r3Run();">Run</button>
-             | 
-            <button class="button is-info" onclick="document.getElementById('src').value=ex2;"> Ex 2 </button>
-             | 
-			<button class="button is-info" onclick="document.getElementById('src').value=ex3;"> Ex 3 </button>
+            <button class="button is-primary is-success" onclick="r3Run();">Run</button>
 			
 			<!-- <button onclick="r3Load('fonti.r3');"> load </button> -->
 
-            <button class="button is-primary is-large is-rounded" onclick="r3Compile();">Compile</button>    
-            <button class="button is-primary is-large is-rounded is-success" onclick="r3step();dumpVM();redraw();">Step</button>
+            <button class="button is-primary" onclick="r3Compile();">Compile</button>    
+            <button class="button is-primary" onclick="r3step();dumpVM();redraw();">Step</button>
+<!--			
             <a class="button is-primary">
               <strong>Sign up</strong>
             </a>
             <a class="button is-light">
               Log in
             </a>
+-->			
           </div>
         </div>
       </div>
+	  
+      <div class="navbar-end">
+  
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">Examples</a>
+ 
+          <div class="navbar-dropdown">
+            <a class="navbar-item" onclick="loadex(ex1);">Pattern XOR in canvas</a>
+            <a class="navbar-item" onclick="loadex(ex2);">Font test</a>
+            <a class="navbar-item" onclick="loadex(ex3);">DOM test</a>			
+<!--			
+            <hr class="navbar-divider">
+            <a class="navbar-item">
+              Report an issue
+            </a>
+-->			
+          </div>
+        </div>
+        <a class="navbar-item">Docs</a>
+        <a class="navbar-item">Settings</a>
+		
+      </div>
+	  
     </div>
   </nav>
 
   <div class="columns">
     <div class="column">
       <div class="panel">
-        <textarea id="src" cols="30" rows="25" class="textarea is-primary is-medium">| Example 1
+        <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
+
+<script>
+var ex1=`| Example 1
 
 :vframe 0 sysmem ;
 :sw 1 sysmem ; 
@@ -178,15 +173,15 @@ function loaded(evt) {
  vframe >a
  sh ( 1? 1 -
   sw ( 1? 1 -
-    2dup xor 16 << a!+
+    2dup xor 16 << 
+	$ff or | opacity
+	a!+
     ) drop
   ) drop ;
  
  patternxor 
 | 'patternxor onshow 
-</textarea>
-
-<script>
+`;
 
 var ex2=`| Example 2
 :vframe 0 sysmem ;
@@ -220,15 +215,19 @@ var ex2=`| Example 2
 `;
 
 var ex3=`| Example 3
+#mbuff * 48 
+
 :.s 0 syscall ;
 
-:.d
- ;
+:.d | val -- str
+ 'mbuff 47 + 0 over c! 1 -  
+ ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
+ 1 + .s ;
 
 :<br> 
- "<br" .s ;
+ "<br>" .s ;
  
-:<btn> 
+:<btn> | 'exec "label" --
  "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
  
 #var
@@ -236,12 +235,18 @@ var ex3=`| Example 3
 :suma1 1 'var +! ;
 
 :dom
+	"Hola Mundo" .s <br>
 	var .d <br>
+	
 	'suma1 "+1" <btn>
 	;
 
  dom 
 `;
+
+function loadex(str) {
+	document.getElementById('src').value=str;
+	}
 
 </script>
 
