@@ -417,13 +417,19 @@ function systemcall(TOS,NOS) {
 		}
 	}
 	
+var date=new Date();
+	
 function systemmem(TOS)	{
 	switch(TOS) {
-	case 0:return 0;
-	case 1:return canvas.width;
-	case 2:return canvas.height;	
+	case 0:return 0;				// VFRAME
+	case 1:return canvas.width;		// sw
+	case 2:return canvas.height;	// sh
+	case 3:return date.now();		// msec
+	case 4:return (getFullYear()<<16)+(date.getMonth()<<8)+getDay();		// y-m-d 0000-00-00
+	case 5:return (getHours()<<16)+(getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
 		}
 	}	
+	
 function r3reset(){
 	boot=-1
 	dicc.splice(0,dicc.length);
@@ -474,7 +480,7 @@ function redraw() {
 /*------DOM------*/
 
 function redom() {
-	document.getElementById('r3dom').value=r3echo;
+	document.getElementById('r3dom').innerHTML=r3echo;
 	}
 
 ////////////////////////////////////////////////////////////////////

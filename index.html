@@ -19,9 +19,9 @@ function dumpmd() { var s="";
 
 function dumpmc() {	var s="";
 	for(var i=0;i<memc;i++) {
-//		if (i==ip) { s+=" >"; } else { s+=" "; } 
+		if (i==ip) { s+=" * "; } else { s+="   "; } 
 		s+=printmr3(memcode[i]);
-		if (i==ip) { s+=" <--"; }
+		if (i==ip) { s+=" **"; }
 		s+="\n";
 		}
 	return s;
@@ -89,6 +89,94 @@ function loaded(evt) {
 	document.getElementById('src').value=evt.target.result;
 	}
 
+//----------------------------------------------------
+var ex1=`| Example 1
+
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+:patternxor
+ vframe >a
+ sh ( 1? 1 -
+  sw ( 1? 1 -
+    2dup xor 16 << 
+	$ff or | opacity
+	a!+
+    ) drop
+  ) drop ;
+ 
+ patternxor 
+| 'patternxor onshow 
+`;
+
+var ex2=`| Example 2
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+#bit (
+%........
+%..1111..
+%.11..11.
+%.1....1.
+%.111111.
+%.1....1.
+%.1....1.
+%........ )
+
+:drawline 
+ 8 ( 1?
+  swap dup 
+  1 and 23 << $ff or a!+
+  1 >> swap 1 - ) 2drop ;
+  
+:drawbit | n --
+ vframe >a
+ 8 ( 1? swap
+   c@+ drawline
+   sw 8 - 2 << a+
+   swap 1 - ) 2drop ;
+
+ 'bit drawbit 
+`;
+
+var ex3=`| Example 3
+#mbuff * 48 
+
+:.s 0 syscall ;
+
+:.d | val -- str
+ 'mbuff 47 + 0 over c! 1 -  
+ ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
+ 1 + .s ;
+
+:<br> 
+ "<br>" .s ;
+ 
+:<btn> | 'exec "label" --
+ "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
+ 
+#var
+
+:suma1 1 'var +! ;
+
+:dom
+	"Hola Mundo" .s <br>
+	var .d <br>
+	
+	'suma1 "+1" <btn>
+	;
+
+ dom 
+`;
+
+function loadex(str) {
+	document.getElementById('src').value=str;
+	}
+
+</script>
+	
 </script>
 
   </head>
@@ -161,114 +249,27 @@ function loaded(evt) {
     <div class="column">
       <div class="panel">
         <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
-
-<script>
-var ex1=`| Example 1
-
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
-
-:patternxor
- vframe >a
- sh ( 1? 1 -
-  sw ( 1? 1 -
-    2dup xor 16 << 
-	$ff or | opacity
-	a!+
-    ) drop
-  ) drop ;
- 
- patternxor 
-| 'patternxor onshow 
-`;
-
-var ex2=`| Example 2
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
-
-#bit (
-%........
-%..1111..
-%.11..11.
-%.1....1.
-%.111111.
-%.1....1.
-%.1....1.
-%........ )
-
-:drawline 
- 8 ( 1?
-  swap dup 
-  1 and 23 << a!+
-  1 >> swap 1 - ) 2drop ;
-  
-:drawbit | n --
- vframe >a
- 8 ( 1? swap
-   c@+ drawline
-   sw 8 - 2 << a+
-   swap 1 - ) 2drop ;
-
- 'bit drawbit 
-`;
-
-var ex3=`| Example 3
-#mbuff * 48 
-
-:.s 0 syscall ;
-
-:.d | val -- str
- 'mbuff 47 + 0 over c! 1 -  
- ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
- 1 + .s ;
-
-:<br> 
- "<br>" .s ;
- 
-:<btn> | 'exec "label" --
- "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
- 
-#var
-
-:suma1 1 'var +! ;
-
-:dom
-	"Hola Mundo" .s <br>
-	var .d <br>
-	
-	'suma1 "+1" <btn>
-	;
-
- dom 
-`;
-
-function loadex(str) {
-	document.getElementById('src').value=str;
-	}
-
-</script>
-
       </div>
+	  <div class="panel">
+      DATA STACK:<div id="ds"></div>
+      CODE STACK:<div id="cs"></div>
+      IP:<div id="ip"></div> ERR:<div id="logerror"></div>
+	  </div>
     </div>
 
     <div class="column">
       <canvas id="canvas" width="512" height="512" ></canvas>
       <div id="r3dom"></div>
     </div>
-      
+
     <div class="column">
       <div class="panel">
-      DATA STACK:<div id="ds"></div><br>
-      CODE STACK:<div id="cs"></div><br>
-      
-      MEMDATA:<div id="md"></div><br>
-      DICC:<div id="dic"></div><br>
-      IP:<div id="ip"></div> ERR:<div id="logerror"></div><br>
+      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
       </div>
+	
       <div class="panel">
-      MEMCODE:<div id="mc"></div><br>
+      DICC:<div id="dic"></div><br>
+      MEMDATA:<div id="md"></div><br>
       </div>
     </div>
   </div>
