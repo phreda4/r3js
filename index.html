@@ -6,6 +6,8 @@
     <title>r3</title>
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
     <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
+    <link rel="import" href="r3-source.html">
+    <link rel="import" href="r3-output.html">
     <script src="./compiler.js"></script>
     <script src="./r3www.js"></script>    
 
@@ -222,21 +224,6 @@ function loadex(str) {
 	  
       <div class="navbar-end">
   
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">Examples</a>
- 
-          <div class="navbar-dropdown">
-            <a class="navbar-item" onclick="loadex(ex1);">Pattern XOR in canvas</a>
-            <a class="navbar-item" onclick="loadex(ex2);">Font test</a>
-            <a class="navbar-item" onclick="loadex(ex3);">DOM test</a>			
-<!--			
-            <hr class="navbar-divider">
-            <a class="navbar-item">
-              Report an issue
-            </a>
--->			
-          </div>
-        </div>
         <a class="navbar-item">Docs</a>
         <a class="navbar-item">Settings</a>
 		
@@ -246,21 +233,17 @@ function loadex(str) {
   </nav>
 
   <div class="columns">
-    <div class="column">
-      <div class="panel">
-        <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
-      </div>
-	  <div class="panel">
-      DATA STACK:<div id="ds"></div>
-      CODE STACK:<div id="cs"></div>
-      IP:<div id="ip"></div> ERR:<div id="logerror"></div>
-	  </div>
+    <div class="column is-narrow">
+      <r3-source></r3-source>
+  	  <div class="panel">
+        DATA STACK:<div id="ds"></div>
+        CODE STACK:<div id="cs"></div>
+        IP:<div id="ip"></div>
+        ERR:<div id="logerror"></div>
+  	  </div>
     </div>
 
-	<div class="column">
-		<div id="r3dom"></div>
-		<canvas id="canvas" width="512" height="512" ></canvas>      
-	</div>
+		<r3-output class="column"></r3-output>
 
     <div class="column">
       <div class="panel">
