@@ -64,10 +64,9 @@ function r3Run() {
 	document.getElementById("r3dom").innerHTML=r3echo;
 	}
 	
-function r3Go(a) {	
-	r3echo="";
-	r3Runa(a);
-	document.getElementById("r3dom").innerHTML=r3echo;
+function r3go(a) {	
+	r3runa(a);
+	redom();
 	}
 	
 function r3Load(readFile) {
@@ -109,7 +108,7 @@ var ex1=`| Example 1
  patternxor 
 | 'patternxor onshow 
 `;
-
+//----------------------------------------------------
 var ex2=`| Example 2
 :vframe 0 sysmem ;
 :sw 1 sysmem ; 
@@ -140,15 +139,17 @@ var ex2=`| Example 2
 
  'bit drawbit 
 `;
-
+//----------------------------------------------------
 var ex3=`| Example 3
-#mbuff * 48 
 
+:ondom 1 syscall ;
 :.s 0 syscall ;
+
+#mbuff * 48 
 
 :.d | val -- str
  'mbuff 47 + 0 over c! 1 -  
- ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
+ swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
  1 + .s ;
 
 :<br> 
@@ -156,8 +157,9 @@ var ex3=`| Example 3
  
 :<btn> | 'exec "label" --
  "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
- 
-#var
+
+|--------------------
+#var 0
 
 :suma1 1 'var +! ;
 
@@ -168,30 +170,28 @@ var ex3=`| Example 3
 	'suma1 "+1" <btn>
 	;
 
- dom 
+|--------------------	
+'dom ondom
+dom 
 `;
-
+//----------------------------------------------------
 function loadex(str) {
 	document.getElementById('src').value=str;
 	}
 
 </script>
-	
-</script>
 
   </head>
 
-  <body>
-    
+<body>
   <nav class="navbar" role="navigation">
     <div class="navbar-brand">
-        <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
-  
-      <a role="button" class="navbar-burger burger" data-target="navbarMenu">
+		<a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
+		<a role="button" class="navbar-burger burger" data-target="navbarMenu">
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
-      </a>
+		</a>
     </div>
 
 	
@@ -257,16 +257,16 @@ function loadex(str) {
 	  </div>
     </div>
 
-    <div class="column">
-      <canvas id="canvas" width="512" height="512" ></canvas>
-      <div id="r3dom"></div>
-    </div>
+	<div class="column">
+		<div id="r3dom"></div>
+		<canvas id="canvas" width="512" height="512" ></canvas>      
+	</div>
 
     <div class="column">
       <div class="panel">
       MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
       </div>
-	
+
       <div class="panel">
       DICC:<div id="dic"></div><br>
       MEMDATA:<div id="md"></div><br>

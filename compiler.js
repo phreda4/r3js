@@ -22,10 +22,12 @@ var memcode=new Int32Array(0xffff); // 256kb
 
 var memd=0;
 var meminidata=0;
-var memdata=new ArrayBuffer(0xfffffff); // 256Mb
+//var memdata=new ArrayBuffer(0xfffffff); // 256Mb
+var memdata=new ArrayBuffer(0x1ffffff); // 32Mb
 var mem=new DataView(memdata);
 
 var r3echo="";
+var r3domx=-1;
 
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
@@ -55,28 +57,29 @@ var r3base=[
 0 ];
 
 function isNro(tok) { 
-	//if (tok[0]=="-")
+	var sign;
+	if (tok[0]=="-") { tok=tok.slice(1);sign=-1; } else { sign=1;}
 	nro=tok.match(/^\d+$/); // integer
-	if (nro!=null) { nro=parseInt(tok);return true; }
+	if (nro!=null) { nro=parseInt(tok)*sign;return true; }
 	nro=tok.match(/^\d+.\d+$/); // fixed.point
 	if (nro!=null) { 
 		n=tok.split(".");
 		var n1=parseInt(n[0]),v=1;
 		for (var i=0;i<n[1].length;i++) { v*=10; }
 		n2=0x10000*parseInt(n[1])/v;
-		nro=(n1<<16)|(n2&0xffff);// falta
+		nro=((n1<<16)|(n2&0xffff))*sign;// falta
 		return true; 
 		}
 	switch (tok[0]) {
 	case "$":	// $hex
 		tok=tok.split('.').join('0');		// convert . or 0
 		tok=tok.slice(1);nro=tok.match(/^[0-9A-F]+$/);
-		if (nro!=null) { nro=parseInt(tok,16);return true; }; 
+		if (nro!=null) { nro=parseInt(tok,16)*sign;return true; }; 
 		break;
 	case "%":  // %bin %..1.1 allow
 		tok=tok.split('.').join('0');		// convert . or 0
 		tok=tok.slice(1);nro=tok.match(/^[0-1]+$/); 
-		if (nro!=null) { nro=parseInt(tok,2);return true; }; 
+		if (nro!=null) { nro=parseInt(tok,2)*sign;return true; }; 
 		break;
 	}
 	return false;
@@ -375,8 +378,8 @@ function r3op(op) { var W;
 	case 84:mem.setInt64(TOS,stack[NOS]);NOS--;TOS+=8;break;//Q!+
 	
 	case 85:mem.setInt32(TOS,mem.getInt32(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//+!
-	case 86:mem[TOS]+=stack[NOS];NOS--;TOS=stack[NOS];NOS--;break;//C+!
-	case 87:mem[TOS]+=stack[NOS];NOS--;TOS=stack[NOS];NOS--;break;//Q+!
+	case 86:mem.setInt8(TOS,mem.getInt8(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C+!
+	case 87:mem.setInt64(TOS,mem.getInt64(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//Q+!
 	
 	case 88:REGA=TOS;TOS=stack[NOS];NOS--;break; //>A
 	case 89:NOS++;stack[NOS]=TOS;TOS=REGA;break; //A> 
@@ -414,6 +417,7 @@ function r3op(op) { var W;
 function systemcall(TOS,NOS) {
 	switch(TOS) {
 	case 0:r3echo+=datastr(NOS);break;	// "hola" 0 systemcall // echo
+	case 1:r3domx=NOS;break;
 		}
 	}
 	
@@ -429,13 +433,18 @@ function systemmem(TOS)	{
 	case 5:return (getHours()<<16)+(getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
 		}
 	}	
-	
+
+//---------------------------------------	
 function r3reset(){
 	boot=-1
 	dicc.splice(0,dicc.length);
 	dicca.splice(0,dicca.length);
 	dicci.splice(0,dicci.length);
 	ndicc=0;
+	
+	r3domx=-1;
+	r3echo="";
+	document.getElementById('r3dom').innerHTML="";
 	}
 
 function r3step() {
@@ -445,13 +454,13 @@ function r3step() {
 
 function r3run() {
 	if (boot==-1) { return; }
-	TOS=0;NOS=0;
-	RTOS=255;stack[255]=0;
+	TOS=0;NOS=0;RTOS=255;stack[255]=0;
 	ip=boot;
 	while(ip!=0) { r3op(memcode[ip++]); }
 	}
 
 function r3runa(adr) {
+	TOS=0;NOS=0;RTOS=255;stack[255]=0;
 	ip=adr;
 	while(ip!=0) { r3op(memcode[ip++]); }
 	}
@@ -480,6 +489,9 @@ function redraw() {
 /*------DOM------*/
 
 function redom() {
+	if (r3domx==-1) { return; }
+	r3echo="";
+	r3runa(r3domx);
 	document.getElementById('r3dom').innerHTML=r3echo;
 	}
 
