@@ -28,6 +28,7 @@ var mem=new DataView(memdata);
 
 var r3echo="";
 var r3domx=-1;
+var r3showx=-1;
 
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
@@ -287,7 +288,7 @@ var stack=new Int32Array(256);
 function r3op(op) { var W;
 	//while(op!=0){
 		switch(op&0x7f){
-	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;op>>=16;break;//LIT9
+	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;//op>>=16;break;//LIT9
 	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;			//LITres
 	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;//op=0;break;		//LITreg neg
 	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;//op=0;break;// LITcte
@@ -418,6 +419,7 @@ function systemcall(TOS,NOS) {
 	switch(TOS) {
 	case 0:r3echo+=datastr(NOS);break;	// "hola" 0 systemcall // echo
 	case 1:r3domx=NOS;break;
+	case 2:r3showx=NOS;animate();break;	
 		}
 	}
 	
@@ -495,15 +497,17 @@ function redom() {
 	document.getElementById('r3dom').innerHTML=r3echo;
 	}
 
-////////////////////////////////////////////////////////////////////
+/*------SHOW------*/
 function animate() {
-	reqAnimFrame=
-	window.mozRequestAnimationFrame||
-	window.webkitRequestAnimationFrame||
-	window.msRequestAnimationFrame||
-	window.oRequestAnimationFrame;
-	reqAnimFrame(animate);
-	//ex(byname("show"));
+	var reqAnimFrame=
+		window.mozRequestAnimationFrame||
+		window.webkitRequestAnimationFrame||
+		window.msRequestAnimationFrame||
+		window.oRequestAnimationFrame;
+	if (r3showx!=-1) {
+		r3runa(r3showx);
+		reqAnimFrame(animate);
+		}
 	}
 
 function r3boot() {

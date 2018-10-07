@@ -6,8 +6,8 @@
     <title>r3</title>
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
     <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
-    <link rel="import" href="r3-source.html">
-    <link rel="import" href="r3-output.html">
+
+	
     <script src="./compiler.js"></script>
     <script src="./r3www.js"></script>    
 
@@ -177,10 +177,130 @@ var ex3=`| Example 3
 dom 
 `;
 //----------------------------------------------------
+var ex4=`| Example 4
+
+:onshow 2 syscall ;
+:vframe 0 sysmem ;
+:sw 1 sysmem ; 
+:sh 2 sysmem ;
+
+:xy>v | x y -- v
+  sw * + 2 << vframe + ;
+  
+:box 
+	
+|--------------------
+#x 0 #vx 1
+#y 0 #vy 1
+
+:hitx vx neg 'vx ! ;
+:hity vy neg 'vy ! ;
+
+:box
+	xy>v >a
+	$ff00ff a!
+	;
+	
+:show
+	x y box
+
+	x sw >=? ( hitx ) 0 <=? ( hitx ) drop
+	y sh >=? ( hity ) 0 <=? ( hity ) drop
+	vx 'x +!
+	vy 'y +!
+
+	;
+
+|--------------------	
+'show onshow
+`;
+
+//----------------------------------------------------
 function loadex(str) {
 	document.getElementById('src').value=str;
 	}
 
+function switchTo(tab, what) {
+	const content = document.querySelector(what);
+	const ul = tab.parentElement.parentElement;
+	[...ul.children].forEach(li => li.classList.remove("is-active"));
+	tab.parentElement.classList.add("is-active");
+	[...content.parentElement.children].forEach(div => div.style.display = "none");
+	content.style.display = "block";
+}
+class r3Output extends HTMLElement {
+  connectedCallback () {
+    this.render();
+  }
+  render () {
+    this.innerHTML =  `
+		<div class="tabs is-small">
+		  <ul>
+		    <li class="is-active">
+		      <a onclick="switchTo(this, '#r3dom')">
+		        <span>DOM</span>
+		      </a>
+		    </li>
+		    <li>
+		      <a onclick="switchTo(this, '#r3canvas')">
+		        <span>CANVAS</span>
+		      </a>
+		    </li>
+		  </ul>
+		</div>
+		<div>
+			<div id="r3dom"></div>
+			<div id="r3canvas" style="display:none;">
+				<canvas id="canvas" width="512" height="512" ></canvas> 
+			</div>
+		</div>
+	  `;
+  }
+}
+window.customElements.define('r3-output', r3Output);
+
+class r3Source extends HTMLElement {
+  connectedCallback () {
+    this.render();
+  }
+  render () {
+    this.innerHTML =  `<div class="panel">
+        <div class="panel-heading">
+          <div class="dropdown is-hoverable">
+            <div class="dropdown-trigger">
+              <button 
+                class="button"
+                aria-haspopup="true"
+                aria-controls="dropdown-menu">
+                <span>Examples</span>
+                <span class="icon is-small">
+                  <i class="fas fa-angle-down"></i>
+                </span>
+              </button>
+            </div>
+   
+            <div
+              class="dropdown-menu"
+              id="dropdown-menu"
+              role="menu">
+              <div class="dropdown-content">
+                <a href="#" class="dropdown-item" onclick="loadex(ex1);">Pattern XOR in canvas</a>
+                <a href="#" class="dropdown-item" onclick="loadex(ex2);">Font test</a>
+                <a href="#" class="dropdown-item" onclick="loadex(ex3);">DOM test</a>			
+                <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>							
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block">
+          <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
+        </div>
+      </div>
+      `;
+  }
+}
+window.customElements.define('r3-source', r3Source);
+	
 </script>
 
   </head>
