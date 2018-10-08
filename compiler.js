@@ -23,7 +23,7 @@ var memcode=new Int32Array(0xffff); // 256kb
 var memd=0;
 var meminidata=0;
 //var memdata=new ArrayBuffer(0xfffffff); // 256Mb
-var memdata=new ArrayBuffer(0x1ffffff); // 32Mb
+var memdata=new ArrayBuffer(0xffffff); // 16Mb
 var mem=new DataView(memdata);
 
 var r3echo="";
@@ -113,7 +113,8 @@ function datanro(nro) {
 	}
 
 function datasave(str) {  var r=memd;
-	for(var i=0;i<str.length;i++) { mem.setInt8(memd++,str.charCodeAt(i)); }
+	for(var i=0;i<str.length;i++) 
+		{ if (str.charCodeAt(i)==34) {i++;} mem.setInt8(memd++,str.charCodeAt(i)); }
 	mem.setInt8(memd++,0);	
 	return r;
 	}
@@ -231,12 +232,12 @@ function r3token(str) {
 			continue; }
 
 		if(str[now]=== "\"") {					// strings		
-			ini=now;
-			now=str.indexOf("\"",now+1)+1;
-	//		now++;while(str.charCodeAt(now)!=43) { now++; } now++;
-	
-			compilaSTR(str.slice(ini+1,now-1));
-			now++;
+			ini=++now;
+			while (str.charCodeAt(now)!=0) { 
+				if (str[now]=== "\"") { if (str[now+1]!="\"") { break; } now++; }
+				now++; }	
+			compilaSTR(str.slice(ini,now));
+			now+=2;
 		} else {
 			ini=now;
 			while (str.charCodeAt(now)>32) { now++; }			
@@ -278,26 +279,25 @@ var ip;
 
 var TOS=0;
 var NOS=0;
-var REGA,REGB;
+var REGA=0,REGB=0;
 var RTOS=254;
 var stack=new Int32Array(256); 
 //---------------------------//
 // TOS..DSTACK--> <--RSTACK  //
 //---------------------------//
 
-function r3op(op) { var W;
-	//while(op!=0){
-		switch(op&0x7f){
-	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;//op>>=16;break;//LIT9
-	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;			//LITres
-	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;//op=0;break;		//LITreg neg
-	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;//op=0;break;// LITcte
-	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;			// STR
-	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;//op=0;break;			// CALL
-	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);break;//op=0;break;	// VAR
-	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;	// DWORD
-	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;break;//op=0;break;	// DVAR
-	case 16:ip=stack[RTOS];RTOS++;break;//op=0;break; 					// ;
+function r3op(op) { var W,W1;
+	switch(op&0x7f){
+	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		//LIT9
+	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				//LITres
+	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;			//LITreg neg
+	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;		// LITcte
+	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// STR
+	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;				// CALL
+	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);break;	// VAR
+	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// DWORD
+	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// DVAR
+	case 16:ip=stack[RTOS];RTOS++;break; 						// ;
 	case 17:ip=(op>>7);break;//JMP
 	case 18:ip+=(op>>7);break;//JMPR
 	case 19:break;
@@ -398,16 +398,43 @@ function r3op(op) { var W;
 	case 100:NOS++;stack[NOS]=TOS;TOS==mem.getInt64(REGB);REGB+=8;break;//B@+ 
 	case 101:mem.setInt64(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=8;break;//B!+
 
-	case 102:break;//MOVE 
-	case 103:break;//MOVE> 
-	case 104:break;//FILL
-	case 105:break;//CMOVE 
-	case 106:break;//CMOVE> 
-	case 107:break;//CFILL
-	case 108:break;//QMOVE 
-	case 109:break;//MOVE> 
-	case 110:break;//QFILL
-	
+	case 102://MOVE 
+		W=stack[NOS-1];W1=stack[NOS];
+		while (TOS--) { mem.setInt32(W,mem.getInt32(W1));W+=4;W1+=4; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 103://MOVE> 
+		W=stack[NOS-1]+(TOS<<2);W1=stack[NOS]+(TOS<<2);
+		while (TOS--) { W-=4;W1-=4;mem.setInt32(W,mem.getInt32(W1)); }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 104://FILL
+		W1=stack[NOS-1];W=stack[NOS];
+		while (TOS--) { mem.setInt32(W,W1);W+=4; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 105://CMOVE 
+		W=stack[NOS-1];W1=stack[NOS];
+		while (TOS--) { mem.setInt8(W,mem.getInt8(W1));W++;W1++; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 106://CMOVE> 
+		W=stack[NOS-1]+TOS;W1=stack[NOS]+TOS;
+		while (TOS--) { W--;W1--;mem.setInt8(W,mem.getInt8(W1)); }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 107://CFILL
+		W1=stack[NOS-1];W=stack[NOS];
+		while (TOS--) { mem.setInt8(W,W1);W++; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 108://QMOVE 
+		W=stack[NOS-1];W1=stack[NOS];
+		while (TOS--) { mem.setInt64(W,mem.getInt64(W1));W+=8;W1+=8; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 109://MOVE> 
+		W=stack[NOS-1]+(TOS<<3);W1=stack[NOS]+(TOS<<3);
+		while (TOS--) { W-=8;W1-=8;mem.setInt64(W,mem.getInt64(W1)); }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+	case 110://QFILL
+		W1=stack[NOS-1];W=stack[NOS];
+		while (TOS--) { mem.setInt64(W,W1);W+=8; }
+		NOS-=2;TOS=stack[NOS];NOS--;break;
+
 	case 111:systemcall(TOS,stack[NOS]);TOS=stack[NOS-1];NOS-=2;break; //SYSCALL | nro int -- 
 	case 112:TOS=systemmem(TOS);break;//SYSMEM | nro -- ini
 	
@@ -445,6 +472,7 @@ function r3reset(){
 	ndicc=0;
 	
 	r3domx=-1;
+	r3showx=-1
 	r3echo="";
 	document.getElementById('r3dom').innerHTML="";
 	}
@@ -456,13 +484,14 @@ function r3step() {
 
 function r3run() {
 	if (boot==-1) { return; }
-	TOS=0;NOS=0;RTOS=255;stack[255]=0;
+	r3showx!=-1
+	RTOS=255;stack[255]=0;
 	ip=boot;
 	while(ip!=0) { r3op(memcode[ip++]); }
 	}
 
 function r3runa(adr) {
-	TOS=0;NOS=0;RTOS=255;stack[255]=0;
+	RTOS=255;stack[255]=0;
 	ip=adr;
 	while(ip!=0) { r3op(memcode[ip++]); }
 	}
@@ -498,14 +527,16 @@ function redom() {
 	}
 
 /*------SHOW------*/
+var reqAnimFrame=
+	window.mozRequestAnimationFrame||
+	window.webkitRequestAnimationFrame||
+	window.msRequestAnimationFrame||
+	window.oRequestAnimationFrame;
+
 function animate() {
-	var reqAnimFrame=
-		window.mozRequestAnimationFrame||
-		window.webkitRequestAnimationFrame||
-		window.msRequestAnimationFrame||
-		window.oRequestAnimationFrame;
 	if (r3showx!=-1) {
 		r3runa(r3showx);
+		redraw();
 		reqAnimFrame(animate);
 		}
 	}

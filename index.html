@@ -166,11 +166,10 @@ var ex3=`| Example 3
 :suma1 1 'var +! ;
 
 :dom
-	"Hola Mundo" .s <br>
-	var .d <br>
-	
-	'suma1 "+1" <btn>
-	;
+  "Hola Mundo" .s <br>
+  var .d <br>
+  'suma1 "+1" <btn>
+  ;
 
 |--------------------	
 'dom ondom
@@ -185,31 +184,36 @@ var ex4=`| Example 4
 :sh 2 sysmem ;
 
 :xy>v | x y -- v
-  sw * + 2 << vframe + ;
+ sw * + 2 << vframe + ;
   
-:box 
-	
+:cls
+ 0 vframe sw sh * fill
+ ;
 |--------------------
-#x 0 #vx 1
-#y 0 #vy 1
+#x 10 #vx 1
+#y 10 #vy 1
 
 :hitx vx neg 'vx ! ;
 :hity vy neg 'vy ! ;
 
 :box
-	xy>v >a
-	$ff00ff a!
-	;
+ xy>v >a
+ $ff00ff a!
+ ;
 	
 :show
-	x y box
-
-	x sw >=? ( hitx ) 0 <=? ( hitx ) drop
-	y sh >=? ( hity ) 0 <=? ( hity ) drop
-	vx 'x +!
-	vy 'y +!
-
-	;
+ cls
+ 
+ x 
+ sw 4 - >=? ( hitx ) 
+ 4 <=? ( hitx ) 
+ y 
+ sh 4 - >=? ( hity ) 
+ 4 <=? ( hity ) 
+ box
+ vx 'x +!
+ vy 'y +!
+ ;
 
 |--------------------	
 'show onshow
