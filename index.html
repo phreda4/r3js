@@ -149,10 +149,15 @@ var ex3=`| Example 3
 
 #mbuff * 48 
 
+:sign | sign --
+ -? ( drop $2d over c! ; )
+ drop 1 +
+ ;
 :.d | val -- str
+ dup
  'mbuff 47 + 0 over c! 1 -  
  swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
- 1 + .s ;
+ swap sign .s ;
 
 :<br> 
  "<br>" .s ;
@@ -163,12 +168,14 @@ var ex3=`| Example 3
 |--------------------
 #var 0
 
-:suma1 1 'var +! ;
+:1+ 1 'var +! ;
+:1- -1 'var +! ;
 
 :dom
   "Hola Mundo" .s <br>
+  '1- " -1 " <btn>
   var .d <br>
-  'suma1 "+1" <btn>
+  '1+ " +1 " <btn>
   ;
 
 |--------------------	
@@ -224,51 +231,41 @@ function loadex(str) {
 	document.getElementById('src').value=str;
 	}
 
-function switchTo(tab, what) {
-	const content = document.querySelector(what);
-	const ul = tab.parentElement.parentElement;
-	[...ul.children].forEach(li => li.classList.remove("is-active"));
-	tab.parentElement.classList.add("is-active");
-	[...content.parentElement.children].forEach(div => div.style.display = "none");
-	content.style.display = "block";
-}
-class r3Output extends HTMLElement {
-  connectedCallback () {
-    this.render();
-  }
-  render () {
-    this.innerHTML =  `
-		<div class="tabs is-small">
-		  <ul>
-		    <li class="is-active">
-		      <a onclick="switchTo(this, '#r3dom')">
-		        <span>DOM</span>
-		      </a>
-		    </li>
-		    <li>
-		      <a onclick="switchTo(this, '#r3canvas')">
-		        <span>CANVAS</span>
-		      </a>
-		    </li>
-		  </ul>
-		</div>
-		<div>
-			<div id="r3dom"></div>
-			<div id="r3canvas" style="display:none;">
-				<canvas id="canvas" width="512" height="512" ></canvas> 
-			</div>
-		</div>
-	  `;
-  }
-}
-window.customElements.define('r3-output', r3Output);
+</script>
 
-class r3Source extends HTMLElement {
-  connectedCallback () {
-    this.render();
-  }
-  render () {
-    this.innerHTML =  `<div class="panel">
+  </head>
+
+<body>
+  <nav class="navbar" role="navigation">
+    <div class="navbar-brand">
+		<a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
+		<a role="button" class="navbar-burger burger" data-target="navbarMenu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+		</a>
+    </div>
+
+	
+    <div id="navbarMenu" class="navbar-menu">
+	
+      <div class="navbar-start">
+        <div class="navbar-item">
+          <div class="buttons">
+            
+            <button class="button is-primary is-success" onclick="r3Run();">Run</button>
+			
+			<!-- <button onclick="r3Load('fonti.r3');"> load </button> -->
+
+            <button class="button is-primary" onclick="r3Compile();">Compile</button>    
+            <button class="button is-primary" onclick="r3step();dumpVM();redraw();">Step</button>
+
+			</div>
+        </div>
+      </div>
+	  
+      <div class="navbar-end">
+
         <div class="panel-heading">
           <div class="dropdown is-hoverable">
             <div class="dropdown-trigger">
@@ -296,58 +293,7 @@ class r3Source extends HTMLElement {
             </div>
           </div>
         </div>
-        <div class="panel-block">
-          <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
-        </div>
-      </div>
-      `;
-  }
-}
-window.customElements.define('r3-source', r3Source);
-	
-</script>
-
-  </head>
-
-<body>
-  <nav class="navbar" role="navigation">
-    <div class="navbar-brand">
-		<a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
-		<a role="button" class="navbar-burger burger" data-target="navbarMenu">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-		</a>
-    </div>
-
-	
-    <div id="navbarMenu" class="navbar-menu">
-	
-      <div class="navbar-start">
-        <div class="navbar-item">
-          <div class="buttons">
-            <button class="button is-small is-disabled" onclick=""> NONAME </button>
-            
-            <button class="button is-primary is-success" onclick="r3Run();">Run</button>
-			
-			<!-- <button onclick="r3Load('fonti.r3');"> load </button> -->
-
-            <button class="button is-primary" onclick="r3Compile();">Compile</button>    
-            <button class="button is-primary" onclick="r3step();dumpVM();redraw();">Step</button>
-<!--			
-            <a class="button is-primary">
-              <strong>Sign up</strong>
-            </a>
-            <a class="button is-light">
-              Log in
-            </a>
--->			
-          </div>
-        </div>
-      </div>
 	  
-      <div class="navbar-end">
-  
         <a class="navbar-item">Docs</a>
         <a class="navbar-item">Settings</a>
 		
@@ -358,7 +304,14 @@ window.customElements.define('r3-source', r3Source);
 
   <div class="columns">
     <div class="column is-narrow">
-      <r3-source></r3-source>
+	
+	
+	<div class="panel">
+        <div class="panel-block">
+          <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
+        </div>
+      </div>	  
+	  
   	  <div class="panel">
         DATA STACK:<div id="ds"></div>
         CODE STACK:<div id="cs"></div>
@@ -367,16 +320,19 @@ window.customElements.define('r3-source', r3Source);
   	  </div>
     </div>
 
-		<r3-output class="column"></r3-output>
+		<div>
+			<div id="r3dom"></div>
+			<div id="r3canvas" >
+				<canvas id="canvas" width="512" height="512" ></canvas> 
+			</div>
+		</div>
+
 
     <div class="column">
       <div class="panel">
-      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
-      </div>
-
-      <div class="panel">
       DICC:<div id="dic"></div><br>
       MEMDATA:<div id="md"></div><br>
+      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>	  
       </div>
     </div>
   </div>

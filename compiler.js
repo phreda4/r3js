@@ -157,12 +157,12 @@ function compilaADDR(n) {
 
 function compilaLIT(n) {
 	if (modo>1) { datanro(n);return; }
-	if (n>-257 && n<256) { codetok(((n<<7)&0xff80)+7);return; }
+//	if (n>-257 && n<256) { codetok(((n<<7)&0xff80)+7);return; }
 	if (n==(n<<6)>>6) { // un bit mas por signo (token 8 y 9)
 		codetok((n<<7)+8+((n>>25)&1));
 		return;
 		} 
-	codetok((n<<7)+10);
+	codetok((n<<7)+10); // falta cte en mem
 	}
 
 function compilaSTR(str) {
@@ -457,9 +457,9 @@ function systemmem(TOS)	{
 	case 0:return 0;				// VFRAME
 	case 1:return canvas.width;		// sw
 	case 2:return canvas.height;	// sh
-	case 3:return date.now();		// msec
-	case 4:return (getFullYear()<<16)+(date.getMonth()<<8)+getDay();		// y-m-d 0000-00-00
-	case 5:return (getHours()<<16)+(getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
+	case 3:return Date.now();		// msec
+	case 4:return (date.getFullYear()<<16)+(date.getMonth()<<8)+date.getDay();		// y-m-d 0000-00-00
+	case 5:return (date.getHours()<<16)+(date.getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
 		}
 	}	
 
