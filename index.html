@@ -222,35 +222,46 @@ var ex4=`| Example 4
 
 //----------------------------------------------------
 function loadex(str) {
-	document.getElementById('src').innerText=str;
-	}
-	
-function playintab() { var pag=window.open();
-	pag.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>r3</title>");
-	pag.document.write('<script src="./compiler.js"></scr'+'ipt><script src="./r3www.js"></scr'+'ipt>');
-	pag.document.write('<scr'+'ipt type="text/r3">');
-	pag.document.write(document.getElementById('src').innerText);
-	pag.document.write('</scr'+'ipt>');
-	pag.document.write('<scr'+'ipt>');
-	
-pag.document.write('function Run(code) {');
-pag.document.write('	r3echo="";r3reset();');
-pag.document.write('	if (r3token(code)!=0) { return;	}');
-pag.document.write('	r3run();redraw();document.getElementById("r3dom").innerHTML=r3echo;');
-pag.document.write('	}');
-  
-pag.document.write('function r3boot() {');
-pag.document.write('	canvasini();');
-pag.document.write('	Array.from(document.getElementsByTagName("script")).filter(({type}) => type === "text/r3").forEach(({text}) => Run(text));');
-pag.document.write('	}');
-  
-pag.document.write('window.onload=r3boot;');
-	pag.document.write('</scr'+'ipt>');
-	pag.document.write('</head><body>'); 
-	pag.document.write('<div id="r3dom"></div>');
-	pag.document.write('<canvas id="canvas" width="512" height="512" ></canvas>'); 
-	pag.document.write("</body></html>"); 
-	}
+  document.getElementById('src').innerText=str;
+  }
+
+  function playintab() {
+    var pag=window.open();
+    var srccode = document.getElementById("src").innerText;
+    var pagsource = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>r3</title>
+    <script src="./compiler.js"><\/script>
+    <script src="./r3www.js"><\/script>
+    <script type="text/r3">${srccode}<\/script>
+    <script>
+function Run(code) {
+  r3echo="";
+  r3reset();
+  if (r3token(code)!=0) { return; }
+  r3run();
+  redraw();
+  document.getElementById("r3dom").innerHTML=r3echo;
+}
+function r3boot() {
+  canvasini();
+  Array.from(document.getElementsByTagName("script"))
+    .filter(({type}) => type === "text/r3")
+    .forEach(({text}) => Run(text));
+}
+window.onload=r3boot;
+    <\/script>
+  <\/head>
+  <body>
+    <div id="r3dom"></div>
+    <canvas id="canvas" width="512" height="512" ></canvas>
+  <\/body>
+<\/html>`;
+    pag.document.write(pagsource);
+  }
 </script>
 </head>
 <body>
