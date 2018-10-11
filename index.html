@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
     <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
 
-	
+
     <script src="./compiler.js"></script>
-    <script src="./r3www.js"></script>    
+    <script src="./r3www.js"></script>
 
 <script>
 function dumpmd() { var s="";
@@ -21,7 +21,7 @@ function dumpmd() { var s="";
 
 function dumpmc() {	var s="";
 	for(var i=0;i<memc;i++) {
-		if (i==ip) { s+=" * "; } else { s+="   "; } 
+		if (i==ip) { s+=" * "; } else { s+="   "; }
 		s+=printmr3(memcode[i]);
 		if (i==ip) { s+=" **"; }
 		s+="\n";
@@ -35,7 +35,7 @@ function dumpdicc() { var s="";
 	return s;
 	}
 
-const setDiv = (id, value) => document.getElementById(id).innerText = value;	
+const setDiv = (id, value) => document.getElementById(id).innerText = value;
 function dumpVM() {
 	setDiv("ip", ip);
 	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
@@ -45,75 +45,75 @@ function dumpVM() {
 	setDiv("dic",dumpdicc());
     }
 
-function r3Compile() { 
+function r3Compile() {
 	r3reset();
-	if (r3token(document.getElementById("src").value)!=0) {
+	if (r3token(document.getElementById("src").innerText)!=0) {
 		}
-	dumpVM(); 
+	dumpVM();
 	}
-	
-function r3Run() { 
+
+function r3Run() {
 	r3echo="";
 	r3reset();
-	if (r3token(document.getElementById("src").value)!=0) {
-		dumpVM(); 
+	if (r3token(document.getElementById("src").innerText)!=0) {
+		dumpVM();
 		return;
 		}
 	// error
 	r3run();
 	redraw();
-	dumpVM(); 
+	dumpVM();
 	document.getElementById("r3dom").innerHTML=r3echo;
 	}
-	
-function r3go(a) {	
+
+function r3go(a) {
 	r3runa(a);
 	redom();
 	}
-	
+
 function r3Load(readFile) {
 	loadFile(readFile);
-	}	
+	}
 
 function loadFile(name) {
 	var d=new Date(2018,1,1,1,1,1,1);
 	var file=new File(["Cargando..."],name,{type:"text/plain",lastModified:d})
 	var reader = new FileReader();
-	reader.onload = function(e) { 
+	reader.onload = function(e) {
 		var contents = e.target.result;
 		setDiv("ttt",contents);
 		};
 	reader.readAsText(file);
 }
-	
+
 function loaded(evt) {
-	document.getElementById('src').value=evt.target.result;
+	document.getElementById('src').innerText=evt.target.result;
 	}
 
 //----------------------------------------------------
 var ex1=`| Example 1
 
 :vframe 0 sysmem ;
-:sw 1 sysmem ; 
+:sw 1 sysmem ;
 :sh 2 sysmem ;
 
 :patternxor
  vframe >a
  sh ( 1? 1 -
   sw ( 1? 1 -
-    2dup xor 16 << 
+    2dup xor 16 <<
 	$ff or | opacity
 	a!+
     ) drop
   ) drop ;
- 
- patternxor 
-| 'patternxor onshow 
+
+ patternxor
+| 'patternxor onshow
 `;
 //----------------------------------------------------
 var ex2=`| Example 2
 :vframe 0 sysmem ;
-:sw 1 sysmem ; 
+:sw 1 sysmem ;
 :sh 2 sysmem ;
 
 #bit (
@@ -126,12 +126,12 @@ var ex2=`| Example 2
 %.1....1.
 %........ )
 
-:drawline 
+:drawline
  8 ( 1?
-  swap dup 
+  swap dup
   1 and 23 << $ff or a!+
   1 >> swap 1 - ) 2drop ;
-  
+
 :drawbit | n --
  vframe >a
  8 ( 1? swap
@@ -139,7 +139,7 @@ var ex2=`| Example 2
    sw 8 - 2 << a+
    swap 1 - ) 2drop ;
 
- 'bit drawbit 
+ 'bit drawbit
 `;
 //----------------------------------------------------
 var ex3=`| Example 3
@@ -147,7 +147,7 @@ var ex3=`| Example 3
 :ondom 1 syscall ;
 :.s 0 syscall ;
 
-#mbuff * 48 
+#mbuff * 48
 
 :sign | sign --
  -? ( drop $2d over c! ; )
@@ -155,13 +155,13 @@ var ex3=`| Example 3
  ;
 :.d | val -- str
  dup
- 'mbuff 47 + 0 over c! 1 -  
+ 'mbuff 47 + 0 over c! 1 -
  swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
  swap sign .s ;
 
-:<br> 
+:<br>
  "<br>" .s ;
- 
+
 :<btn> | 'exec "label" --
  "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
 
@@ -178,21 +178,21 @@ var ex3=`| Example 3
   '1+ " +1 " <btn>
   ;
 
-|--------------------	
+|--------------------
 'dom ondom
-dom 
+dom
 `;
 //----------------------------------------------------
 var ex4=`| Example 4
 
 :onshow 2 syscall ;
 :vframe 0 sysmem ;
-:sw 1 sysmem ; 
+:sw 1 sysmem ;
 :sh 2 sysmem ;
 
 :xy>v | x y -- v
  sw * + 2 << vframe + ;
-  
+
 :cls
  0 vframe sw sh * fill
  ;
@@ -207,28 +207,28 @@ var ex4=`| Example 4
  xy>v >a
  $ff00ff a!
  ;
-	
+
 :show
  cls
- 
- x 
- sw 4 - >=? ( hitx ) 
- 4 <=? ( hitx ) 
- y 
- sh 4 - >=? ( hity ) 
- 4 <=? ( hity ) 
+
+ x
+ sw 4 - >=? ( hitx )
+ 4 <=? ( hitx )
+ y
+ sh 4 - >=? ( hity )
+ 4 <=? ( hity )
  box
  vx 'x +!
  vy 'y +!
  ;
 
-|--------------------	
+|--------------------
 'show onshow
 `;
 
 //----------------------------------------------------
 function loadex(str) {
-	document.getElementById('src').value=str;
+	document.getElementById('src').innerText=str;
 	}
 
 </script>
@@ -246,30 +246,30 @@ function loadex(str) {
 		</a>
     </div>
 
-	
+
     <div id="navbarMenu" class="navbar-menu">
-	
+
       <div class="navbar-start">
         <div class="navbar-item">
           <div class="buttons">
-            
+
             <button class="button is-primary is-success" onclick="r3Run();">Run</button>
-			
+
 			<!-- <button onclick="r3Load('fonti.r3');"> load </button> -->
 
-            <button class="button is-primary" onclick="r3Compile();">Compile</button>    
+            <button class="button is-primary" onclick="r3Compile();">Compile</button>
             <button class="button is-primary" onclick="r3step();dumpVM();redraw();">Step</button>
 
 			</div>
         </div>
       </div>
-	  
+
       <div class="navbar-end">
 
         <div class="panel-heading">
           <div class="dropdown is-hoverable">
             <div class="dropdown-trigger">
-              <button 
+              <button
                 class="button"
                 aria-haspopup="true"
                 aria-controls="dropdown-menu">
@@ -279,7 +279,7 @@ function loadex(str) {
                 </span>
               </button>
             </div>
-   
+
             <div
               class="dropdown-menu"
               id="dropdown-menu"
@@ -287,31 +287,31 @@ function loadex(str) {
               <div class="dropdown-content">
                 <a href="#" class="dropdown-item" onclick="loadex(ex1);">Pattern XOR in canvas</a>
                 <a href="#" class="dropdown-item" onclick="loadex(ex2);">Font test</a>
-                <a href="#" class="dropdown-item" onclick="loadex(ex3);">DOM test</a>			
-                <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>							
+                <a href="#" class="dropdown-item" onclick="loadex(ex3);">DOM test</a>
+                <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>
               </div>
             </div>
           </div>
         </div>
-	  
+
         <a class="navbar-item">Docs</a>
         <a class="navbar-item">Settings</a>
-		
+
       </div>
-	  
+
     </div>
   </nav>
 
   <div class="columns">
     <div class="column is-narrow">
-	
-	
+
+
 	<div class="panel">
         <div class="panel-block">
-          <textarea id="src" cols="40" rows="30" style="font-family:Monospace;color:#fff;background-color:#666;"></textarea>
+          <div id="src" contenteditable="true" style="font-family:Monospace;color:#fff;background-color:#666;"></div>
         </div>
-      </div>	  
-	  
+      </div>
+
   	  <div class="panel">
         DATA STACK:<div id="ds"></div>
         CODE STACK:<div id="cs"></div>
@@ -323,7 +323,7 @@ function loadex(str) {
 		<div>
 			<div id="r3dom"></div>
 			<div id="r3canvas" >
-				<canvas id="canvas" width="512" height="512" ></canvas> 
+				<canvas id="canvas" width="512" height="512" ></canvas>
 			</div>
 		</div>
 
@@ -332,10 +332,10 @@ function loadex(str) {
       <div class="panel">
       DICC:<div id="dic"></div><br>
       MEMDATA:<div id="md"></div><br>
-      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>	  
+      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
       </div>
     </div>
   </div>
-	
+
   </body>
 </html>
