@@ -5,86 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
 
-<!-- // JUERA BICHO	-->
+<!-- // JUERA BICHO -->
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
     <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
 <!-- // ----- ----- -->
-	
+
     <script src="./compiler.js"></script>
 
 <script>
 // DEBUG
 //----------------------------------------------------
 function dumpmd() { var s="";
-	for(var i=meminidata;i<memd;i++) { s=s+" "+mem.getInt8(i); }
-	return s;
-	}
+  for(var i=meminidata;i<memd;i++) { s=s+" "+mem.getInt8(i); }
+  return s;
+  }
 
-function dumpmc() {	var s="";
-	for(var i=0;i<memc;i++) {
-		if (i==ip) { s+=" >>"; } 
-		s+=printmr3(memcode[i])+" ";
-		if (i==ip) { s+="<< "; }
-//		s+="\n";
-		}
-	return s;
-	}
+function dumpmc() { var s="";
+  for(var i=0;i<memc;i++) {
+    if (i==ip) { s+=" >>"; }
+    s+=printmr3(memcode[i])+" ";
+    if (i==ip) { s+="<< "; }
+//    s+="\n";
+    }
+  return s;
+  }
 function dumpdicc() { var s="";
-	for (var i=0;i<dicc.length;i++) { s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n"; }
-	return s;
-	}
+  for (var i=0;i<dicc.length;i++) { s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n"; }
+  return s;
+  }
 
 function dumpinc() { var s="";
 
-	for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"; }
-	  
-//	for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
-	return s;
-	}
-	
+  for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"; }
+
+//  for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
+  return s;
+  }
+
 const setDiv=(id,value)=>document.getElementById(id).innerText=value;
 
 function dumpVM() {
-	setDiv("ip", ip);
-	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
+  setDiv("ip", ip);
+  setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
     setDiv("cs", stack.slice(RTOS,255).join(" "));
     setDiv("mc", dumpmc());
     setDiv("md", dumpmd());
-	setDiv("dic",dumpdicc());
-	setDiv("inc",dumpinc());	
+  setDiv("dic",dumpdicc());
+  setDiv("inc",dumpinc());
     }
 
 // VM
-//----------------------------------------------------	
-function r3Compile() { 
-	r3reset();
-	if (r3compile(document.getElementById("src").innerText)!=0) {
-		}
-	dumpVM(); 
-	}
-	
-function r3Run() { 
-	r3echo="";
-	r3reset();
-	if (r3token(document.getElementById("src").innerText)!=0) {// error
-		dumpVM(); 
-		return;
-		}
-	r3run();
-	redraw();
-	dumpVM(); 
-	document.getElementById("r3dom").innerHTML=r3echo;
-	}
-	
+//----------------------------------------------------
+function r3Compile() {
+  r3reset();
+  if (r3compile(document.getElementById("src").innerText)!=0) {
+    }
+  dumpVM();
+  }
+
+function r3Run() {
+  r3echo="";
+  r3reset();
+  if (r3token(document.getElementById("src").innerText)!=0) {// error
+    dumpVM();
+    return;
+    }
+  r3run();
+  redraw();
+  dumpVM();
+  document.getElementById("r3dom").innerHTML=r3echo;
+  }
+
 //  Includes
 //----------------------------------------------------
 async function loadincludes() {
-	if (window.sessionStorage == null) { alert("error de confianza");return; }
-	let libsText = await(await fetch("./libs.txt")).text();
-	for (let libname of libsText.split("\n")) {
-		sessionStorage[libname] = await (await fetch(libname)).text();
-	}
-	dumpVM();
+  if (window.sessionStorage == null) { alert("error de confianza");return; }
+  let libsText = await(await fetch("./libs.txt")).text();
+  for (let libname of libsText.split("\n")) {
+    sessionStorage[libname] = await (await fetch(libname)).text();
+  }
+  dumpVM();
 }
 
 //  Examples
@@ -96,10 +96,10 @@ async function loadex(str) {
 
 //----------------------------------------------------
 // PLAY IN TAB
-//----------------------------------------------------  
+//----------------------------------------------------
 function playintab() {
-	var wcanvas=512;
-	var hcanvas=512;
+  var wcanvas=512;
+  var hcanvas=512;
     var pag=window.open();
     var srccode = document.getElementById("src").innerText;
     var pagsource = `<!DOCTYPE html>
@@ -127,25 +127,25 @@ function playintab() {
 </head>
 <body>
   <nav class="navbar" role="navigation">
-	<a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
+  <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
 
     <div id="navbarMenu" class="navbar-menu">
 
       <div class="navbar-start">
         <div class="navbar-item">
-			<div class="buttons">
-            
+      <div class="buttons">
+
             <button class="button is-success" onclick="r3Run();">Play</button>
-			<button class="button is-success" onclick="playintab();">Play in Tab</button>
-			
+      <button class="button is-success" onclick="playintab();">Play in Tab</button>
+
             <button class="button is-primary" onclick="r3Compile();">Compile</button>
             <button class="button" onclick="r3step();dumpVM();redraw();">Step</button>
 
-			<button class="button">Includes</button>
-			
+      <button class="button">Includes</button>
+
           <div class="dropdown is-hoverable">
             <div class="dropdown-trigger">
-              <button 
+              <button
                 class="button"
                 aria-haspopup="true"
                 aria-controls="dropdown-menu">
@@ -155,7 +155,7 @@ function playintab() {
                 </span>
               </button>
             </div>
-   
+
             <div
               class="dropdown-menu"
               id="dropdown-menu"
@@ -168,46 +168,46 @@ function playintab() {
                 <a href="#" class="dropdown-item" onclick="loadex('examples/XYMOUSE-test.r3');">XYMOUSE test</a>
               </div>
             </div>
-          </div>			
-			
-			</div>
+          </div>
+
+      </div>
         </div>
       </div>
-	  
+
       <div class="navbar-end">
-	  
+
         <a class="navbar-item">No Docs</a>
         <a class="navbar-item">No Settings</a>
-		
+
       </div>
-	  
+
     </div>
   </nav>
 
   <div class="columns">
     <div class="column is-narrow">
-		<div class="panel">
-			<div class="panel-block">
-				<div id="src" contenteditable="true" style="font-family:Monospace;color:#fff;background-color:#444;">| r3 code</div>
-			</div>
-		</div>	  
+    <div class="panel">
+      <div class="panel-block">
+        <div id="src" contenteditable="true" style="font-family:Monospace;color:#fff;background-color:#444;">| r3 code</div>
+      </div>
+    </div>
     </div>
 
-	<div class="column">
-		<div id="r3dom"></div>
-		<div id="r3canvas" >
-		<canvas id="canvas" width="512" height="512" ></canvas> 
-		</div>
-	</div>
+  <div class="column">
+    <div id="r3dom"></div>
+    <div id="r3canvas" >
+    <canvas id="canvas" width="512" height="512" ></canvas>
+    </div>
+  </div>
 
     <div class="column">
       <div class="panel" style="font-family:Monospace;">
-	  
+
 DS:<div id="ds"></div>
 RS:<div id="cs"></div>
 IP:<div id="ip"></div>
 ERR:<div id="logerror"></div>
-INC:<div id="inc"></div><br>	  
+INC:<div id="inc"></div><br>
 DIC:<div id="dic"></div><br>
 MEMCODE:<div id="mc" ></div><br>
 MEMDATA:<div id="md"></div><br>
@@ -215,7 +215,7 @@ MEMDATA:<div id="md"></div><br>
       </div>
     </div>
   </div>
-  
+
 <script>
 /////////
 // BOOT//
