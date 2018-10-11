@@ -6,6 +6,8 @@
 // 0-imm 1-code 2-data 3-reserve 4-bytes 5-qwords
 var modo=0; 
 
+var includes=[]
+
 var dicc=[];
 var dicca=[];
 var dicci=[];
@@ -226,6 +228,11 @@ function r3token(str) {
 	str=str.trim();
 	while(now<str.length) {
 		while (str.charCodeAt(now)<33) { now++; }
+		if(str[now]==="^") {					// include
+			ini=now;
+			while (str.charCodeAt(now)>32) { now++; }
+			continue;
+			}
 		if(str[now]==="|") {					// comments	
 			now=str.indexOf("\n",now)+1;
 			if (now<=0) { now=str.length;}
@@ -240,7 +247,7 @@ function r3token(str) {
 			now+=2;
 		} else {
 			ini=now;
-			while (str.charCodeAt(now)>32) { now++; }			
+			while (str.charCodeAt(now)>32) { now++; }
 			ntoken=str.slice(ini,now);
 			switch (ntoken.charCodeAt(0)) {	// genera tokens
 				case 0x3A:// $3a :  Definicion	// :CODE
@@ -266,6 +273,51 @@ function r3token(str) {
 	ip=boot;	 
 	if (memcode[memc-1]!=16) { memcode[memc++]=16; } // last;
 	return 0;
+	}
+
+function addinclude(name) {
+	var pos=includes.indexOf(name);
+	if (pos==-1) { 
+		includes.push(name); 
+	} else {
+		
+		}
+	}
+	
+function r3includes(str) {
+	var now=0;
+	var ini;	
+	str=str.trim();
+	while(now<str.length) {
+		while (str.charCodeAt(now)<33) { now++; }
+		if(str[now]==="^") {					// include
+			ini=++now;
+			while (str.charCodeAt(now)>32) { now++; }
+			addinclude(str.slice(ini,now));
+			continue;
+			}
+		if(str[now]==="|") {					// comments	
+			now=str.indexOf("\n",now)+1;
+			if (now<=0) { now=str.length;}
+			continue; }
+		if(str[now]=== "\"") {					// strings		
+			ini=++now;
+			while (str.charCodeAt(now)!=0) { 
+				if (str[now]=== "\"") { if (str[now+1]!="\"") { break; } now++; }
+				now++; }	
+			now+=2;
+		} else {
+			ini=now;
+			while (str.charCodeAt(now)>32) { now++; }
+			}
+		}
+	}
+
+function r3compile(str) {	
+	r3includes(str);
+
+	
+	r3token(str);
 	}
 
 function error(e) {
@@ -465,11 +517,14 @@ function systemmem(TOS)	{
 
 //---------------------------------------	
 function r3reset(){
+	
+	includes.splice(0,includes.length);
 	boot=-1
 	dicc.splice(0,dicc.length);
 	dicca.splice(0,dicca.length);
 	dicci.splice(0,dicci.length);
 	ndicc=0;
+
 	
 	r3domx=-1;
 	r3showx=-1
@@ -542,8 +597,33 @@ function animate() {
 	}
 
 function r3boot() {
-	canvasini();
 
+	canvasini();
+	
+/*	
+	fetch('includes.txt')
+  .then(response => response.text())
+  .then((data) => {
+    console.log(data)
+  })
+*/  
+/*  
+	var client = new XMLHttpRequest();
+	client.open('GET', 'lib/math.r3');
+	client.onreadystatechange = function() { alert(client.responseText); }
+	client.send();
+*/
+
+/*  
+var file = new File([""], "includes.txt");
+var reader = new FileReader();
+reader.onload=function(){
+    console.log(reader.result); // display file contents
+	console.log("mundo");
+}
+reader.readAsText(file); //asynchronous
+console.log("hola");
+*/
 	//animate();
 	}	
 

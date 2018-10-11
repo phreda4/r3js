@@ -2,25 +2,16 @@
 
 (function() {
 
-
-  function Compile(code) {
-    return r3tokenizer(code);
-  }
-  
-  function Execute(what) {
-    Say(what);
-    console.log(what);
-  }
-
   function Run(code) {
-    return Execute(Compile(code));
+	r3boot();
+	r3echo="";
+	r3reset();
+	if (r3token(code)!=0) { return;	}
+	r3run();
+	redraw();
+	document.getElementById("r3dom").innerHTML=r3echo;
   }
 
-  function Say(what) {
-    const createNewDiv = () => document.body.appendChild(document.createElement('div'));
-    const [firstDiv = createNewDiv()] = document.getElementsByTagName('div');
-    firstDiv.appendChild(document.createTextNode(what));
-  }
   
   function Init() {
       Array
