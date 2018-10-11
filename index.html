@@ -252,12 +252,12 @@ function r3boot() {
     .filter(({type}) => type === "text/r3")
     .forEach(({text}) => Run(text));
 }
-window.onload=r3boot;
     <\/script>
   <\/head>
   <body>
     <div id="r3dom"></div>
     <canvas id="canvas" width="512" height="512" ></canvas>
+    <script>r3boot();<\/script>
   <\/body>
 <\/html>`;
     pag.document.write(pagsource);
