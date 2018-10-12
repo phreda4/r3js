@@ -161,7 +161,8 @@ function compilaLIT(n) {
 	if (modo>1) { datanro(n);return; }
 //	if (n>-257 && n<256) { codetok(((n<<7)&0xff80)+7);return; }
 	if (n==(n<<6)>>6) { // un bit mas por signo (token 8 y 9)
-		codetok((n<<7)+8+((n>>25)&1));
+//		codetok((n<<7)+8+((n>>25)&1));
+		codetok((n<<7)+8);
 		return;
 		} 
 	codetok((n<<7)+10); // falta cte en mem
@@ -552,7 +553,6 @@ function r3runa(adr) {
 	}
 	
 /*------CANVAS------*/
-
 var canvas;
 var ctx;
 var imageData;
@@ -573,7 +573,11 @@ function redraw() {
 	
 
 /*------DOM------*/
-
+function r3go(a) {	
+	r3runa(a);
+	redom();
+	}
+	
 function redom() {
 	if (r3domx==-1) { return; }
 	r3echo="";
@@ -596,40 +600,6 @@ function animate() {
 		}
 	}
 
-function r3boot() {
-
-	canvasini();
-	
-/*	
-	fetch('includes.txt')
-  .then(response => response.text())
-  .then((data) => {
-    console.log(data)
-  })
-*/  
-/*  
-	var client = new XMLHttpRequest();
-	client.open('GET', 'lib/math.r3');
-	client.onreadystatechange = function() { alert(client.responseText); }
-	client.send();
-*/
-
-/*  
-var file = new File([""], "includes.txt");
-var reader = new FileReader();
-reader.onload=function(){
-    console.log(reader.result); // display file contents
-	console.log("mundo");
-}
-reader.readAsText(file); //asynchronous
-console.log("hola");
-*/
-	//animate();
-	}	
-
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-window.onload=r3boot;	
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
@@ -653,10 +623,28 @@ switch(tok&0x7f){
 		case 26:case 27:case 28:case 29:case 30:case 31:
 		case 32:case 33:case 34:
 			s+="."+numr(tok);break
-		case 9:s+="."+numnr(tok);break
+		case 9:s+="."+numrn(tok);break
 		case 10:s+="."+numct(tok);break
 //		default:
 	}
 if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }
 return r3machine[tok&0x7f]+s;
+}
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+function Run(code) {
+  r3echo="";
+  r3reset();
+  if (r3token(code)!=0) { return; }
+  r3run();
+  redraw();redom();
+  document.getElementById("r3dom").innerHTML=r3echo;
+}
+function r3boot() {
+  canvasini();
+  Array.from(document.getElementsByTagName("script"))
+    .filter(({type}) => type === "text/r3")
+    .forEach(({text}) => Run(text));
 }

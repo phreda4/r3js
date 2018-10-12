@@ -1,3 +1,0 @@
-lib/math.r3
-hola mundo
-coso

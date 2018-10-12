@@ -4,45 +4,46 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
+
+<!-- // JUERA BICHO	-->
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
     <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
-
+<!-- // ----- ----- -->
 	
     <script src="./compiler.js"></script>
-    <script src="./r3www.js"></script>    
 
 <script>
+// DEBUG
+//----------------------------------------------------
 function dumpmd() { var s="";
-	for(var i=meminidata;i<memd;i++) {
-		s=s+" "+mem.getInt8(i);
-		}
+	for(var i=meminidata;i<memd;i++) { s=s+" "+mem.getInt8(i); }
 	return s;
 	}
 
 function dumpmc() {	var s="";
 	for(var i=0;i<memc;i++) {
-		if (i==ip) { s+=" * "; } else { s+="   "; } 
-		s+=printmr3(memcode[i]);
-		if (i==ip) { s+=" **"; }
-		s+="\n";
+		if (i==ip) { s+=" >>"; } 
+		s+=printmr3(memcode[i])+" ";
+		if (i==ip) { s+="<< "; }
+//		s+="\n";
 		}
 	return s;
 	}
 function dumpdicc() { var s="";
-	for (var i=0;i<dicc.length;i++) {
-		s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n";
-		}
+	for (var i=0;i<dicc.length;i++) { s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n"; }
 	return s;
 	}
 
 function dumpinc() { var s="";
-	for (var i=0;i<includes.length;i++) {
-		s+=includes[i]+"\n";
-		}
+
+	for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"; }
+	  
+//	for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
 	return s;
 	}
 	
-const setDiv = (id, value) => document.getElementById(id).innerText = value;	
+const setDiv=(id,value)=>document.getElementById(id).innerText=value;
+
 function dumpVM() {
 	setDiv("ip", ip);
 	setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
@@ -53,6 +54,8 @@ function dumpVM() {
 	setDiv("inc",dumpinc());	
     }
 
+// VM
+//----------------------------------------------------	
 function r3Compile() { 
 	r3reset();
 	if (r3compile(document.getElementById("src").innerText)!=0) {
@@ -63,27 +66,72 @@ function r3Compile() {
 function r3Run() { 
 	r3echo="";
 	r3reset();
-	if (r3token(document.getElementById("src").innerText)!=0) {
+	if (r3token(document.getElementById("src").innerText)!=0) {// error
 		dumpVM(); 
 		return;
 		}
-	// error
 	r3run();
 	redraw();
 	dumpVM(); 
 	document.getElementById("r3dom").innerHTML=r3echo;
 	}
 	
-function r3go(a) {	
-	r3runa(a);
-	redom();
+//  Includes
+//----------------------------------------------------
+function linclude(name) {
+	var client = new XMLHttpRequest();
+	client.open('GET',name);
+	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { sessionStorage[name]=client.responseText; } }
+	client.send();
 	}
 	
-	
-function loaded(evt) {
-	document.getElementById('src').innerText=evt.target.result;
+function storelibs(name) {
+	var arr=name.split("\n");
+	for (var i=0;i<arr.length;i++) { linclude(arr[i]); }
 	}
+	
+function loadincludes() {
+	if (window.sessionStorage == null) { alert("error de confianza");return; }
+	var client = new XMLHttpRequest();
+	client.open('GET','libs.txt');
+	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { storelibs(client.responseText); } }
+	client.send();
+	}
+	
+//  Examples
+//----------------------------------------------------
+function loadex(str) {
+  document.getElementById('src').innerText=str;
+  }
 
+//----------------------------------------------------
+// PLAY IN TAB
+//----------------------------------------------------  
+function playintab() {
+	var wcanvas=512;
+	var hcanvas=512;
+    var pag=window.open();
+    var srccode = document.getElementById("src").innerText;
+    var pagsource = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>r3</title>
+    <script src="./compiler.js"><\/script>
+    <script type="text/r3">${srccode}<\/script>
+  <\/head>
+  <body>
+    <div id="r3dom"></div>
+    <canvas id="canvas" width="${wcanvas}" height="${hcanvas}" ></canvas>
+    <script>r3boot();<\/script>
+  <\/body>
+<\/html>`;
+    pag.document.write(pagsource);
+  }
+  
+//----------------------------------------------------
+// Examples in r3
 //----------------------------------------------------
 var ex1=`| Example 1
 
@@ -144,11 +192,10 @@ var ex3=`| Example 3
 #mbuff * 48 
 
 :sign | sign --
- -? ( drop $2d over c! ; )
- drop 1 +
- ;
+ -? ( drop $2d over c! ; ) drop 1 + ;
+ 
 :.d | val -- str
- dup
+ dup abs
  'mbuff 47 + 0 over c! 1 -  
  swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
  swap sign .s ;
@@ -166,9 +213,10 @@ var ex3=`| Example 3
 :1- -1 'var +! ;
 
 :dom
+  <br>
   "Hola Mundo" .s <br>
   '1- " -1 " <btn>
-  var .d <br>
+  " " .s var .d " " .s
   '1+ " +1 " <btn>
   ;
 
@@ -205,12 +253,8 @@ var ex4=`| Example 4
 :show
  cls
  
- x 
- sw 4 - >=? ( hitx ) 
- 4 <=? ( hitx ) 
- y 
- sh 4 - >=? ( hity ) 
- 4 <=? ( hity ) 
+ x sw 4 - >=? ( hitx ) 4 <=? ( hitx ) 
+ y sh 4 - >=? ( hity ) 4 <=? ( hity ) 
  box
  vx 'x +!
  vy 'y +!
@@ -220,48 +264,8 @@ var ex4=`| Example 4
 'show onshow
 `;
 
+// DEV-WEB
 //----------------------------------------------------
-function loadex(str) {
-  document.getElementById('src').innerText=str;
-  }
-
-  function playintab() {
-    var pag=window.open();
-    var srccode = document.getElementById("src").innerText;
-    var pagsource = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>r3</title>
-    <script src="./compiler.js"><\/script>
-    <script src="./r3www.js"><\/script>
-    <script type="text/r3">${srccode}<\/script>
-    <script>
-function Run(code) {
-  r3echo="";
-  r3reset();
-  if (r3token(code)!=0) { return; }
-  r3run();
-  redraw();
-  document.getElementById("r3dom").innerHTML=r3echo;
-}
-function r3boot() {
-  canvasini();
-  Array.from(document.getElementsByTagName("script"))
-    .filter(({type}) => type === "text/r3")
-    .forEach(({text}) => Run(text));
-}
-    <\/script>
-  <\/head>
-  <body>
-    <div id="r3dom"></div>
-    <canvas id="canvas" width="512" height="512" ></canvas>
-    <script>r3boot();<\/script>
-  <\/body>
-<\/html>`;
-    pag.document.write(pagsource);
-  }
 </script>
 </head>
 <body>
@@ -272,19 +276,16 @@ function r3boot() {
 
       <div class="navbar-start">
         <div class="navbar-item">
-          <div class="buttons">
+			<div class="buttons">
             
-            <button class="button is-primary is-success" onclick="r3Run();">Run</button>
-            <button class="button is-primary" onclick="r3Compile();">Compile</button>
-            <button class="button is-primary" onclick="r3step();dumpVM();redraw();">Step</button>
-			<button class="button is-primary" onclick="playintab();">PLAY</button>
+            <button class="button is-success" onclick="r3Run();">Play</button>
+			<button class="button is-success" onclick="playintab();">Play in Tab</button>
 			
-			</div>
-        </div>
-      </div>
-	  
-      <div class="navbar-end">
-        <div class="panel-heading">
+            <button class="button is-primary" onclick="r3Compile();">Compile</button>
+            <button class="button" onclick="r3step();dumpVM();redraw();">Step</button>
+
+			<button class="button">Includes</button>
+			
           <div class="dropdown is-hoverable">
             <div class="dropdown-trigger">
               <button 
@@ -309,11 +310,16 @@ function r3boot() {
                 <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>							
               </div>
             </div>
-          </div>
+          </div>			
+			
+			</div>
         </div>
+      </div>
 	  
-        <a class="navbar-item">Docs</a>
-        <a class="navbar-item">Settings</a>
+      <div class="navbar-end">
+	  
+        <a class="navbar-item">No Docs</a>
+        <a class="navbar-item">No Settings</a>
 		
       </div>
 	  
@@ -322,39 +328,44 @@ function r3boot() {
 
   <div class="columns">
     <div class="column is-narrow">
-	
-	
-	<div class="panel">
-        <div class="panel-block">
-			<div id="src" contenteditable="true" style="font-family:Monospace;color:#fff;background-color:#444;">| r3 code</div>
-        </div>
-      </div>	  
-	  
-  	  <div class="panel">
-        DATA STACK:<div id="ds"></div>
-        CODE STACK:<div id="cs"></div>
-        IP:<div id="ip"></div>
-        ERR:<div id="logerror"></div>
-  	  </div>
+		<div class="panel">
+			<div class="panel-block">
+				<div id="src" contenteditable="true" style="font-family:Monospace;color:#fff;background-color:#444;">| r3 code</div>
+			</div>
+		</div>	  
     </div>
 
-		<div>
-			<div id="r3dom"></div>
-			<div id="r3canvas" >
-			<canvas id="canvas" width="512" height="512" ></canvas> 
-			</div>
+	<div class="column">
+		<div id="r3dom"></div>
+		<div id="r3canvas" >
+		<canvas id="canvas" width="512" height="512" ></canvas> 
 		</div>
-
+	</div>
 
     <div class="column">
-      <div class="panel">
-      INC:<div id="inc"></div><br>	  
-      DICC:<div id="dic"></div><br>
-      MEMDATA:<div id="md"></div><br>
-      MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>	  
+      <div class="panel" style="font-family:Monospace;">
+	  
+DS:<div id="ds"></div>
+RS:<div id="cs"></div>
+IP:<div id="ip"></div>
+ERR:<div id="logerror"></div>
+INC:<div id="inc"></div><br>	  
+DIC:<div id="dic"></div><br>
+MEMCODE:<div id="mc" ></div><br>
+MEMDATA:<div id="md"></div><br>
+
       </div>
     </div>
   </div>
-	
+  
+<script>
+/////////
+// BOOT//
+/////////
+sessionStorage.clear();
+loadincludes();
+canvasini();
+</script>	
+
   </body>
 </html>
