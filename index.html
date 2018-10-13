@@ -81,7 +81,7 @@ function r3Run() {
 function linclude(name) {
 	var client = new XMLHttpRequest();
 	client.open('GET',name);
-	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { sessionStorage[name]=client.responseText; } }
+	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { sessionStorage[name]=client.responseText;dumpVM(); } }
 	client.send();
 	}
 	
@@ -133,6 +133,7 @@ function playintab() {
 //----------------------------------------------------
 // Examples in r3
 //----------------------------------------------------
+
 var ex1=`| Example 1
 
 :vframe 0 sysmem ;
@@ -249,6 +250,87 @@ var ex4=`| Example 4
  xy>v >a
  $ff00ff a!
  ;
+	
+:show
+ cls
+ 
+ x sw 4 - >=? ( hitx ) 4 <=? ( hitx ) 
+ y sh 4 - >=? ( hity ) 4 <=? ( hity ) 
+ box
+ vx 'x +!
+ vy 'y +!
+ ;
+
+|--------------------	
+'show onshow
+`;
+
+var ex1l=`| Example 1
+
+^lib/gr.r3
+
+:patternxor
+ vframe >a
+ sh ( 1? 1 -
+  sw ( 1? 1 -
+    2dup xor 16 << 
+	$ff or | opacity
+	a!+
+    ) drop
+  ) drop ;
+ 
+ patternxor 
+| 'patternxor onshow 
+`;
+//----------------------------------------------------
+var ex2l=`| Example 2
+
+^lib/gr.r3
+^lib/fonti.r3
+
+:print | str --
+  0 0 xy>v >a   
+  ( c@+ 1? 
+    char8i ) 
+  2drop ;
+  
+"Hola" print
+`;
+//----------------------------------------------------
+var ex3l=`| Example 3
+
+^lib/html.r3
+
+#var 0
+
+:1+ 1 'var +! ;
+:1- -1 'var +! ;
+
+:dom
+  <br>
+  "Hola Mundo" .s <br>
+  '1- " -1 " <btn>
+  " " .s var .d " " .s
+  '1+ " +1 " <btn>
+  ;
+
+'dom ondom
+dom 
+`;
+//----------------------------------------------------
+var ex4l=`| Example 4
+
+^lib/gr.r3
+  
+|--------------------
+#x 10 #vx 1
+#y 10 #vy 1
+
+:hitx vx neg 'vx ! ;
+:hity vy neg 'vy ! ;
+
+:box
+ xy>v >a $ff00ff a! ;
 	
 :show
  cls

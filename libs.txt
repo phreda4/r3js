@@ -1,3 +1,4 @@
-lib/math.r3
-lib/graph.r3
+lib/gr.r3
+lib/str.r3
 lib/fonti.r3
+lib/html.r3

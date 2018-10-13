@@ -1,4 +1,7 @@
-^graph.r3
+| r3 lib fonti 
+| PHREDA 2018
+
+^gr.r3
 
 #:rom8x12 (
 %........ 
@@ -3335,7 +3338,6 @@
 	4 a+ ;
 
 ::char8i | c --
-	ccx ccy xy>v >a
 	3 << dup 2/ + 'rom8x12 +
 	sw 8 - 2 << swap
 	12 ( 1? 1 -
@@ -3343,4 +3345,5 @@
 		$80 ( 1? over setpix 1 >> ) 2drop
 		pick2 a+
 		swap )
+	sw 3 << neg a+
 	3drop ;

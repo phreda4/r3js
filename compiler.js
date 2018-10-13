@@ -635,12 +635,9 @@ return r3machine[tok&0x7f]+s;
 ////////////////////////////////////////////////////////////////////
 
 function Run(code) {
-  r3echo="";
   r3reset();
   if (r3token(code)!=0) { return; }
-  r3run();
-  redraw();redom();
-  document.getElementById("r3dom").innerHTML=r3echo;
+  r3run();redraw();redom();
 }
 function r3boot() {
   canvasini();
