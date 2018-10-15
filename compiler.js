@@ -31,6 +31,11 @@ var mem=new DataView(memdata);
 var r3echo="";
 var r3domx=-1;
 var r3showx=-1;
+var xm=0;
+var ym=0;
+var ke=0;
+var kc=0;
+
 
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
@@ -513,9 +518,18 @@ function systemmem(TOS)	{
 	case 3:return Date.now();		// msec
 	case 4:return (date.getFullYear()<<16)+(date.getMonth()<<8)+date.getDay();		// y-m-d 0000-00-00
 	case 5:return (date.getHours()<<16)+(date.getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
+
+	// keyboard
+	case 6: return ke;
+	case 7: return kc;
+	// miqui maus
+	case 8: return ym<<16|xm;
 		}
 	}	
-
+	
+ 
+function onMouseUpdate(e) { xm = e.pageX;ym = e.pageY; }
+		
 //---------------------------------------	
 function r3reset(){
 	
@@ -531,8 +545,18 @@ function r3reset(){
 	r3showx=-1
 	r3echo="";
 	document.getElementById('r3dom').innerHTML="";
+	
+	document.addEventListener('mousemove', onMouseUpdate, false);
+	document.addEventListener('mouseenter', onMouseUpdate, false);
+
+	window.addEventListener("keydown", function(event) 
+		{ ke=event.key;kc=event.code;event.preventDefault(); }, true);
+	window.addEventListener("keyup", function(event) {
+			ke=event.key;kc=event.code;event.preventDefault(); }, true);	
+
 	}
 
+	
 function r3step() {
 	if (ip==0) { return; }
 	r3op(memcode[ip++]);	
@@ -573,6 +597,11 @@ function redraw() {
 	
 
 /*------DOM------*/
+function domini() {
+	document.getElementById('r3dom').innerHTML="DOM INI";
+	r3domx=-1;
+	}
+	
 function r3go(a) {	
 	r3runa(a);
 	redom();
@@ -639,8 +668,10 @@ function Run(code) {
   if (r3token(code)!=0) { return; }
   r3run();redraw();redom();
 }
-function r3boot() {
+function r3scanrun() {
+	
   canvasini();
+  domini();
   Array.from(document.getElementsByTagName("script"))
     .filter(({type}) => type === "text/r3")
     .forEach(({text}) => Run(text));

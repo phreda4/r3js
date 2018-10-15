@@ -56,8 +56,12 @@
 ::polar2 | largo bangle  -- dx dy
 	sincos pick2 16 *>> >r 16 *>> r> ;
 
+:iatan2p
+	+? ( 2dup + >r swap - >r 0.125 ; )
+	2dup - >r + >r 0.375 ;
+	
 :iatan2 | |x| y -- bangle
-	+? ( 2dup + >r swap - >r 0.125 )( 2dup - >r + >r 0.375 )
+	iatan2p
 	0.125 r> r> 0? ( nip nip nip ; )
 	*/ - ;
 
@@ -118,7 +122,7 @@
 	$20000000 <? ( 2 << swap $162e4 - swap )
 	$40000000 <? ( 2* swap $b172 - swap ) | y x
 	swap | x y
-	over dup 2/ + +? ( rot drop swap $67cd - )( drop )
+	over dup 1 >> + +? ( rot drop swap $67cd - )( drop )
 	over dup 2 >> + +? ( rot drop swap $3920 - )( drop )
 	over dup 3 >> + +? ( rot drop swap $1e27 - )( drop )
 	over dup 4 >> + +? ( rot drop swap $f85 - )( drop )
@@ -160,8 +164,8 @@
 	over $58b91 - +? ( rot drop swap 8 << )( drop )
 	over $2c5c8 - +? ( rot drop swap 4 << )( drop )
 	over $162e4 - +? ( rot drop swap 2 << )( drop )
-	over $b172 - +? ( rot drop swap 2* )( drop )
-	over $67cd - +? ( rot drop swap dup 2/ + )( drop )
+	over $b172 - +? ( rot drop swap 1 << )( drop )
+	over $67cd - +? ( rot drop swap dup 1 >> + )( drop )
 	over $3920 - +? ( rot drop swap dup 2 >> + )( drop )
 	over $1e27 - +? ( rot drop swap dup 3 >> + )( drop )
 	over $f85 - +? ( rot drop swap dup 4 >> + )( drop )

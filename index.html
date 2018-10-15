@@ -124,7 +124,7 @@ function playintab() {
   <body>
     <div id="r3dom"></div>
     <canvas id="canvas" width="${wcanvas}" height="${hcanvas}" ></canvas>
-    <script>r3boot();<\/script>
+    <script>r3scanrun();<\/script>
   <\/body>
 <\/html>`;
     pag.document.write(pagsource);
@@ -136,9 +136,7 @@ function playintab() {
 
 var ex1=`| Example 1
 
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
+^lib/gr.r3
 
 :patternxor
  vframe >a
@@ -155,135 +153,6 @@ var ex1=`| Example 1
 `;
 //----------------------------------------------------
 var ex2=`| Example 2
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
-
-#bit (
-%........
-%..1111..
-%.11..11.
-%.1....1.
-%.111111.
-%.1....1.
-%.1....1.
-%........ )
-
-:drawline 
- 8 ( 1?
-  swap dup 
-  1 and 23 << $ff or a!+
-  1 >> swap 1 - ) 2drop ;
-  
-:drawbit | n --
- vframe >a
- 8 ( 1? swap
-   c@+ drawline
-   sw 8 - 2 << a+
-   swap 1 - ) 2drop ;
-
- 'bit drawbit 
-`;
-//----------------------------------------------------
-var ex3=`| Example 3
-
-:ondom 1 syscall ;
-:.s 0 syscall ;
-
-#mbuff * 48 
-
-:sign | sign --
- -? ( drop $2d over c! ; ) drop 1 + ;
- 
-:.d | val -- str
- dup abs
- 'mbuff 47 + 0 over c! 1 -  
- swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
- swap sign .s ;
-
-:<br> 
- "<br>" .s ;
- 
-:<btn> | 'exec "label" --
- "<button onclick='r3go(" .s swap .d ");'>" .s .s "</button>" .s ;
-
-|--------------------
-#var 0
-
-:1+ 1 'var +! ;
-:1- -1 'var +! ;
-
-:dom
-  <br>
-  "Hola Mundo" .s <br>
-  '1- " -1 " <btn>
-  " " .s var .d " " .s
-  '1+ " +1 " <btn>
-  ;
-
-|--------------------	
-'dom ondom
-dom 
-`;
-//----------------------------------------------------
-var ex4=`| Example 4
-
-:onshow 2 syscall ;
-:vframe 0 sysmem ;
-:sw 1 sysmem ; 
-:sh 2 sysmem ;
-
-:xy>v | x y -- v
- sw * + 2 << vframe + ;
-  
-:cls
- 0 vframe sw sh * fill
- ;
-|--------------------
-#x 10 #vx 1
-#y 10 #vy 1
-
-:hitx vx neg 'vx ! ;
-:hity vy neg 'vy ! ;
-
-:box
- xy>v >a
- $ff00ff a!
- ;
-	
-:show
- cls
- 
- x sw 4 - >=? ( hitx ) 4 <=? ( hitx ) 
- y sh 4 - >=? ( hity ) 4 <=? ( hity ) 
- box
- vx 'x +!
- vy 'y +!
- ;
-
-|--------------------	
-'show onshow
-`;
-
-var ex1l=`| Example 1
-
-^lib/gr.r3
-
-:patternxor
- vframe >a
- sh ( 1? 1 -
-  sw ( 1? 1 -
-    2dup xor 16 << 
-	$ff or | opacity
-	a!+
-    ) drop
-  ) drop ;
- 
- patternxor 
-| 'patternxor onshow 
-`;
-//----------------------------------------------------
-var ex2l=`| Example 2
 
 ^lib/gr.r3
 ^lib/fonti.r3
@@ -297,9 +166,9 @@ var ex2l=`| Example 2
 "Hola" print
 `;
 //----------------------------------------------------
-var ex3l=`| Example 3
+var ex3=`| Example 3
 
-^lib/html.r3
+^lib/dom.r3
 
 #var 0
 
@@ -318,7 +187,7 @@ var ex3l=`| Example 3
 dom 
 `;
 //----------------------------------------------------
-var ex4l=`| Example 4
+var ex4=`| Example 4
 
 ^lib/gr.r3
   
@@ -344,6 +213,67 @@ var ex4l=`| Example 4
 
 |--------------------	
 'show onshow
+`;
+
+var ex5=`| Example 5 DRAW in Canvas
+
+##ink $ff00ff
+
+:keycode 6 sysmem ;
+:keychar 7 sysmem ;
+:xymouse 8 sysmem ;
+
+::vframe 0 sysmem ;
+::sw 1 sysmem ; 
+::sh 2 sysmem ;
+
+::onshow 2 syscall ;
+
+::xy>v | x y -- adr
+  sw * + 2 << vframe + ;
+
+::cls
+  0 vframe sw sh * fill ;
+
+:hit
+  keycode -1 <>? ( ink $ff00 xor 'ink ! ) 
+  drop ;
+  
+::ondom 1 syscall ;
+::echo 0 syscall ;
+ 
+
+#mbuff * 48 
+
+:sign | sign --
+ -? ( drop $2d over c! ; ) drop 1 + ;
+ 
+::.d | val -- str
+ dup abs
+ 'mbuff 47 + 0 over c! 1 -  
+ swap ( 10 /mod $30 + pick2 c! swap 1 - swap 1? ) drop
+ swap sign ;
+ 
+:dom
+ "tecla :" echo
+  keycode .d echo
+  " " echo
+  keychar .d echo
+  
+  ;
+  
+:show
+  xymouse dup $ffff and swap 16 >> 
+  xy>v >a 
+  |ink 
+  3 sysmem 18 << $ff or 
+  dup a!+ a!+ 
+  hit
+  ;
+
+'dom ondom  
+'show onshow
+
 `;
 
 // DEV-WEB
@@ -388,8 +318,10 @@ var ex4l=`| Example 4
               <div class="dropdown-content">
                 <a href="#" class="dropdown-item" onclick="loadex(ex1);">Pattern XOR in canvas</a>
                 <a href="#" class="dropdown-item" onclick="loadex(ex2);">Font test</a>
-                <a href="#" class="dropdown-item" onclick="loadex(ex3);">DOM test</a>			
-                <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>							
+                <a href="#" class="dropdown-item" onclick="loadex(ex3);">DOM test</a>
+                <a href="#" class="dropdown-item" onclick="loadex(ex4);">SHOW test</a>
+				<a href="#" class="dropdown-item" onclick="loadex(ex5);">XYMOUSE test</a>
+				
               </div>
             </div>
           </div>			

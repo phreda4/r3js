@@ -1,4 +1,5 @@
 lib/gr.r3
+lib/dom.r3
 lib/str.r3
 lib/fonti.r3
-lib/html.r3
+lib/math.r3
