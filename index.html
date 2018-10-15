@@ -78,26 +78,15 @@ function r3Run() {
 	
 //  Includes
 //----------------------------------------------------
-function linclude(name) {
-	var client = new XMLHttpRequest();
-	client.open('GET',name);
-	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { sessionStorage[name]=client.responseText;dumpVM(); } }
-	client.send();
-	}
-	
-function storelibs(name) {
-	var arr=name.split("\n");
-	for (var i=0;i<arr.length;i++) { linclude(arr[i]); }
-	}
-	
-function loadincludes() {
+async function loadincludes() {
 	if (window.sessionStorage == null) { alert("error de confianza");return; }
-	var client = new XMLHttpRequest();
-	client.open('GET','libs.txt');
-	client.onreadystatechange=function() { if (client.readyState == XMLHttpRequest.DONE) { storelibs(client.responseText); } }
-	client.send();
+	let libsText = await(await fetch("./libs.txt")).text();
+	for (let libname of libsText.split("\n")) {
+		sessionStorage[libname] = await (await fetch(libname)).text();
 	}
-	
+	dumpVM();
+}
+
 //  Examples
 //----------------------------------------------------
 function loadex(str) {
@@ -377,9 +366,8 @@ MEMDATA:<div id="md"></div><br>
 // BOOT//
 /////////
 sessionStorage.clear();
-loadincludes();
-canvasini();
-</script>	
+loadincludes().then(canvasini);
+</script>
 
   </body>
 </html>
