@@ -262,7 +262,7 @@ function r3token(str) {
 					compilaDATA(ntoken);break;	
 				case 0x27:// $27 ' Direccion	// 'ADR
 					ntoken=ntoken.substr(1).toUpperCase();
-					nro=isWord(ntoken);if (nro<0) { error(now);return 2; }			
+					nro=isWord(ntoken);if (nro<0) { error(str,now);return 2; }			
 					compilaADDR(nro);break;		
 				default:
 					ntoken=ntoken.toUpperCase();
@@ -270,7 +270,7 @@ function r3token(str) {
 						compilaLIT(nro);break; }
 					if (isBas(ntoken)) { 
 						compilaMAC(nro);break; }
-					nro=isWord(ntoken);if (nro<0) { error(now);return 1; }
+					nro=isWord(ntoken);if (nro<0) { error(str,now);return 1; }
 					compilaWORD(nro);
 					break;
 				}
@@ -319,15 +319,21 @@ function r3includes(str) {
 		}
 	}
 
+var nowerror=0;
+
 function r3compile(str) {	
-	r3includes(str);
+//	r3includes(str);
 
 	
-	r3token(str);
+	if (r3token(str)!=0) return nowerror;
+	return -1;
 	}
 
-function error(e) {
-	document.getElementById("logerror").innerText = "Not Word in:"+e;
+function error(str,now) {
+	nowerror=now;
+	var n2=now;
+	var n1=now-2;while (str.charCodeAt(n1)>32) {n1--;}
+	document.getElementById("logerror").innerText = "Not Word :"+str.slice(n1,n2);
 	}
 
 
@@ -546,13 +552,11 @@ function r3reset(){
 	r3echo="";
 	document.getElementById('r3dom').innerHTML="";
 	
-	document.addEventListener('mousemove', onMouseUpdate, false);
-	document.addEventListener('mouseenter', onMouseUpdate, false);
+	document.addEventListener('mousemove',onMouseUpdate,false);
+	document.addEventListener('mouseenter',onMouseUpdate,false);
 
-	window.addEventListener("keydown", function(event) 
-		{ ke=event.key;kc=event.code;event.preventDefault(); }, true);
-	window.addEventListener("keyup", function(event) {
-			ke=event.key;kc=event.code;event.preventDefault(); }, true);	
+	//window.addEventListener("keydown", function(event) 	{ ke=event.key;kc=event.code;event.preventDefault(); }, true);
+	//window.addEventListener("keyup", function(event) { 	ke=event.key;kc=event.code;event.preventDefault(); }, true);	
 
 	}
 
