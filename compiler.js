@@ -6,12 +6,12 @@
 // 0-imm 1-code 2-data 3-reserve 4-bytes 5-qwords
 var modo=0; 
 
-var includes=[]
+var includes=[];	// nombre del include
 
-var dicc=[];
-var dicca=[];
-var dicci=[];
-var ndicc=0;
+var dicc=[];		// nombre palabra
+var dicca=[];		// direccion de entrada
+var dicci=[];		// info
+var dicclocal;
 
 var level=0;
 var stacka=[];
@@ -100,7 +100,7 @@ function isBas(tok) {
 	}
 
 function isWord(tok) { var i=dicc.length;
-	while (i--) { if (dicc[i]===tok) { break; } }
+	while (i--) { if (dicc[i]===tok && ((dicci[i]&1)==1 || i>dicclocal)) { break; } }
 	return i;
 	}
 
@@ -223,10 +223,7 @@ function compilaWORD(n) {
 	}
 
 function r3token(str) {
-	memc=1;
-	memd=meminidata;
 
-	boot=-1;
 	level=0;
 	var now=0;
 	var ini;
@@ -281,15 +278,7 @@ function r3token(str) {
 	return 0;
 	}
 
-function addinclude(name) {
-	var pos=includes.indexOf(name);
-	if (pos==-1) { 
-		includes.push(name); 
-	} else {
-		
-		}
-	}
-	
+
 function r3includes(str) {
 	var now=0;
 	var ini;	
@@ -299,7 +288,12 @@ function r3includes(str) {
 		if(str[now]==="^") {					// include
 			ini=++now;
 			while (str.charCodeAt(now)>32) { now++; }
-			addinclude(str.slice(ini,now));
+			var name=str.slice(ini,now);
+			if (includes.indexOf(name)==-1) {
+				//if (sessionStorage.getItem(name)=null) return;
+				r3includes(sessionStorage.getItem(name));
+				includes.push(name); 
+				}
 			continue;
 			}
 		if(str[now]==="|") {					// comments	
@@ -322,9 +316,28 @@ function r3includes(str) {
 var nowerror=0;
 
 function r3compile(str) {	
-//	r3includes(str);
-
+	includes.splice(0,includes.length);
 	
+// load includes
+	r3includes(str);
+
+	dicc.splice(0,dicc.length);
+	dicca.splice(0,dicca.length);
+	dicci.splice(0,dicci.length);
+	dicclocal=0;
+	
+	boot=-1
+
+	memc=1;
+	memd=meminidata;
+	
+// tokenize
+	for (var i=0;i<includes.length;i++) {
+		if (r3token(sessionStorage.getItem(includes[i]))) return nowerror;
+		dicclocal=dicc.length;
+		}
+	
+// last tokenizer		
 	if (r3token(str)!=0) return nowerror;
 	return -1;
 	}
@@ -538,15 +551,6 @@ function onMouseUpdate(e) { xm = e.pageX;ym = e.pageY; }
 		
 //---------------------------------------	
 function r3reset(){
-	
-	includes.splice(0,includes.length);
-	boot=-1
-	dicc.splice(0,dicc.length);
-	dicca.splice(0,dicca.length);
-	dicci.splice(0,dicci.length);
-	ndicc=0;
-
-	
 	r3domx=-1;
 	r3showx=-1
 	r3echo="";
@@ -673,9 +677,10 @@ function Run(code) {
   r3run();redraw();redom();
 }
 function r3scanrun() {
-	
+
   canvasini();
   domini();
+
   Array.from(document.getElementsByTagName("script"))
     .filter(({type}) => type === "text/r3")
     .forEach(({text}) => Run(text));

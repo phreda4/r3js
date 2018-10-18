@@ -10,7 +10,7 @@
 	
 <!-- // JUERA BICHO -->
     <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
-<!--    <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script> -->
+    <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script> 
 <!-- // ----- ----- -->
 
 	<script src="./codemirror.js"></script>
@@ -40,29 +40,29 @@ function dumpdicc() { var s="";
 
 function dumpinc() { var s="";
 
-  for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"; }
+//  for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"+sessionStorage.getItem(sessionStorage.key(i))+"\n"; }
 
-//  for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
+  for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
   return s;
   }
-
+  
 const setDiv=(id,value)=>document.getElementById(id).innerText=value;
 
 function dumpVM() {
   setDiv("ip", ip);
   setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
-    setDiv("cs", stack.slice(RTOS,255).join(" "));
-    setDiv("mc", dumpmc());
-    setDiv("md", dumpmd());
+  setDiv("cs", stack.slice(RTOS,255).join(" "));
+  setDiv("mc", dumpmc());
+  setDiv("md", dumpmd());
   setDiv("dic",dumpdicc());
-  setDiv("inc",dumpinc());
-    }
+  
+//  setDiv("inc",dumpinc());
+  
+  }
 
 // VM
 //----------------------------------------------------
 function r3Compile() {
-  r3reset();
-  //if (r3compile(document.getElementById("src").innerText)!=0) {
   var src=editor.getValue("\n");
   var cc=r3compile(src);
   if (cc>-1) {
@@ -76,13 +76,11 @@ function r3Compile() {
   }
 
 function r3Run() {
-  r3echo="";
-  r3reset();
-//  if (r3token(document.getElementById("src").innerText)!=0) {// error
   if (r3token(editor.getValue("\n"))>-1) {// error
     dumpVM();
     return;
     }
+  r3reset();
   r3run();
   redraw();
   dumpVM();
@@ -91,20 +89,21 @@ function r3Run() {
 
 //  Includes
 //----------------------------------------------------
+
 async function loadincludes() {
   if (window.sessionStorage == null) { alert("error de confianza");return; }
   let libsText = await(await fetch("./libs.txt")).text();
-  for (let libname of libsText.split("\n")) {
-    sessionStorage[libname] = await (await fetch(libname)).text();
+  for (let libname of libsText.trim().split("\n")) {
+    libname=libname.trim();
+    sessionStorage.setItem(libname,await (await fetch(libname)).text());
   }
-  dumpVM();
+dumpVM();  
 }
 
 //  Examples
 //----------------------------------------------------
 async function loadex(str) {
   const source = await(await fetch(str)).text();
-  //document.getElementById('src').innerText=source;
   editor.setValue(source);
 }
 
@@ -114,9 +113,10 @@ async function loadex(str) {
 function playintab() {
   var wcanvas=512;
   var hcanvas=512;
-    var pag=window.open();
-    var srccode = editor.getValue("\n"); //document.getElementById("src").innerText;
-    var pagsource = `<!DOCTYPE html>
+  var pag=window.open();
+  var srccode = editor.getValue("\n");
+
+  var pagsource = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -131,6 +131,7 @@ function playintab() {
     <script>r3scanrun();<\/script>
   <\/body>
 <\/html>`;
+
     pag.document.write(pagsource);
   }
 
@@ -149,14 +150,14 @@ function playintab() {
         <div class="navbar-item">
       <div class="buttons">
 
-            <button class="button is-success" onclick="r3Run();">Play</button>
-      <button class="button is-success" onclick="playintab();">Play in Tab</button>
+	<button class="button is-success" onclick="r3Run();">Play</button>
+	<button class="button is-success" onclick="playintab();">Play in Tab</button>
 
-            <button class="button is-primary" onclick="r3Compile();">Compile</button>
-            <button class="button" onclick="r3step();dumpVM();redraw();">Step</button>
+	<button class="button is-primary" onclick="r3Compile();">Compile</button>
+	<button class="button" onclick="r3step();dumpVM();redraw();">Step</button>
 
-      <button class="button">Includes</button>
-
+<!-- <button class="button">Includes</button> -->
+	  
           <div class="dropdown is-hoverable">
             <div class="dropdown-trigger">
               <button
@@ -189,10 +190,8 @@ function playintab() {
       </div>
 
       <div class="navbar-end">
-
         <a class="navbar-item">No Docs</a>
         <a class="navbar-item">No Settings</a>
-
       </div>
 
     </div>
@@ -201,18 +200,6 @@ function playintab() {
   <div class="columns">
     <div class="column is-quarter">
         <div id="src"></div>
-    <script>
-	var editor;
-      window.onload = function() {
-        editor = CodeMirror(document.getElementById("src"), {
-        mode: "text/html",
-		lineNumbers: true,
-		styleActiveLine: true,
-		autofocus:true,
-		theme:"colorforth"
-        });
-      };
-    </script>	
     </div>
 
   <div class="column">
@@ -229,11 +216,11 @@ DS:<div id="ds"></div>
 RS:<div id="cs"></div>
 IP:<div id="ip"></div>
 ERR:<div id="logerror"></div>
-INC:<div id="inc"></div><br>
 DIC:<div id="dic"></div><br>
 MEMCODE:<div id="mc" ></div><br>
 MEMDATA:<div id="md"></div><br>
 
+INC:<div id="inc"></div><br>
       </div>
     </div>
   </div>
@@ -242,8 +229,19 @@ MEMDATA:<div id="md"></div><br>
 /////////
 // BOOT//
 /////////
-//sessionStorage.clear();
-//loadincludes();
+var editor;
+window.onload = function() {
+	editor = CodeMirror(document.getElementById("src"), {
+	mode: "text/html",
+	lineNumbers: true,
+	styleActiveLine: true,
+	autofocus:true,
+	theme:"colorforth"
+	});
+};
+	  
+sessionStorage.clear();
+loadincludes();
 canvasini();
 </script>
 
