@@ -5,16 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
 	
-	<link rel="stylesheet" href="codemirror.css" />
-	<link rel="stylesheet" href="colorforth.css"> 
-	
-<!-- // JUERA BICHO -->
-    <link rel="stylesheet" href="https://rawgit.com/jenil/bulmaswatch/gh-pages/cyborg/bulmaswatch.min.css" />
-    <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script> 
-<!-- // ----- ----- -->
+	<link rel="stylesheet" href="./use/bulma.min.css" />
+	<link rel="stylesheet" href="./use/ico.css" />	
 
-	<script src="./codemirror.js"></script>
+	<link rel="stylesheet" href="./use/codemirror.css" />
+<!--	<link rel="stylesheet" href="./use/colorforth.css">  -->
+	<script src="use/codemirror.js"></script>
+
     <script src="./compiler.js"></script>
+
+</head>
+<body>
+  <nav class="navbar" role="navigation">
+  <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
+
+    <div id="navbarMenu" class="navbar-menu">
+
+      <div class="navbar-start">
+        <div class="navbar-item">
+      <div class="buttons">
+
+	<button class="button is-success" onclick="r3Run();"><i class="ico icon-play"></i></button>
+	
+	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i><i class="ico icon-window-maximize"></i></button>
+
+	<button class="button is-primary" onclick="r3Compile();"><i class="ico icon-cog"></i></button>
+	<button class="button is-primary" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i></button>
+
+<!-- <button class="button">Includes</button> -->
+	  
+          <div class="dropdown is-hoverable">
+            <div class="dropdown-trigger">
+              <button
+                class="button"
+                aria-haspopup="true"
+                aria-controls="dropdown-menu">
+                <span>Examples</span>
+                <span class="icon is-small">
+					<i class="ico icon-down-dir"></i>				  
+                </span>
+              </button>
+            </div>
+
+            <div
+              class="dropdown-menu"
+              id="dropdown-menu"
+              role="menu">
+              <div class="dropdown-content">
+                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/Pattern-XOR-in-canvas.r3');">Pattern XOR in canvas</a>
+                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/Font-test.r3');">Font test</a>
+                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/DOM-test.r3');">DOM test</a>
+                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/SHOW-test.r3');">SHOW test</a>
+                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/XYMOUSE-test.r3');">XYMOUSE test</a>
+              </div>
+            </div>
+          </div>
+
+      </div>
+        </div>
+      </div>
+
+      <div class="navbar-end">
+        <a class="navbar-item">No Docs</a>
+        <a class="navbar-item">No Settings</a>
+      </div>
+
+    </div>
+  </nav>
+
+  <div class="columns">
+    <div class="column is-quarter">
+        <div id="src" style="position: relative;"></div>
+    </div>
+
+  <div class="column">
+    <div id="r3dom"></div>
+    <div id="r3canvas" >
+    <canvas id="canvas" width="512" height="512" ></canvas>
+    </div>
+  </div>
+
+    <div class="column">
+      <div class="panel" style="font-family:Monospace;">
+
+D:<span id="ds"></span>
+R:<span id="cs"></span>
+IP:<div id="ip"></div>
+ERR:<div id="logerror"></div>
+DIC:<div id="dic"></div><br>
+MEMCODE:<div id="mc" ></div><br>
+MEMDATA:<div id="md"></div><br>
+
+INC:<div id="inc"></div><br>
+      </div>
+    </div>
+  </div>
 
 <script>
 // DEBUG
@@ -76,7 +161,7 @@ function r3Compile() {
   }
 
 function r3Run() {
-  if (r3token(editor.getValue("\n"))>-1) {// error
+  if (r3compile(editor.getValue("\n"))>-1) {// error
     dumpVM();
     return;
     }
@@ -92,9 +177,9 @@ function r3Run() {
 
 async function loadincludes() {
   if (window.sessionStorage == null) { alert("error de confianza");return; }
-  let libsText = await(await fetch("./libs.txt")).text();
+  let libsText = await(await fetch("./r3/libs.txt")).text();
   for (let libname of libsText.trim().split("\n")) {
-    libname=libname.trim();
+    libname="r3/"+libname.trim();
     sessionStorage.setItem(libname,await (await fetch(libname)).text());
   }
 dumpVM();  
@@ -114,7 +199,15 @@ function playintab() {
   var wcanvas=512;
   var hcanvas=512;
   var pag=window.open();
-  var srccode = editor.getValue("\n");
+
+  var srccode=editor.getValue("\n");
+  
+  r3includes(srccode);
+
+  var presource="";
+  for (var i=0;i<includes.length;i++) {
+    presource+=sessionStorage.getItem(includes[i]);
+    }
 
   var pagsource = `<!DOCTYPE html>
 <html>
@@ -123,7 +216,8 @@ function playintab() {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>r3</title>
     <script src="./compiler.js"><\/script>
-    <script type="text/r3">${srccode}<\/script>
+    <script type="text/r3">${presource}
+	${srccode}<\/script>
   <\/head>
   <body>
     <div id="r3dom"></div>
@@ -132,116 +226,25 @@ function playintab() {
   <\/body>
 <\/html>`;
 
-    pag.document.write(pagsource);
+  pag.document.write(pagsource);
   }
 
-//----------------------------------------------------
-// DEV-WEB
-//----------------------------------------------------
-</script>
-</head>
-<body>
-  <nav class="navbar" role="navigation">
-  <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
-
-    <div id="navbarMenu" class="navbar-menu">
-
-      <div class="navbar-start">
-        <div class="navbar-item">
-      <div class="buttons">
-
-	<button class="button is-success" onclick="r3Run();">Play</button>
-	<button class="button is-success" onclick="playintab();">Play in Tab</button>
-
-	<button class="button is-primary" onclick="r3Compile();">Compile</button>
-	<button class="button" onclick="r3step();dumpVM();redraw();">Step</button>
-
-<!-- <button class="button">Includes</button> -->
-	  
-          <div class="dropdown is-hoverable">
-            <div class="dropdown-trigger">
-              <button
-                class="button"
-                aria-haspopup="true"
-                aria-controls="dropdown-menu">
-                <span>Examples</span>
-                <span class="icon is-small">
-                  <i class="fas fa-angle-down"></i>
-                </span>
-              </button>
-            </div>
-
-            <div
-              class="dropdown-menu"
-              id="dropdown-menu"
-              role="menu">
-              <div class="dropdown-content">
-                <a href="#" class="dropdown-item" onclick="loadex('examples/Pattern-XOR-in-canvas.r3');">Pattern XOR in canvas</a>
-                <a href="#" class="dropdown-item" onclick="loadex('examples/Font-test.r3');">Font test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('examples/DOM-test.r3');">DOM test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('examples/SHOW-test.r3');">SHOW test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('examples/XYMOUSE-test.r3');">XYMOUSE test</a>
-              </div>
-            </div>
-          </div>
-
-      </div>
-        </div>
-      </div>
-
-      <div class="navbar-end">
-        <a class="navbar-item">No Docs</a>
-        <a class="navbar-item">No Settings</a>
-      </div>
-
-    </div>
-  </nav>
-
-  <div class="columns">
-    <div class="column is-quarter">
-        <div id="src"></div>
-    </div>
-
-  <div class="column">
-    <div id="r3dom"></div>
-    <div id="r3canvas" >
-    <canvas id="canvas" width="512" height="512" ></canvas>
-    </div>
-  </div>
-
-    <div class="column">
-      <div class="panel" style="font-family:Monospace;">
-
-DS:<div id="ds"></div>
-RS:<div id="cs"></div>
-IP:<div id="ip"></div>
-ERR:<div id="logerror"></div>
-DIC:<div id="dic"></div><br>
-MEMCODE:<div id="mc" ></div><br>
-MEMDATA:<div id="md"></div><br>
-
-INC:<div id="inc"></div><br>
-      </div>
-    </div>
-  </div>
-
-<script>
 /////////
 // BOOT//
 /////////
-var editor;
-window.onload = function() {
-	editor = CodeMirror(document.getElementById("src"), {
-	mode: "text/html",
-	lineNumbers: true,
-	styleActiveLine: true,
-	autofocus:true,
-	theme:"colorforth"
-	});
-};
-	  
 sessionStorage.clear();
+
+var editor = CodeMirror(document.getElementById("src"), {
+  mode: "text/html",
+  lineNumbers: true,
+  styleActiveLine: true,
+  autofocus:true,
+  //	theme:"colorforth"
+  });
+editor.setSize("100%","100%");
+	  
 loadincludes();
+
 canvasini();
 </script>
 

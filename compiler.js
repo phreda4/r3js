@@ -100,10 +100,9 @@ function isBas(tok) {
 	}
 
 function isWord(tok) { var i=dicc.length;
-	while (i--) { if (dicc[i]===tok && ((dicci[i]&1)==1 || i>dicclocal)) { break; } }
+	while (i--) { if (dicc[i]===tok && ((dicci[i]&1)==1 || i>=dicclocal)) { break; } }
 	return i;
 	}
-
 
 function codetok(nro) { 
 	if (modo==0 && boot==-1) { boot=memc; }
@@ -147,7 +146,6 @@ function dataMAC(n){
 	if (n==3) {modo=5;} // [	qwords
 	if (n==4) {modo=2;} // ]
 	}
-
 	
 function compilaCODE(name) { var ex=0;
 	if (name[1]==":") { ex=1; }

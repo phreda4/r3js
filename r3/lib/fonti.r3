@@ -1,7 +1,7 @@
 | r3 lib fonti 
 | PHREDA 2018
 
-^gr.r3
+^r3/lib/gr.r3
 
 #:rom8x12 (
 %........ 
@@ -3338,7 +3338,7 @@
 	4 a+ ;
 
 ::char8i | c --
-	3 << dup 2/ + 'rom8x12 +
+	3 << dup 1 >> + 'rom8x12 +
 	sw 8 - 2 << swap
 	12 ( 1? 1 -
 		swap c@+

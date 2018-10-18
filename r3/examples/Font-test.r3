@@ -1,7 +1,7 @@
 | Example 2
 
-^lib/gr.r3
-^lib/fonti.r3
+^r3/lib/gr.r3
+^r3/lib/fonti.r3
 
 :print | str --
   0 0 xy>v >a

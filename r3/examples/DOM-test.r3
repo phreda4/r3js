@@ -1,6 +1,6 @@
 | Example 3
 
-^lib/dom.r3
+^r3/lib/dom.r3
 
 #var 0
 
@@ -9,10 +9,11 @@
 
 :dom
   <br>
-  "Hola Mundo" .s <br>
+  "Hola Mundo" echo <br>
   '1- " -1 " <btn>
-  " " .s var .d " " .s
+  " " echo var .d echo " " echo
   '1+ " +1 " <btn>
+  <br>
   ;
 
 'dom ondom
