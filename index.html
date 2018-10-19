@@ -75,7 +75,11 @@
 
   <div class="columns">
     <div class="column is-quarter">
-        <div id="src" style="position: relative;"></div>
+        <div id="src"></div>
+		<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
+		<div>D:<span id="ds"></span><br></div>
+		<div>R:<span id="cs"></span><br></div>
+		
     </div>
 
   <div class="column">
@@ -88,15 +92,12 @@
     <div class="column">
       <div class="panel" style="font-family:Monospace;">
 
-D:<span id="ds"></span>
-R:<span id="cs"></span>
-IP:<div id="ip"></div>
-ERR:<div id="logerror"></div>
-DIC:<div id="dic"></div><br>
+
+<div id="dic"></div><br>
+
 MEMCODE:<div id="mc" ></div><br>
 MEMDATA:<div id="md"></div><br>
 
-INC:<div id="inc"></div><br>
       </div>
     </div>
   </div>
@@ -118,31 +119,46 @@ function dumpmc() { var s="";
     }
   return s;
   }
-function dumpdicc() { var s="";
-  for (var i=0;i<dicc.length;i++) { s+=dicc[i]+" "+dicca[i]+" "+dicci[i]+"\n"; }
-  return s;
-  }
-
+  
 function dumpinc() { var s="";
-
 //  for(var i=0;i<sessionStorage.length;i++) { s+=sessionStorage.key(i)+"\n"+sessionStorage.getItem(sessionStorage.key(i))+"\n"; }
-
   for (var i=0;i<includes.length;i++) { s+=includes[i]+"\n"; }
   return s;
   }
   
+function dumpd() { var s="";
+  if (NOS==0) {return s;}
+  s+='<span class="tag is-success">'+TOS+'</span>';
+  for (var i=NOS;i>1;i--) { s+='<span class="tag is-success">'+stack[i]+'</span>';}
+  return s;
+  }
+
+function dumpr() { var s="";
+  for (var i=RTOS;i<254;i++) { s+='<span class="tag is-link">'+stack[i]+'</span>';}
+  return s;
+  }
+  
+function dumpdicc() { var s="";
+	s+="<table class='table is-bordered is-striped is-narrow is-hoverable is-fullwidth'>";
+  for (var i=0;i<dicc.length;i++) { 
+	s+="<tr>";  
+	s+="<td>"+dicc[i]+"</td><td>"+dicca[i]+":"+dicci[i]+"</td><td>"+dicci[i]+"</td>"; 
+	s+="</tr>";  	
+	}
+	s+="</table>";	
+  return s;
+  }
+  
 const setDiv=(id,value)=>document.getElementById(id).innerText=value;
+const setDivH=(id,value)=>document.getElementById(id).innerHTML=value;
 
 function dumpVM() {
   setDiv("ip", ip);
-  setDiv("ds", [TOS, ...(stack.slice(2, NOS+1).reverse())].join(" "));
-  setDiv("cs", stack.slice(RTOS,255).join(" "));
+  setDivH("ds", dumpd());
+  setDivH("cs", dumpr());
+  setDivH("dic",dumpdicc());
   setDiv("mc", dumpmc());
   setDiv("md", dumpmd());
-  setDiv("dic",dumpdicc());
-  
-//  setDiv("inc",dumpinc());
-  
   }
 
 // VM
@@ -219,9 +235,10 @@ function playintab() {
     <script type="text/r3">${presource}
 	${srccode}<\/script>
   <\/head>
-  <body>
+  <body bgcolor="#000"><center>
     <div id="r3dom"></div>
     <canvas id="canvas" width="${wcanvas}" height="${hcanvas}" ></canvas>
+	</center>
     <script>r3scanrun();<\/script>
   <\/body>
 <\/html>`;

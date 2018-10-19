@@ -31,6 +31,7 @@ var mem=new DataView(memdata);
 var r3echo="";
 var r3domx=-1;
 var r3showx=-1;
+
 var xm=0;
 var ym=0;
 var ke=0;
@@ -340,6 +341,22 @@ function r3compile(str) {
 	return -1;
 	}
 
+function r3copilewi(str) {
+	dicc.splice(0,dicc.length);
+	dicca.splice(0,dicca.length);
+	dicci.splice(0,dicci.length);
+	
+	boot=-1
+
+	memc=1;
+	memd=meminidata;
+	
+// last tokenizer		
+	if (r3token(str)!=0) return nowerror;
+	return -1;
+	
+  }
+	
 function error(str,now) {
 	nowerror=now;
 	var n2=now;
@@ -545,7 +562,6 @@ function systemmem(TOS)	{
 	}	
 	
  
-function onMouseUpdate(e) { xm = e.pageX;ym = e.pageY; }
 		
 //---------------------------------------	
 function r3reset(){
@@ -553,12 +569,10 @@ function r3reset(){
 	r3showx=-1
 	r3echo="";
 	document.getElementById('r3dom').innerHTML="";
-	
-	document.addEventListener('mousemove',onMouseUpdate,false);
-	document.addEventListener('mouseenter',onMouseUpdate,false);
 
 	//window.addEventListener("keydown", function(event) 	{ ke=event.key;kc=event.code;event.preventDefault(); }, true);
 	//window.addEventListener("keyup", function(event) { 	ke=event.key;kc=event.code;event.preventDefault(); }, true);	
+	
 
 	}
 
@@ -588,6 +602,18 @@ var ctx;
 var imageData;
 var buf8;
 
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+        y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+    };
+}
+
+function getMouse(e) {
+    var pos=getMousePos(canvas, e);xm=pos.x;ym=pos.y;
+	}
+
 function canvasini() {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
@@ -595,6 +621,10 @@ function canvasini() {
 	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
 	
 	meminidata=imageData.data.length;// dinamic???
+
+	canvas.addEventListener('mousemove', getMouse, false);
+	canvas.addEventListener('mouseenter', getMouse, false);	
+  
 	}
 
 function redraw() { 
@@ -670,14 +700,14 @@ return r3machine[tok&0x7f]+s;
 ////////////////////////////////////////////////////////////////////
 
 function Run(code) {
-  r3reset();
-  if (r3token(code)!=0) { return; }
+  if (r3compilewi(code)!=0) { return; }
   r3run();redraw();redom();
 }
 function r3scanrun() {
 
   canvasini();
   domini();
+  r3reset();	
 
   Array.from(document.getElementsByTagName("script"))
     .filter(({type}) => type === "text/r3")

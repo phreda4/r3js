@@ -3,7 +3,7 @@
 
 ^r3/lib/gr.r3
 
-#:rom8x12 (
+#rom8x12 (
 %........ 
 %1.1.1.1. 
 %........ 
@@ -3334,8 +3334,8 @@
 )
 
 :setpix | val mask -- val
-	an? ( ink a!+ ; )
-	4 a+ ;
+	an? ( 4 a+ ; )
+	ink a!+ ;
 
 ::char8i | c --
 	3 << dup 1 >> + 'rom8x12 +
@@ -3345,5 +3345,5 @@
 		$80 ( 1? over setpix 1 >> ) 2drop
 		pick2 a+
 		swap )
-	sw 3 << neg a+
+	sw 2 << dup 1 << + 2 << 32 - neg a+
 	3drop ;
