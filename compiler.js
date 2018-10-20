@@ -34,9 +34,10 @@ var r3showx=-1;
 
 var xm=0;
 var ym=0;
+var bm=0;
+
 var ke=0;
 var kc=0;
-
 
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
@@ -546,18 +547,22 @@ var date=new Date();
 	
 function systemmem(TOS)	{
 	switch(TOS) {
+	// graphics
 	case 0:return 0;				// VFRAME
 	case 1:return canvas.width;		// sw
 	case 2:return canvas.height;	// sh
+	// time
 	case 3:return Date.now();		// msec
 	case 4:return (date.getFullYear()<<16)+(date.getMonth()<<8)+date.getDay();		// y-m-d 0000-00-00
 	case 5:return (date.getHours()<<16)+(date.getMinutes()<<8)+date.getSeconds();		// h:m:s .. 00:00:00
-
 	// keyboard
-	case 6: return ke;
-	case 7: return kc;
+	case 6:return ke;
+	case 7:return kc;
 	// miqui maus
-	case 8: return ym<<16|xm;
+	case 8:return ym<<16|xm;
+	case 9:return bm;
+	// mem
+	case 10:return memd;
 		}
 	}	
 	
@@ -569,11 +574,6 @@ function r3reset(){
 	r3showx=-1
 	r3echo="";
 	document.getElementById('r3dom').innerHTML="";
-
-	//window.addEventListener("keydown", function(event) 	{ ke=event.key;kc=event.code;event.preventDefault(); }, true);
-	//window.addEventListener("keyup", function(event) { 	ke=event.key;kc=event.code;event.preventDefault(); }, true);	
-	
-
 	}
 
 	
@@ -602,18 +602,31 @@ var ctx;
 var imageData;
 var buf8;
 
-function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-        x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
-        y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
-    };
-}
-
 function getMouse(e) {
-    var pos=getMousePos(canvas, e);xm=pos.x;ym=pos.y;
-	}
+  var rect = canvas.getBoundingClientRect();
+  xm=(e.clientX - rect.left) / (rect.right - rect.left) * canvas.width;
+  ym=(e.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height;
+  }
+  
+/*  
+  window.addEventListener('resize', Resize, false);
+// to suppress oncontextmenu because it blocks a mouseup when two buttons are pressed and 
+// the right-mouse button is released before the other button.
+//	canvas.addEventListener('contextmenu',function(e) { return false; }, false);	
+*/  
 
+function getWindowStyleButton(e){ var button = 0;
+  if (e) {
+	if (e.button === 0) button = 1;
+	else if (e.button === 1) button = 4;
+	else if (e.button === 2) button = 2;  
+  } else if (window.event){ button = window.event.button; }
+  return button;
+  }
+	
+function DownMouse(e){ bm = bm | getWindowStyleButton(e); }
+function UpMouse(e){ bm = bm ^ getWindowStyleButton(e); }
+	
 function canvasini() {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
@@ -622,15 +635,26 @@ function canvasini() {
 	
 	meminidata=imageData.data.length;// dinamic???
 
+	// event for var
 	canvas.addEventListener('mousemove', getMouse, false);
 	canvas.addEventListener('mouseenter', getMouse, false);	
-  
+
+	canvas.addEventListener('mousedown', DownMouse, false);
+	canvas.addEventListener('mouseup', UpMouse, false);	
+
+	document.addEventListener("keydown", function(event) { ke=event.key;kc=event.code;
+	//event.preventDefault(); 
+	}, true);
+	document.addEventListener("keyup", function(event) { ke=event.key;kc=event.code;
+	//event.preventDefault();  
+	}, true);	
+
 	}
 
 function redraw() { 
 	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
 	}
-	
+
 
 /*------DOM------*/
 function domini() {

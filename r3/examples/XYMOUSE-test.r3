@@ -4,10 +4,6 @@
 ^r3/lib/str.r3
 ^r3/lib/dom.r3
 
-:keycode 6 sysmem ;
-:keychar 7 sysmem ;
-:xymouse 8 sysmem ;
-
 :hit
   keycode -1 <>? ( ink $ff00 xor 'ink ! )
   drop ;
@@ -20,10 +16,11 @@
   ;
 
 :show
+  bmouse 0? ( drop ; ) drop
   xymouse dup $ffff and swap 16 >>
   xy>v >a
   |ink
-  3 sysmem 18 << $ff or
+  msec 18 << $ff or
   dup a!+ a!+
   hit
   ;

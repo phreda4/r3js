@@ -1,0 +1,42 @@
+<script src="use/jszip.min.js"></script>
+
+
+<h3>Choose the local(s) zip file(s)</h3>
+<p class="note">Note : your browser will process the zip file, don't choose a file too big !</p>
+<input type="file" id="file" name="file" multiple /><br />
+
+<div id="result_block">
+  <h3>Content :</h3>
+  <div id="result"></div>
+</div>
+<script>
+var $result =document.getElementById("result");
+
+document.getElementById("file").addEventListener("change", function(evt) {
+    // remove content
+    $result.innerHTML="";
+	var str="";
+
+    // Closure to capture the file information.
+    function handleFile(f) {
+		str+=f.name+" ";
+		
+        JSZip.loadAsync(f)                                   // 1) read the Blob
+        .then( function(zip) {
+		
+            zip.forEach(function (relativePath, zipEntry) {  // 2) print entries
+                str+=zipEntry.name+" ";
+                });
+					$result.innerHTML=str;
+        }, function (e) {
+			str+="error";
+        });
+    }
+
+    var files = evt.target.files;
+    for (var i = 0; i < files.length; i++) {
+        handleFile(files[i]);
+	
+    }
+},false);
+</script>		
