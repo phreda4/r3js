@@ -1,42 +1,69 @@
 <script src="use/jszip.min.js"></script>
 
+<h3>load session storage</h3>
 
-<h3>Choose the local(s) zip file(s)</h3>
-<p class="note">Note : your browser will process the zip file, don't choose a file too big !</p>
-<input type="file" id="file" name="file" multiple /><br />
+<input type="file" id="file" name="file"/><br />
+<button onclick="versess();">Ver</button>
 
 <div id="result_block">
-  <h3>Content :</h3>
+  <h3>file :</h3>
   <div id="result"></div>
 </div>
+
 <script>
-var $result =document.getElementById("result");
 
+//---------------------- from file
 document.getElementById("file").addEventListener("change", function(evt) {
-    // remove content
-    $result.innerHTML="";
-	var str="";
-
     // Closure to capture the file information.
     function handleFile(f) {
-		str+=f.name+" ";
-		
         JSZip.loadAsync(f)                                   // 1) read the Blob
         .then( function(zip) {
-		
-            zip.forEach(function (relativePath, zipEntry) {  // 2) print entries
-                str+=zipEntry.name+" ";
+            zip.forEach(function (relativePath, file) {  // 2) print entries
+				file.async("string").then(function (s) { sessionStorage.setItem(relativePath,s); });
                 });
-					$result.innerHTML=str;
-        }, function (e) {
-			str+="error";
-        });
+        }, function (e) {  });
     }
 
+	sessionStorage.clear();
     var files = evt.target.files;
     for (var i = 0; i < files.length; i++) {
         handleFile(files[i]);
 	
     }
 },false);
+
+//---------------------- from url
+function fromURL(name) {
+sessionStorage.clear();
+fetch(name)
+.then(function (response) { // 2) filter on 200 OK
+    if (response.status === 200 || response.status===0) {
+        return Promise.resolve(response.blob());
+    } else {
+        return Promise.reject(new Error(response.statusText));
+    }
+})
+.then(JSZip.loadAsync)
+.then( function (zip) {
+  zip.forEach(function (relativePath,file){
+     //console.log("iterating over",relativePath); 
+    file.async("string").then(function (s) { sessionStorage.setItem(relativePath,s); });
+    });
+});
+}
+
+//---------------------- DUMP
+function versess() {
+var $result =document.getElementById("result");
+$result.innerHTML='';
+for(var i=0;i<sessionStorage.length;i++){
+	var name=sessionStorage.key(i);
+	//var precio=sessionStorage.getItem(producto);
+	var cont="..";
+	$result.innerHTML += '<div>'+name+' - '+cont+'</div>';
+	}
+}
+
+//--- BOOT
+fromURL('r3.zip');
 </script>		
