@@ -401,14 +401,15 @@ function r3op(op) { var W,W1;
 	case 23:if (TOS==0) {ip+=(op>>7);}; break;//UIF
 	case 24:if (TOS<0) {ip+=(op>>7);}; break;//PIF
 	case 25:if (TOS>=0) {ip+=(op>>7);}; break;//NIF
-	case 26:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
-	case 27:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
-	case 28:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
-	case 29:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
-	case 30:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
-	case 31:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
-	case 32:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAN
-	case 33:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNA
+	
+	case 26:if (TOS<stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
+	case 27:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
+	case 28:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
+	case 29:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
+	case 30:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
+	case 31:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
+	case 32:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNA
+	case 33:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAN
 	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} 
 				TOS=stack[NOS-1];NOS-=2;break;//BTW (need bit trick)
 
@@ -626,15 +627,8 @@ function getWindowStyleButton(e){ var button = 0;
 	
 function DownMouse(e){ bm = bm | getWindowStyleButton(e); }
 function UpMouse(e){ bm = bm ^ getWindowStyleButton(e); }
-	
-function canvasini() {
-	canvas = document.getElementById('canvas');
-	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
-	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
-	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
-	
-	meminidata=imageData.data.length;// dinamic???
 
+function eventIni() {	
 	// event for var
 	canvas.addEventListener('mousemove', getMouse, false);
 	canvas.addEventListener('mouseenter', getMouse, false);	
@@ -644,11 +638,37 @@ function canvasini() {
 
 	document.addEventListener("keydown", function(event) { ke=event.key;kc=event.code;
 	//event.preventDefault(); 
-	}, true);
+	}, false);
 	document.addEventListener("keyup", function(event) { ke=event.key;kc=event.code;
 	//event.preventDefault();  
-	}, true);	
+	}, false);	
+}
 
+function eventDel() {
+	canvas.removeEventListener('mousemove', getMouse, false);
+	canvas.removeEventListener('mouseenter', getMouse, false);	
+
+	canvas.removeEventListener('mousedown', DownMouse, false);
+	canvas.removeEventListener('mouseup', UpMouse, false);	
+
+	document.removeEventListener("keydown", function(event) { ke=event.key;kc=event.code;
+	//event.preventDefault(); 
+	}, false);
+	document.removeEventListener("keyup", function(event) { ke=event.key;kc=event.code;
+	//event.preventDefault();  
+	}, false);	
+	
+}
+
+function canvasini() {
+	canvas = document.getElementById('canvas');
+	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
+	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
+	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
+	
+	meminidata=imageData.data.length;// dinamic???
+
+	eventIni();
 	}
 
 function redraw() { 
