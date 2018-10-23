@@ -41,7 +41,7 @@ var kc=0;
 
 var r3machine=[
 "nop",":","::","#","##","|","^",	// 6
-"lit","lit","lit","lit","str",		// 11
+"","","","","str",		// 11
 "call","var","dcode","ddata",		// 15
 ";","jmp","jmpw","[","]"
 ];
@@ -73,11 +73,11 @@ function isNro(tok) {
 	if (nro!=null) { nro=parseInt(tok)*sign;return true; }
 	nro=tok.match(/^\d+.\d+$/); // fixed.point
 	if (nro!=null) { 
-		n=tok.split(".");
+		var n=tok.split(".");
 		var n1=parseInt(n[0]),v=1;
 		for (var i=0;i<n[1].length;i++) { v*=10; }
-		n2=0x10000*parseInt(n[1])/v;
-		nro=((n1<<16)|(n2&0xffff))*sign;// falta
+		var n2=0x10000*parseInt(n[1])/v;
+		nro=((n1<<16)|(n2&0xffff))*sign;
 		return true; 
 		}
 	switch (tok[0]) {
@@ -571,6 +571,7 @@ function systemmem(TOS)	{
 		
 //---------------------------------------	
 function r3reset(){
+	NOS=0;TOS=0;
 	r3domx=-1;
 	r3showx=-1
 	r3echo="";
@@ -654,7 +655,7 @@ function eventDel() {
 	document.removeEventListener("keydown", function(event) { ke=event.key;kc=event.code;
 	//event.preventDefault(); 
 	}, false);
-	document.removeEventListener("keyup", function(event) { ke=event.key;kc=event.code;
+	document.removeEventListener("keyup", function(event) { ke=event.key;kc=0x10000|event.code;
 	//event.preventDefault();  
 	}, false);	
 	
@@ -724,16 +725,16 @@ function numct(tok) // cte
 function printmr3(tok) {
 var s="";
 switch(tok&0x7f){
-		case 7:s+="."+num9(tok);break
+		case 7:s+=num9(tok);break
 		case 8:	
 		case 12:case 13:case 14:case 15:
 		case 17:case 18:
 		case 22:case 23:case 24:case 25:
 		case 26:case 27:case 28:case 29:case 30:case 31:
 		case 32:case 33:case 34:
-			s+="."+numr(tok);break
-		case 9:s+="."+numrn(tok);break
-		case 10:s+="."+numct(tok);break
+			s+=numr(tok);break
+		case 9:s+=numrn(tok);break
+		case 10:s+=numct(tok);break
 //		default:
 	}
 if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }
