@@ -1,8 +1,8 @@
 | r3 lib DOM play
 | PHREDA 2018
 
-^r3/lib/sys.r3
-^r3/lib/str.r3
+^lib/sys.r3
+^lib/str.r3
 
 ::<br> 
  "<br>" echo ;

@@ -1,7 +1,7 @@
 | r3 lib VFRAME play
 | PHREDA 2018
 
-^r3/lib/sys.r3
+^lib/sys.r3
 
 ##ink $ff00ff
 ##paper $ff
@@ -32,12 +32,17 @@
   -? ( rot over + rot rot neg )
   >r xy>v ink swap r> fill ;
   
+:vline | x1 y1 cnt
+	rot rot xy>v >a
+	( 1? 1 - ink a! sw 2 << a+ ) drop ;
+	
 :iline | xd yd --
   ya =? ( xa hline ; )
   xa ya 
   pick2 <? ( 2swap )   | xm ym xM yM
   pick2 - 1 + >r	   | xm ym xM  r:canty
-  pick2 - r@ 16 <</
+  pick2 - 0? ( drop r> vline ; )
+  r@ 16 <</
   rot 16 << $8000 + 
   rot rot r>           | xm<<16 ym delta canty
   ( 1? 1 - >r >r

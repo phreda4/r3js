@@ -1,7 +1,7 @@
 | r3 lib fonti 
 | PHREDA 2018
 
-^r3/lib/gr.r3
+^lib/gr.r3
 
 #rom8x12 (
 %........ 

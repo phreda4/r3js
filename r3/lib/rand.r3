@@ -1,7 +1,7 @@
 | funciones aleatorias
 | PHREDA 2010
 
-^r3/lib/sys.r3
+^lib/sys.r3
 
 ##seed8 12345
 
