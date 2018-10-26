@@ -178,7 +178,8 @@ function compilaLIT(n) {
 		codetok((n<<7)+8);
 		return;
 		} 
-	codetok((n<<7)+10); // falta cte en mem
+	codetok((n&0xffffff80)+8); // falta cte en mem
+	codetok(((n&0x7f)<<7)+9); // falta cte en mem	
 	}
 
 function compilaSTR(str) {
@@ -369,7 +370,10 @@ function r3copilewi(str) {
 function error(str,now) {
 	nowerror=now;
 	var n2=now;
-	var n1=now-2;while (str.charCodeAt(n1)>32) {n1--;}
+	var n1=now-1;
+	while (n1>0 && str.charCodeAt(n1)>32) {n1--;}
+	
+	editor.markText(n1, n2, {className: 'syntax-error', title: "Not Word"})
 	document.getElementById("logerror").innerText = "Not Word :"+str.slice(n1,n2);
 	}
 
@@ -391,7 +395,8 @@ function r3op(op) { var W,W1;
 	switch(op&0x7f){
 	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		//LIT9
 	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				//LITres
-	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;			//LITreg neg
+//	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;			//LITreg neg
+	case 9: NOS++;stack[NOS]=TOS;TOS|=(op>>7);break;			//LITreg compl
 	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;		// LITcte
 	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// STR
 	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;				// CALL

@@ -5,103 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
 	
-	<link rel="stylesheet" href="./use/bulma.min.css" />
-	<link rel="stylesheet" href="./use/ico.css" />	
-
-	<link rel="stylesheet" href="./use/codemirror.css" />
-<!--	<link rel="stylesheet" href="./use/colorforth.css">  -->
+	<link rel="stylesheet" href="use/bulma.min.css" />
+	<link rel="stylesheet" href="use/ico.css" />	
+	<link rel="stylesheet" href="use/codemirror.css" />
+<!--	<link rel="stylesheet" href="use/colorforth.css">  -->
 	<script src="use/codemirror.js"></script>
+	<script src="use/jszip.min.js"></script>
 
-    <script src="./compiler.js"></script>
+    <script src="compiler.js"></script>
 
 </head>
-<body>
-  <nav class="navbar" role="navigation">
-  <a class="navbar-item" href="https://github.com/r3www/r3">r3</a>
+<body class="has-navbar-fixed-top">
+  <nav class="navbar is-fixed-top" role="navigation">
+  <a class="navbar-item">r3&nbsp;
+	<button id="mainbtn" class="button is-success is-outlined" onclick="r3RunState();">
+	  <i id="mainico" class="ico icon-play"></i>
+	</button>
+	<button id="debugbtn" class="button is-primary is-outlined" onclick="r3Compile();">
+	  <i class="ico icon-cog"></i>
+	</button>
+  </a>
 
-    <div id="navbarMenu" class="navbar-menu">
-
-      <div class="navbar-start">
-        <div class="navbar-item">
+  <div id="navbarMenu" class="navbar-menu">
+    <div class="navbar-start">
+      <div class="navbar-item">
       <div class="buttons">
-
-	<button class="button is-success" onclick="r3Run();"><i class="ico icon-play"></i></button>
-	
-	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i><i class="ico icon-window-maximize"></i></button>
-
-	<button class="button is-primary" onclick="r3Compile();"><i class="ico icon-cog"></i></button>
+<!--	  
+	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i></button>
 	<button class="button is-primary" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i></button>
+-->
 
-<!-- <button class="button">Includes</button> -->
-	  
-          <div class="dropdown is-hoverable">
-            <div class="dropdown-trigger">
-              <button
-                class="button"
-                aria-haspopup="true"
-                aria-controls="dropdown-menu">
-                <span>Examples</span>
-                <span class="icon is-small">
-					<i class="ico icon-down-dir"></i>				  
-                </span>
-              </button>
-            </div>
-
-            <div
-              class="dropdown-menu"
-              id="dropdown-menu"
-              role="menu">
-              <div class="dropdown-content">
-                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/Pattern-XOR-in-canvas.r3');">Pattern XOR in canvas</a>
-                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/Font-test.r3');">Font test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/DOM-test.r3');">DOM test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/SHOW-test.r3');">SHOW test</a>
-                <a href="#" class="dropdown-item" onclick="loadex('r3/examples/XYMOUSE-test.r3');">XYMOUSE test</a>
-              </div>
-            </div>
-          </div>
-
+		<div id="filesis"></div>
+		
       </div>
-        </div>
-      </div>
+    </div>
+  </div>
 
       <div class="navbar-end">
-        <a class="navbar-item">No Docs</a>
+	  
+<!--        <a class="navbar-item">No Docs</a>
         <a class="navbar-item">No Settings</a>
+		-->
       </div>
 
     </div>
   </nav>
 
+  <div id="modedit" >
   <div class="columns">
-    <div class="column is-quarter">
-        <div id="src"></div>
-		<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
-		<div>D:<span id="ds"></span><br></div>
-		<div>R:<span id="cs"></span><br></div>
+    <div class="column is-half">
+	
+  <nav class="tabs is-boxed" style="margin:0">
+        <div class="container" id="codetabs">
 		
+<!--		
+          <ul>
+            <li class="tab is-active" onclick="openTab(event,'WebDev')"><a>new</a></li>
+            <li class="tab" onclick="openTab(event,'WebAud')"><a>lib</a></li>
+            <li class="tab" onclick="openTab(event,'Support')"><a>coso</a></li>
+          </ul>
+-->		  
+        </div>
+  </nav>
+	  
+  <div id="src"></div>
     </div>
-
-  <div class="column">
-    <div id="r3dom"></div>
-    <div id="r3canvas" >
-    <canvas id="canvas" width="512" height="512" ></canvas>
-    </div>
-  </div>
 
     <div class="column">
       <div class="panel" style="font-family:Monospace;">
-
-
-
+	  
+  
+		<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
+		<div>D:<span id="ds"></span><br></div>
+		<div>R:<span id="cs"></span><br></div>
 
 MEMCODE:<div id="mc" ></div><br>
 MEMDATA:<div id="md"></div><br>
 <div id="dic"></div><br>
+
       </div>
+    </div>
+	
+	</div>
+  </div>
+  
+  <div id="moderun" style="display:none;">
+    <div id="r3dom"></div>
+    <div id="r3canvas">
+    <canvas id="canvas" width="512" height="512" ></canvas>
+
     </div>
   </div>
 
+  <div id="modeload" style="display:none;">
+    <input type="file" id="file" name="file"/>
+  </div>
+  
 <script>
 // DEBUG
 //----------------------------------------------------
@@ -176,36 +175,66 @@ function r3Compile() {
   dumpVM();
   }
 
+function dumpError(){
+}
+
 function r3Run() {
   if (r3compile(editor.getValue("\n"))>-1) {// error
+	dumpError();
     dumpVM();
     return;
     }
+	
   r3reset();
   r3run();
+  
   redraw();
-  dumpVM();
   document.getElementById("r3dom").innerHTML=r3echo;
+  dumpVM();  
   }
 
-//  Includes
-//----------------------------------------------------
-
-async function loadincludes() {
-  if (window.sessionStorage == null) { alert("error de confianza");return; }
-  let libsText = await(await fetch("./r3/libs.txt")).text();
-  for (let libname of libsText.trim().split("\n")) {
-    libname="r3/"+libname.trim();
-    sessionStorage.setItem(libname,await (await fetch(libname)).text());
-  }
-dumpVM();  
+function r3Stop() {
+eventDel();
+document.getElementById('moderun').style.display = 'none';
+document.getElementById('modedit').style.display = 'block';
+document.getElementById('mainbtn').onclick = r3RunState;
+document.getElementById('mainbtn').classList.remove('is-danger');
+document.getElementById('mainbtn').classList.add('is-success');
+document.getElementById('mainico').className = "ico icon-play";
+editor.focus();
 }
 
+function r3RunState() {
+  if (r3compile(editor.getValue("\n"))>-1) {// error
+	dumpError();
+    dumpVM();
+    return;
+    }
+
+document.getElementById('modedit').style.display = 'none';
+document.getElementById('moderun').style.display = 'block';
+document.getElementById('mainbtn').onclick = r3Stop;
+document.getElementById('mainbtn').classList.remove('is-success');
+document.getElementById('mainbtn').classList.add('is-danger');
+document.getElementById('mainico').className = "ico icon-stop";
+
+  canvasini();    
+  
+  r3reset();
+  r3run();
+  
+  redraw();
+  document.getElementById("r3dom").innerHTML=r3echo;
+  dumpVM();  
+  }
+  
 //  Examples
 //----------------------------------------------------
-async function loadex(str) {
-  const source = await(await fetch(str)).text();
-  editor.setValue(source);
+function codeload(name) {
+  sessionStorage.setItem(nametab,editor.getValue("\n"));
+  editor.setValue(sessionStorage.getItem(name));
+  nametab=name;
+  addtab(name);
 }
 
 //----------------------------------------------------
@@ -252,18 +281,178 @@ function playintab() {
 sessionStorage.clear();
 
 var editor = CodeMirror(document.getElementById("src"), {
-  mode: "text/html",
+  //mode: "text/html",
   lineNumbers: true,
   styleActiveLine: true,
   autofocus:true,
+  gutters: ["note-gutter", "CodeMirror-linenumbers"],
   //	theme:"colorforth"
   });
 editor.setSize("100%","100%");
-	  
-loadincludes();
+//editor.setGutterMarker(0, "note-gutter", document.createTextNode("hi"));
 
-canvasini();
 </script>
 
   </body>
 </html>
+
+<style>
+syntax-error
+</style>
+<!--
+<h3>load session storage</h3>
+
+<input type="file" id="file" name="file"/><br />
+<button onclick="versess();">Ver</button>
+
+<div id="result_block">
+  <h3>file :</h3>
+  <div id="result"></div>
+</div>
+-->
+<script>
+
+//-------------------------
+var nametab="";
+var codetabs=[];
+
+function gentab(name) {
+var d=document.getElementById("codetabs");
+var s="<ul>";
+for(var i=0;i<codetabs.length;i++) {
+  s+="<li class='tab";
+  if (codetabs[i]==name) { s+=" is-active"; }  
+  s+="' onclick='openTab(event,"+'"'+codetabs[i]+'"'+")'><a>"+codetabs[i];
+  s+="&nbsp;<button class='delete is-small' onclick='deltab("+'"'+codetabs[i]+'"'+");'></button></a></li>";
+  }
+s+="</ul>";
+d.innerHTML=s;
+}
+
+function newempty() {
+nametab='new';
+addtab(nametab);
+sessionStorage.setItem(nametab,"");
+editor.setValue(sessionStorage.getItem(nametab));
+}
+
+function addtab(name) {
+var index=codetabs.indexOf(name);
+if (index==-1) {
+  codetabs.push(name);
+  gentab(name);
+  }
+}
+
+function deltab(name) {
+var index=codetabs.indexOf(name);
+if (index>-1) {
+  codetabs.splice(index,1);
+  if (codetabs.length==0) { newempty();return; } 
+  if (index>0) index--;
+  gentab(codetabs[index]);
+  editor.setValue(sessionStorage.getItem(codetabs[index]));
+  }
+return false;
+}
+
+function openTab(evt, tabName) {
+  var i, tablinks;
+  tablinks = document.getElementsByClassName("tab");
+  for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].className = tablinks[i].className.replace(" is-active", "");
+  }
+  evt.currentTarget.className += " is-active";
+  
+  sessionStorage.setItem(nametab,editor.getValue("\n"));
+  editor.setValue(sessionStorage.getItem(tabName));
+  nametab=tabName;
+}
+
+//------------------------------------------
+function addfilep(path,name) {
+var d=document.getElementById("mp"+path);
+if (d==null) {
+var s=`
+<div class="dropdown is-hoverable">
+ <div class="dropdown-trigger">
+  <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+   <span>${path}<\/span>
+   <span class="icon is-small"><i class="ico icon-down-dir"><\/i><\/span>
+  <\/button>
+ <\/div>
+ <div class="dropdown-menu" id="dropdown-menu" role="menu">
+  <div class="dropdown-content" id="mp${path}"><\/div>
+ <\/div>
+<\/div>`;
+var i=document.getElementById("filesis");
+i.innerHTML+=s;
+d=document.getElementById("mp"+path);
+}
+d.innerHTML+='<a href="#" class="dropdown-item" onclick="codeload('+"'"+path+"/"+name+"'"+');">'+name+'</a>';
+}
+
+function addfile(name,s) {
+if (s=="") return;
+sessionStorage.setItem(name,s);
+var path=name.split("/");
+if (path[1]!=null) {
+  addfilep(path[0],path[1]);
+  }
+  
+}
+
+//---------------------- from url
+function fromURL(name) {
+sessionStorage.clear();
+fetch(name)
+.then(function (response) { if (response.status === 200 || response.status===0) { 
+  return Promise.resolve(response.blob());
+} else {
+  return Promise.reject(new Error(response.statusText));
+  }
+})
+.then(JSZip.loadAsync)
+.then( function (zip) {
+  zip.forEach(function (name,file){
+    file.async("string").then(function (s) { addfile(name,s); });
+    });
+});
+}
+
+//---------------------- from file
+document.getElementById("file").addEventListener("change", function(evt) {
+    // Closure to capture the file information.
+    function handleFile(f) {
+        JSZip.loadAsync(f)                                   // 1) read the Blob
+        .then( function(zip) {
+            zip.forEach(function (name, file) {  // 2) print entries
+				file.async("string").then(function (s) { addfile(name,s); });
+                });
+        }, function (e) {  });
+    }
+
+	sessionStorage.clear();
+    var files = evt.target.files;
+    for (var i = 0; i < files.length; i++) {
+        handleFile(files[i]);
+	
+    }
+},false);
+
+//---------------------- DUMP
+function versess() {
+var $result =document.getElementById("result");
+$result.innerHTML='';
+for(var i=0;i<sessionStorage.length;i++){
+	var name=sessionStorage.key(i);
+	//var precio=sessionStorage.getItem(producto);
+	var cont="..";
+	$result.innerHTML += '<div>'+name+' - '+cont+'</div>';
+	}
+}
+
+//--- BOOT
+fromURL('r3.zip');
+newempty();
+</script>		
