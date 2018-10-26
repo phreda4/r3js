@@ -132,8 +132,15 @@ function datastr(n) { var s="";
 	return s;
 	}
 
+function closevar() {
+	if (dicc.length==0) { return; }
+	if ((dicci[dicc.length-1]&0x10)==0) { return; } // prev is var
+	if (dicca[dicc.length-1]<memd) { return; } // have val
+	mem.setInt32(memd,0);memd+=4;
+}
 
 function compilaDATA(name) { var ex=0;
+	closevar();
 	if (name[1]=="#") { ex=1; }
 	dicc.push(name.slice(ex+1,name.length).toUpperCase());
 	dicca.push(memd);
@@ -150,6 +157,7 @@ function dataMAC(n){
 	}
 	
 function compilaCODE(name) { var ex=0;
+	closevar();
 	if (name[1]==":") { ex=1; }
 	dicc.push(name.slice(ex+1,name.length).toUpperCase());
 	dicca.push(memc);
