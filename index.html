@@ -7,9 +7,11 @@
 	
 	<link rel="stylesheet" href="use/bulma.min.css" />
 	<link rel="stylesheet" href="use/ico.css" />	
+	
 	<link rel="stylesheet" href="use/codemirror.css" />
 <!--	<link rel="stylesheet" href="use/colorforth.css">  -->
 	<script src="use/codemirror.js"></script>
+
 	<script src="use/jszip.min.js"></script>
 
     <script src="compiler.js"></script>
@@ -68,7 +70,7 @@
         </div>
   </nav>
 	  
-  <div id="src"></div>
+    <div id="src"></div> 
     </div>
 
     <div class="column">
@@ -289,6 +291,7 @@ var editor = CodeMirror(document.getElementById("src"), {
   //	theme:"colorforth"
   });
 editor.setSize("100%","100%");
+
 //editor.setGutterMarker(0, "note-gutter", document.createTextNode("hi"));
 
 </script>
@@ -296,15 +299,10 @@ editor.setSize("100%","100%");
   </body>
 </html>
 
-<style>
-syntax-error
-</style>
 <!--
 <h3>load session storage</h3>
-
 <input type="file" id="file" name="file"/><br />
 <button onclick="versess();">Ver</button>
-
 <div id="result_block">
   <h3>file :</h3>
   <div id="result"></div>
@@ -455,4 +453,4 @@ for(var i=0;i<sessionStorage.length;i++){
 //--- BOOT
 fromURL('r3.zip');
 newempty();
-</script>		
+</script>

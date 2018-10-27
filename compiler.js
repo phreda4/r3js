@@ -178,8 +178,8 @@ function compilaLIT(n) {
 		codetok((n<<7)+8);
 		return;
 		} 
-	codetok((n&0xffffff80)+8); // falta cte en mem
-	codetok(((n&0x7f)<<7)+9); // falta cte en mem	
+	codetok((n&0xffffff80)+9); // falta cte en mem
+	codetok(((n&0x7f)<<7)+10); // falta cte en mem	
 	}
 
 function compilaSTR(str) {
@@ -393,11 +393,10 @@ var stack=new Int32Array(256);
 
 function r3op(op) { var W,W1;
 	switch(op&0x7f){
-	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		//LIT9
-	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				//LITres
-//	case 9: NOS++;stack[NOS]=TOS;TOS=-(op>>7);break;			//LITreg neg
-	case 9: NOS++;stack[NOS]=TOS;TOS|=(op>>7);break;			//LITreg compl
-	case 10:NOS++;stack[NOS]=TOS;TOS=memcode[op>>7];break;		// LITcte
+	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		// LIT9
+	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// LITres
+	case 9: NOS++;stack[NOS]=TOS;TOS=(op&0xffffff80);break;		// LIT1
+	case 10:TOS|=(op>>7)&0x7f;break;		// LIT2
 	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// STR
 	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;				// CALL
 	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);break;	// VAR
@@ -746,8 +745,8 @@ switch(tok&0x7f){
 		case 26:case 27:case 28:case 29:case 30:case 31:
 		case 32:case 33:case 34:
 			s+=numr(tok);break
-		case 9:s+=numrn(tok);break
-		case 10:s+=numct(tok);break
+		case 9:s+=tok&0xffffff80;break
+		case 10:s+=(tok>>7)&0x7f;break
 //		default:
 	}
 if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }
