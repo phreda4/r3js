@@ -8,12 +8,15 @@
 	<link rel="stylesheet" href="use/bulma.min.css" />
 	<link rel="stylesheet" href="use/ico.css" />	
 	
+	<link rel="stylesheet" href="use/vanillatree.css">
+	
 	<link rel="stylesheet" href="use/codemirror.css" />
 <!--	<link rel="stylesheet" href="use/colorforth.css">  -->
 	<script src="use/codemirror.js"></script>
 
 	<script src="use/jszip.min.js"></script>
-
+	<script src="use/vanillatree.min.js"></script>
+  
     <script src="compiler.js"></script>
 
 </head>
@@ -75,17 +78,16 @@
 
     <div class="column">
       <div class="panel" style="font-family:Monospace;">
-	  
-  
-		<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
-		<div>D:<span id="ds"></span><br></div>
-		<div>R:<span id="cs"></span><br></div>
-
-MEMCODE:<div id="mc" ></div><br>
-MEMDATA:<div id="md"></div><br>
-<div id="dic"></div><br>
-
-      </div>
+	    <input type="text" class="input" value="r3.zip"/>
+		<br>
+		<div id="filelist"></div>
+		<br>
+		<button class="button is-small">canvas 512x512</button>
+		<button class="button is-small">dom</button> 
+		<br>
+		<button class="button is-small">save</button>
+		<button class="button is-small">load</button>		
+	  </div>
     </div>
 	
 	</div>
@@ -95,11 +97,19 @@ MEMDATA:<div id="md"></div><br>
     <div id="r3dom"></div>
     <div id="r3canvas">
     <canvas id="canvas" width="512" height="512" ></canvas>
-
     </div>
+	
+	<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
+	<div>D:<span id="ds"></span><br></div>
+	<div>R:<span id="cs"></span><br></div>
+MEMCODE:<div id="mc" ></div><br>
+MEMDATA:<div id="md"></div><br>
+	<div id="dic"></div><br>
+
+	
   </div>
 
-  <div id="modeload" style="display:none;">
+  <div id="modeimg" style="display:none;">
     <input type="file" id="file" name="file"/>
   </div>
   
@@ -235,8 +245,9 @@ document.getElementById('mainico').className = "ico icon-stop";
 function codeload(name) {
   sessionStorage.setItem(nametab,editor.getValue("\n"));
   editor.setValue(sessionStorage.getItem(name));
-  nametab=name;
-  addtab(name);
+  n=name.split("/");
+  nametab=n[1];
+  addtab(n[1]);
 }
 
 //----------------------------------------------------
@@ -368,6 +379,12 @@ function openTab(evt, tabName) {
 }
 
 //------------------------------------------
+function addfilelist(path,name) { var s="";
+var b='<button onclick="codeload('+"'"+path+"/"+name+"'"+');">'+name+'</button>';
+document.getElementById("filelist").innerHTML+=b;
+}
+
+//------------------------------------------
 function addfilep(path,name) {
 var d=document.getElementById("mp"+path);
 if (d==null) {
@@ -391,13 +408,30 @@ d.innerHTML+='<a href="#" class="dropdown-item" onclick="codeload('+"'"+path+"/"
 }
 
 function addfile(name,s) {
+/*
 if (s=="") return;
 sessionStorage.setItem(name,s);
 var path=name.split("/");
 if (path[1]!=null) {
-  addfilep(path[0],path[1]);
+//  addfilep(path[0],path[1]);
+//	addfilelist(path,name);
+tree.add({
+    label: path[1],
+    parent: path[0],
+    id: name
+    });
+  } else {
+	tree.add({ label:name,id:name});
   }
-  
+*/  
+
+var path=name.split("/");
+if (path[1]!="") {
+	tree.add({ label:path[1],parent:path[0],id:name });
+	sessionStorage.setItem(name,s);
+  } else {
+	tree.add({ label:name,id:path[0]});
+  }
 }
 
 //---------------------- from url
@@ -453,4 +487,26 @@ for(var i=0;i<sessionStorage.length;i++){
 //--- BOOT
 fromURL('r3.zip');
 newempty();
+
+const main = document.getElementById('filelist');
+const tree = new VanillaTree( main, {
+    contextmenu: [{
+      label: 'Include', action: function(id) { alert('Hey ' + id); }
+    }, {
+      label: 'Delete', action: function(id) { alert('Blah ' + id); }
+    }]
+    });
+	
+main.addEventListener('vtree-open', function(evt) { 
+ //info.innerHTML = evt.detail.id + ' is opened'; 
+ });
+main.addEventListener('vtree-close', function(evt) {
+ //info.innerHTML = evt.detail.id + ' is closed';
+ });
+
+main.addEventListener('vtree-select',function(evt) {
+  codeload(evt.detail.id);
+//  info.innerHTML = evt.detail.id + ' is selected';
+  });
+
 </script>
