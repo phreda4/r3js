@@ -7,18 +7,21 @@
 	
 	<link rel="stylesheet" href="use/bulma.min.css" />
 	<link rel="stylesheet" href="use/ico.css" />	
-	
 	<link rel="stylesheet" href="use/vanillatree.css">
-	
 	<link rel="stylesheet" href="use/codemirror.css" />
 <!--	<link rel="stylesheet" href="use/colorforth.css">  -->
-	<script src="use/codemirror.js"></script>
 
+	<script src="use/codemirror.js"></script>
 	<script src="use/jszip.min.js"></script>
 	<script src="use/vanillatree.min.js"></script>
   
     <script src="compiler.js"></script>
 
+<style rel="stylesheet" type="text/css"> 
+#filelist ul { margin: 0px; } // vanillatree
+</style>
+
+</head>	
 </head>
 <body class="has-navbar-fixed-top">
   <nav class="navbar is-fixed-top" role="navigation">
@@ -46,6 +49,7 @@
     </div>
   </div>
 
+    
       <div class="navbar-end">
 	  
 <!--        <a class="navbar-item">No Docs</a>
@@ -58,7 +62,7 @@
 
   <div id="modedit" >
   <div class="columns">
-    <div class="column is-half">
+    <div class="column is-three-quarters">
 	
   <nav class="tabs is-boxed" style="margin:0">
         <div class="container" id="codetabs">
@@ -76,18 +80,40 @@
     <div id="src"></div> 
     </div>
 
+	
+	
+	
     <div class="column">
-      <div class="panel" style="font-family:Monospace;">
-	    <input type="text" class="input" value="r3.zip"/>
-		<br>
+<br>
+<div class="card">
+  <header class="card-header">
+    <p class="card-header-title">
+r3 Image
+    </p>
+    <a class="card-header-icon" aria-label="more options" onclick="openmodal('modalfile');">
+      <span class="icon">
+        <i class="ico icon-cog" aria-hidden="true"></i>
+      </span>
+    </a>
+  </header>
+  <div class="card-content">
+    <div class="content">
+		<span class="tag is-medium is-info">r3.zip</span>
 		<div id="filelist"></div>
 		<br>
-		<button class="button is-small">canvas 512x512</button>
-		<button class="button is-small">dom</button> 
-		<br>
-		<button class="button is-small">save</button>
-		<button class="button is-small">load</button>		
+		<span class="tag is-info">canvas 512x512</span>
+		<span class="tag is-info">dom</span>		
+    </div>
+  </div>
+  <footer class="card-footer">
+    <a class="card-footer-item" onclick="saveimage();">Save</a>
+    <a class="card-footer-item" onclick="loadimage();">Load</a>
+    <a class="card-footer-item" onclick="newimage();">New</a>
+  </footer>
+</div>	
+	  
 	  </div>
+	  
     </div>
 	
 	</div>
@@ -109,11 +135,66 @@ MEMDATA:<div id="md"></div><br>
 	
   </div>
 
-  <div id="modeimg" style="display:none;">
-    <input type="file" id="file" name="file"/>
-  </div>
+ 
+<!-- ///////////////////////////////////////////// -->
   
+<div class="modal" id="modalfile">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">r3 Image - Settings</p>
+      <button class="delete" aria-label="close" onclick="closemodal('modalfile');"></button>
+    </header>
+    <section class="modal-card-body">
+		<button class="button">Canvas</button>
+		Width:<input type="text" value="512"/>
+		Height:<input type="text" value="512"/>		
+		<button class="button">Dom</button>		
+		<button class="button">Console</button>				
+		
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success">Save changes</button>
+      <button class="button">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+  </body>
+</html>
+
+<!-- ///////////////////////////////////////////// -->
+
+
 <script>
+function saveimage() {
+}
+
+function loadimage() {
+var x = document.createElement("INPUT");
+x.setAttribute("type", "file");
+document.body.appendChild(x);
+x.addEventListener("change", function(evt) { fromFILE(evt.target.files[0]); },false);
+x.click();
+document.body.removeChild(x);  
+}
+
+function newimage() {
+}
+</script> 
+ 
+    </section>
+  </div>
+</div>
+
+
+  </body>
+</html>
+
+<script>
+function openmodal(name) { document.getElementById(name).classList.add('is-active'); }
+function closemodal(name) { document.getElementById(name).classList.remove('is-active'); }
+
 // DEBUG
 //----------------------------------------------------
 function dumpmd() { var s="";
@@ -288,38 +369,6 @@ function playintab() {
   pag.document.write(pagsource);
   }
 
-/////////
-// BOOT//
-/////////
-sessionStorage.clear();
-
-var editor = CodeMirror(document.getElementById("src"), {
-  //mode: "text/html",
-  lineNumbers: true,
-  styleActiveLine: true,
-  autofocus:true,
-  gutters: ["note-gutter", "CodeMirror-linenumbers"],
-  //	theme:"colorforth"
-  });
-editor.setSize("100%","100%");
-
-//editor.setGutterMarker(0, "note-gutter", document.createTextNode("hi"));
-
-</script>
-
-  </body>
-</html>
-
-<!--
-<h3>load session storage</h3>
-<input type="file" id="file" name="file"/><br />
-<button onclick="versess();">Ver</button>
-<div id="result_block">
-  <h3>file :</h3>
-  <div id="result"></div>
-</div>
--->
-<script>
 
 //-------------------------
 var nametab="";
@@ -379,52 +428,21 @@ function openTab(evt, tabName) {
 }
 
 //------------------------------------------
-function addfilelist(path,name) { var s="";
-var b='<button onclick="codeload('+"'"+path+"/"+name+"'"+');">'+name+'</button>';
-document.getElementById("filelist").innerHTML+=b;
+// IMAGEN
+
+function inifilelist() {
+  sessionStorage.clear();
+  filelist.removeChild(filelist.firstChild);  
+  tree=new VanillaTree(filelist, {
+    contextmenu: 
+	[{ label: 'Include', action: function(id) { alert('Hey ' + id); } },
+ 	{ label: 'Delete', action: function(id) { alert('Blah ' + id); } }]
+    });
+  filelist.addEventListener('vtree-select',function(evt) { codeload(evt.detail.id); });  
 }
 
-//------------------------------------------
-function addfilep(path,name) {
-var d=document.getElementById("mp"+path);
-if (d==null) {
-var s=`
-<div class="dropdown is-hoverable">
- <div class="dropdown-trigger">
-  <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
-   <span>${path}<\/span>
-   <span class="icon is-small"><i class="ico icon-down-dir"><\/i><\/span>
-  <\/button>
- <\/div>
- <div class="dropdown-menu" id="dropdown-menu" role="menu">
-  <div class="dropdown-content" id="mp${path}"><\/div>
- <\/div>
-<\/div>`;
-var i=document.getElementById("filesis");
-i.innerHTML+=s;
-d=document.getElementById("mp"+path);
-}
-d.innerHTML+='<a href="#" class="dropdown-item" onclick="codeload('+"'"+path+"/"+name+"'"+');">'+name+'</a>';
-}
 
 function addfile(name,s) {
-/*
-if (s=="") return;
-sessionStorage.setItem(name,s);
-var path=name.split("/");
-if (path[1]!=null) {
-//  addfilep(path[0],path[1]);
-//	addfilelist(path,name);
-tree.add({
-    label: path[1],
-    parent: path[0],
-    id: name
-    });
-  } else {
-	tree.add({ label:name,id:name});
-  }
-*/  
-
 var path=name.split("/");
 if (path[1]!="") {
 	tree.add({ label:path[1],parent:path[0],id:name });
@@ -434,43 +452,36 @@ if (path[1]!="") {
   }
 }
 
+function savefilelist() {
+}
+
 //---------------------- from url
 function fromURL(name) {
-sessionStorage.clear();
-fetch(name)
-.then(function (response) { if (response.status === 200 || response.status===0) { 
-  return Promise.resolve(response.blob());
-} else {
-  return Promise.reject(new Error(response.statusText));
-  }
-})
-.then(JSZip.loadAsync)
-.then( function (zip) {
-  zip.forEach(function (name,file){
-    file.async("string").then(function (s) { addfile(name,s); });
-    });
-});
+  inifilelist();
+  fetch(name)
+  .then(function (response) { if (response.status === 200 || response.status===0) { 
+    return Promise.resolve(response.blob());
+  } else {
+    return Promise.reject(new Error(response.statusText));
+    }
+  })
+  .then(JSZip.loadAsync)
+  .then( function (zip) {
+    zip.forEach(function (name,file){
+      file.async("string").then(function (s) { addfile(name,s); });
+      });
+  });
 }
 
 //---------------------- from file
-document.getElementById("file").addEventListener("change", function(evt) {
-    // Closure to capture the file information.
-    function handleFile(f) {
-        JSZip.loadAsync(f)                                   // 1) read the Blob
-        .then( function(zip) {
-            zip.forEach(function (name, file) {  // 2) print entries
-				file.async("string").then(function (s) { addfile(name,s); });
-                });
-        }, function (e) {  });
-    }
-
-	sessionStorage.clear();
-    var files = evt.target.files;
-    for (var i = 0; i < files.length; i++) {
-        handleFile(files[i]);
-	
-    }
-},false);
+function fromFILE(f){
+  inifilelist(); 
+  JSZip.loadAsync(f).then( function(zip) {
+    zip.forEach(function (name, file) {
+      file.async("string").then(function (s) { addfile(name,s); });
+     });
+    });
+}
 
 //---------------------- DUMP
 function versess() {
@@ -484,29 +495,24 @@ for(var i=0;i<sessionStorage.length;i++){
 	}
 }
 
-//--- BOOT
+/////////
+// BOOT//
+/////////
+var editor = CodeMirror(document.getElementById("src"), {
+  //mode: "text/html",
+  lineNumbers: true,
+  styleActiveLine: true,
+  autofocus:true,
+  gutters: ["note-gutter", "CodeMirror-linenumbers"],
+  //	theme:"colorforth"
+  });
+editor.setSize("100%","100%");
+
+//editor.setGutterMarker(0, "note-gutter", document.createTextNode("hi"));
+
+var filelist=document.getElementById('filelist');
+var tree=new VanillaTree(filelist);
 fromURL('r3.zip');
 newempty();
-
-const main = document.getElementById('filelist');
-const tree = new VanillaTree( main, {
-    contextmenu: [{
-      label: 'Include', action: function(id) { alert('Hey ' + id); }
-    }, {
-      label: 'Delete', action: function(id) { alert('Blah ' + id); }
-    }]
-    });
-	
-main.addEventListener('vtree-open', function(evt) { 
- //info.innerHTML = evt.detail.id + ' is opened'; 
- });
-main.addEventListener('vtree-close', function(evt) {
- //info.innerHTML = evt.detail.id + ' is closed';
- });
-
-main.addEventListener('vtree-select',function(evt) {
-  codeload(evt.detail.id);
-//  info.innerHTML = evt.detail.id + ' is selected';
-  });
 
 </script>
