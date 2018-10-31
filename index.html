@@ -13,6 +13,7 @@
 
 	<script src="use/codemirror.js"></script>
 	<script src="use/jszip.min.js"></script>
+	<script src="use/FileSaver.min.js"></script>
 	<script src="use/vanillatree.min.js"></script>
   
     <script src="compiler.js"></script>
@@ -146,16 +147,22 @@ MEMDATA:<div id="md"></div><br>
       <button class="delete" aria-label="close" onclick="closemodal('modalfile');"></button>
     </header>
     <section class="modal-card-body">
-		<button class="button">Canvas</button>
-		Width:<input type="text" value="512"/>
-		Height:<input type="text" value="512"/>		
-		<button class="button">Dom</button>		
-		<button class="button">Console</button>				
+		<button class="button" onclick="toggle(this);">Canvas</button>
+		<div class="columns">
+		<div class="column">
+		Width:<input class="input" type="text" value="512"/>
+		</div>
+		<div class="column">
+		Height:<input class="input" type="text" value="512"/>
+		</div>
+		</div>
+		<button class="button" onclick="toggle(this);">Dom</button>		
+		<button class="button" onclick="toggle(this);">Console</button>				
 		
     </section>
     <footer class="modal-card-foot">
-      <button class="button is-success">Save changes</button>
-      <button class="button">Cancel</button>
+      <button class="button is-success" onclick="closemodal('modalfile');">Save changes</button>
+      <button class="button" onclick="closemodal('modalfile');">Cancel</button>
     </footer>
   </div>
 </div>
@@ -167,7 +174,12 @@ MEMDATA:<div id="md"></div><br>
 
 
 <script>
+function toggle(evt) {
+evt.classList.toggle("is-primary");
+}
+
 function saveimage() {
+toFILE("imager3.zip");
 }
 
 function loadimage() {
@@ -481,6 +493,16 @@ function fromFILE(f){
       file.async("string").then(function (s) { addfile(name,s); });
      });
     });
+}
+
+function toFILE(f) {
+var zip = new JSZip();
+var namea,namefile;
+for(var i=0;i<sessionStorage.length;i++) { 
+	namefile=sessionStorage.key(i);
+	zip.file(namefile,sessionStorage.getItem(namefile));
+	}
+zip.generateAsync({type:"blob"}).then(function (blob) { saveAs(blob,f); });
 }
 
 //---------------------- DUMP
