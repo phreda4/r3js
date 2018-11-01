@@ -60,36 +60,27 @@
 #ym #xm
 #dx #dy
 
-:qfill | x y
-	ym over - xm pick3 - over op
-	xm pick3 + swap line
-	ym over + xm pick3 - over op
-	xm pick3 + swap line ;
 :qf
 	xm pick2 - ym pick2 - xm pick4 + hline 
 	xm pick2 - ym pick2 + xm pick4 + hline ;
 	
-
-:qfill1 | x y
-	xm pick2 - ym op
-	xm pick2 + ym line ;
 :qf1
-	ym xm pick3 - xm pick4 + hline ;
+	xm pick2 - ym xm pick4 + hline ;
 	
-::ellipse | a b rx ry --
+::ellipse | x y rx ry --
 	'ym ! 'xm !
 	over dup * dup 1 <<		| a b c 2aa
-	swap dup >b 'dy ! 		| a b 2aa
+	swap dup >a 'dy ! 		| a b 2aa
 	rot rot over neg 1 << 1 +	| 2aa a b c
 	swap dup * dup 1 << 		| 2aa a c b 2bb
-	rot rot * dup b+ 'dx !	| 2aa a 2bb
+	rot rot * dup a+ 'dx !	| 2aa a 2bb
 	swap 1				| 2aa 2bb x y
-	pick3 'dy +! dy b+
-	qfill1
+	pick3 'dy +! dy a+
+	qf1
 	( swap +? swap 		| 2aa 2bb x y
-		b> 1 <<
-		dx >=? ( rot 1 - rot rot pick3 'dx +! dx b+ )
-		dy <=? ( rot rot qfill 1 + rot pick4 'dy +! dy b+ )
+		a> 1 <<
+		dx >=? ( rot 1 - rot rot pick3 'dx +! dx a+ )
+		dy <=? ( rot rot qf 1 + rot pick4 'dy +! dy a+ )
 		drop
 		)
 	4drop ;
@@ -101,7 +92,7 @@
 	dup 1 << 'ym ! 1 - 0
 	1 'dx ! 1 'dy !
 	1 ym - 'xm !
-	( over <=?  | x0 y0 x y 
+	( over <?  | x0 y0 x y 
 		pick3 pick2 + pick3 pick2 + pset
 		pick3 pick2 - pick3 pick2 + pset
 		pick3 pick2 + pick3 pick2 - pset

@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
 	
-	<link rel="stylesheet" href="use/bulma.min.css" />
+<!--	<link rel="stylesheet" href="use/bulma.min.css" /> -->
+	<link rel="stylesheet" href="use/bulmaswatch.min.css" />
 	<link rel="stylesheet" href="use/ico.css" />	
 	<link rel="stylesheet" href="use/vanillatree.css">
 	<link rel="stylesheet" href="use/codemirror.css" />
-<!--	<link rel="stylesheet" href="use/colorforth.css">  -->
+	<link rel="stylesheet" href="use/colorforth.css">  
 
 	<script src="use/codemirror.js"></script>
 	<script src="use/jszip.min.js"></script>
@@ -26,70 +27,42 @@
 </head>
 <body class="has-navbar-fixed-top">
   <nav class="navbar is-fixed-top" role="navigation">
-  <a class="navbar-item">r3&nbsp;
-	<button id="mainbtn" class="button is-success is-outlined" onclick="r3RunState();">
+   <a class="navbar-item">r3&nbsp; 
+	<button id="mainbtn" class="button is-success is-outlined is-small" onclick="r3RunState();">
 	  <i id="mainico" class="ico icon-play"></i>
 	</button>
-	<button id="debugbtn" class="button is-primary is-outlined" onclick="r3Compile();">
+	&nbsp;
+	<button id="debugbtn" class="button is-primary is-outlined is-small" onclick="r3Compile();">
 	  <i class="ico icon-cog"></i>
 	</button>
-  </a>
-
-  <div id="navbarMenu" class="navbar-menu">
-    <div class="navbar-start">
-      <div class="navbar-item">
-      <div class="buttons">
-<!--	  
-	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i></button>
-	<button class="button is-primary" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i></button>
--->
-
-		<div id="filesis"></div>
-		
-      </div>
-    </div>
-  </div>
-
-    
-      <div class="navbar-end">
-	  
-<!--        <a class="navbar-item">No Docs</a>
-        <a class="navbar-item">No Settings</a>
-		-->
-      </div>
+<!--
+	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i>
+	</button>
+-->	
+	<button class="button is-primary is-outlined is-small" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i>
+	</button>
+  </a> 
 
     </div>
   </nav>
 
   <div id="modedit" >
   <div class="columns">
+  
     <div class="column is-three-quarters">
-	
-  <nav class="tabs is-boxed" style="margin:0">
+      <nav class="tabs is-boxed" style="margin:0">
         <div class="container" id="codetabs">
-		
-<!--		
-          <ul>
-            <li class="tab is-active" onclick="openTab(event,'WebDev')"><a>new</a></li>
-            <li class="tab" onclick="openTab(event,'WebAud')"><a>lib</a></li>
-            <li class="tab" onclick="openTab(event,'Support')"><a>coso</a></li>
-          </ul>
--->		  
         </div>
-  </nav>
-	  
-    <div id="src"></div> 
+      </nav>
+      <div id="src"></div> 
     </div>
 
-	
-	
-	
-    <div class="column">
-<br>
+  <div class="column">
+  
 <div class="card">
   <header class="card-header">
     <p class="card-header-title">
-r3 Image
+Image&nbsp; <span class="tag is-info">r3.zip</span>
     </p>
     <a class="card-header-icon" aria-label="more options" onclick="openmodal('modalfile');">
       <span class="icon">
@@ -99,7 +72,6 @@ r3 Image
   </header>
   <div class="card-content">
     <div class="content">
-		<span class="tag is-medium is-info">r3.zip</span>
 		<div id="filelist"></div>
 		<br>
 		<span class="tag is-info">canvas 512x512</span>
@@ -113,30 +85,39 @@ r3 Image
   </footer>
 </div>	
 	  
-	  </div>
-	  
+  </div>
     </div>
 	
 	</div>
   </div>
   
   <div id="moderun" style="display:none;">
+
+   <div class="columns">
+     <div class="column">
+ 
+ 
     <div id="r3dom"></div>
     <div id="r3canvas">
     <canvas id="canvas" width="512" height="512" ></canvas>
     </div>
 	
+	</div>
+    <div class="column">	
+	
 	<div> IP:<span id="ip" class="tag is-warning"></span> <span id="logerror"></span></div>
 	<div>D:<span id="ds"></span><br></div>
 	<div>R:<span id="cs"></span><br></div>
-MEMCODE:<div id="mc" ></div><br>
+MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
 MEMDATA:<div id="md"></div><br>
 	<div id="dic"></div><br>
-
 	
+	</div>
+	</div>
+		
   </div>
 
- 
+
 <!-- ///////////////////////////////////////////// -->
   
 <div class="modal" id="modalfile">
@@ -216,10 +197,9 @@ function dumpmd() { var s="";
 
 function dumpmc() { var s="";
   for(var i=0;i<memc;i++) {
-    if (i==ip) { s+=" >>"; }
+    if (i==ip) { s+="<span class='tag is-success'>"; }
     s+=printmr3(memcode[i])+" ";
-    if (i==ip) { s+="<< "; }
-//    s+="\n";
+    if (i==ip) { s+="</span> "; }
     }
   return s;
   }
@@ -261,7 +241,7 @@ function dumpVM() {
   setDivH("ds", dumpd());
   setDivH("cs", dumpr());
   setDivH("dic",dumpdicc());
-  setDiv("mc", dumpmc());
+  setDivH("mc", dumpmc());
   setDiv("md", dumpmd());
   }
 
@@ -277,6 +257,14 @@ function r3Compile() {
 	editor.focus();
 	editor.setCursor({line:lin,ch:c});
     }
+	
+document.getElementById('modedit').style.display = 'none';
+document.getElementById('moderun').style.display = 'block';
+document.getElementById('mainbtn').onclick = r3Stop;
+document.getElementById('mainbtn').classList.remove('is-success');
+document.getElementById('mainbtn').classList.add('is-danger');
+document.getElementById('mainico').className = "ico icon-stop";
+	
   dumpVM();
   }
 
@@ -511,7 +499,6 @@ var $result =document.getElementById("result");
 $result.innerHTML='';
 for(var i=0;i<sessionStorage.length;i++){
 	var name=sessionStorage.key(i);
-	//var precio=sessionStorage.getItem(producto);
 	var cont="..";
 	$result.innerHTML += '<div>'+name+' - '+cont+'</div>';
 	}
@@ -526,9 +513,9 @@ var editor = CodeMirror(document.getElementById("src"), {
   styleActiveLine: true,
   autofocus:true,
   gutters: ["note-gutter", "CodeMirror-linenumbers"],
-  //	theme:"colorforth"
+  theme:"colorforth"
   });
-editor.setSize("100%","100%");
+//editor.setSize("100%","100%");
 
 //editor.setGutterMarker(0, "note-gutter", document.createTextNode("hi"));
 
