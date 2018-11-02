@@ -16,6 +16,11 @@ var dicclocal;
 var level=0;
 var stacka=[];
 
+var nerror=0;	
+var lerror=0;
+var cerror=0;
+var werror="";
+
 var boot=-1;
 var nro=0;
 
@@ -322,7 +327,6 @@ function r3includes(str) {
 		}
 	}
 
-var nowerror=0;
 
 function r3compile(str) {	
 	includes.splice(0,includes.length);
@@ -342,12 +346,12 @@ function r3compile(str) {
 	
 // tokenize
 	for (var i=0;i<includes.length;i++) {
-		if (r3token(sessionStorage.getItem(includes[i]))) return nowerror;
+		if (r3token(sessionStorage.getItem(includes[i]))) return nerror;
 		dicclocal=dicc.length;
 		}
 	
 // last tokenizer		
-	if (r3token(str)!=0) return nowerror;
+	if (r3token(str)!=0) return nerror;
 	return -1;
 	}
 
@@ -362,21 +366,23 @@ function r3copilewi(str) {
 	memd=meminidata;
 	
 // last tokenizer		
-	if (r3token(str)!=0) return nowerror;
+	if (r3token(str)!=0) return nerror;
 	return -1;
 	
   }
 	
 function error(str,now) {
-	nowerror=now;
+	nerror=now;
 	var n2=now;
 	var n1=now-1;
 	while (n1>0 && str.charCodeAt(n1)>32) {n1--;}
 	
-	editor.markText(n1, n2, {className: 'syntax-error', title: "Not Word"})
-	document.getElementById("logerror").innerText = "Not Word :"+str.slice(n1,n2);
+	lerror=0;
+	for(var i=0;i<now;i++){ if(str[i]=="\n") {lerror++;cerror=i+1;} }
+	cerror=now-cerror;
+	
+	werror=str.slice(n1,n2);
 	}
-
 
 /*------RUNER------*/
 
@@ -587,7 +593,6 @@ function r3reset(){
 	r3domx=-1;
 	r3showx=-1
 	r3echo="";
-	document.getElementById('r3dom').innerHTML="";
 	}
 
 	
