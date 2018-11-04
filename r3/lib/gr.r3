@@ -36,13 +36,12 @@
   pick2 - 1 + >r	   | xm ym xM  r:canty
   pick2 - 0? ( drop r> vline ; )
   r@ 16 <</
-  rot 16 << $8000 + 
-  rot rot r>           | xm<<16 ym delta canty
-  ( 1? 1 - >r >r
-    over 16 >> over pick3 r@ + 16 >> hline
-    1 + swap
-    r@ + swap
-    r> r> ) 4drop ;
+  rot 16 << $8000 +
+  rot rot >a           | xm<<16 ym delta canty
+  ( 1? 1 - >r
+    over 16 >> over pick3 a> + 16 >> hline
+    1 + swap a> + swap
+    r> ) 4drop ;
 	
 ::line | x y --
   2dup iline 
