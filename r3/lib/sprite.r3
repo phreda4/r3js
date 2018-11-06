@@ -10,6 +10,11 @@
 $000000ff $808080ff $C0C0C0ff $FFFFFFff $800000ff $FF0000ff $808000ff $FFFF00ff 
 $008000ff $00FF00ff $008080ff $00FFFFff $000080ff $0000FFff $800080ff $FF00FFff
 
+#pal8
+$000000ff $1D2B53ff $7E2553ff $008751ff $AB5236ff $5F574Fff $C2C3C7ff $FFF1E8ff
+$FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
+
+
 #wb #hb		| ancho alto
 #paleta 'pal0
 
@@ -21,6 +26,23 @@ $008000ff $00FF00ff $008080ff $00FFFFff $000080ff $0000FFff $800080ff $FF00FFff
 #wr #hr
 #sx #sy
 #xa #ya
+
+
+|---- w/alpha
+:alp!+ | col --
+|	$ff nan? ( drop 4 a+ ; )
+	dup $ff and 
+	0? ( drop a!+ ; )
+	$ff =? ( 2drop 4 a+ ; )
+	swap
+	dup $ff00ff00 and				| alpha color colorand
+	a@ dup $ff00ff00 and 		| alpha color colorand inkc inkcand
+	pick2 - pick4 8 *>> rot +	| alpha color inkc inkcandl
+	$ff00ff00 and >r				| alpha color inkc
+	swap $ff0000 and 				| alpha px colorand
+	swap $ff0000 and 				| alpha colorand pxa
+	over - rot 8 *>> + $ff0000 and
+	r> or $ff or a!+ ;
 
 |----- 1:1
 
@@ -70,24 +92,26 @@ $008000ff $00FF00ff $008080ff $00FFFFff $000080ff $0000FFff $800080ff $FF00FFff
 	24 >> $f and 2 << 'odraw + @ exec ;
 
 |----- DRAW ROT 1:1
+:rotlim
+	rot -? ( min ; ) rot max swap ;
+	
+:neglim
+	-? ( 0 swap ; ) 0 ;
+	
 :inirot | x y r -- x y
 	sincos 'xa ! 'ya !	| calc w&h
 	xa wb * ya hb * neg 2dup +
-	-? ( 0 swap )( 0 )
-	rot -? ( min )( rot max swap )
-	rot -? ( min )( rot max swap )
+	neglim rotlim rotlim
 	- 16 >> 'wi !
 	ya wb * xa hb * 2dup +
-	-? ( 0 swap )( 0 )
-	rot -? ( min )( rot max swap )
-	rot -? ( min )( rot max swap )
+	neglim rotlim rotlim
 	- 16 >> 'hi !		| calc ori
-	wb 15 << wi xa * hi ya * - 2/ - 'sx !
-	hb 15 << hi xa * wi ya * + 2/ - 'sy !
-	swap wi wb - 2/ -	| adjust & clip
+	wb 15 << wi xa * hi ya * - 1 >> - 'sx !
+	hb 15 << hi xa * wi ya * + 1 >> - 'sy !
+	swap wi wb - 1 >> -	| adjust & clip
 	wi over + sw >? ( sw over - 'wi +! ) drop
 	-? ( dup 'wi +! neg dup xa * 'sx +! ya * 'sy +! 0 )
-	swap hi hb - 2/ -
+	swap hi hb - 1 >> -
 	hi over + sh >? ( sh over - 'hi +! ) drop
 	-? ( dup 'hi +! dup ya * 'sx +! neg xa * 'sy +! 0 )
 	;
@@ -100,39 +124,45 @@ $008000ff $00FF00ff $008080ff $00FFFFff $000080ff $0000FFff $800080ff $FF00FFff
 	16 >> wb >=? ( 2drop -1 ; )
 	+ ;
 
+:point0
+	-? ( drop 4 a+ ; ) 2 << b> + @ a!+ ;
+	
 :r0
-	>r inirot
-	wi hi or -? ( 3drop r> drop ; ) drop
-	setxy
+	>b 
+	inirot
+	wi hi or -? ( 3drop ; ) drop
+	xy>v >a
 	sx sy
 	hi ( 1? )(
 		pick2 pick2
 		wi ( 1? )(
-			dotrot
-			-? ( drop 4 a+ )( 2 << r@ + @ a!+ )
+			dotrot point0
 			rot xa + rot ya +
-			rot 1- ) 3drop
+			rot 1 - ) 3drop
 		sw wi - 2 << a+
 		rot ya - rot xa +
-		rot 1- )
-	3drop r> drop ;
+		rot 1 - )
+	3drop ;
 
+:point1
+	-? ( drop 4 a+ ; ) 2 << b> + @ alp!+ ;
+	
 :r1 | x y r adr --
-	>r inirot
-	wi hi or -? ( 3drop r> drop ; ) drop
-	setxy
+	>b 
+	inirot
+	wi hi or -? ( 3drop ; ) drop
+	xy>v >a
 	sx sy
 	hi ( 1? )(
 		pick2 pick2
 		wi ( 1? )(
-			dotrot
-			-? ( drop 4 a+ )( 2 << r@ + @ acpx!+ )
+			dotrot point1
 			rot xa + rot ya +
-			rot 1- ) 3drop
+			rot 1 - ) 3drop
 		sw wi - 2 << a+
 		rot ya - rot xa +
-		rot 1- )
-	3drop r> drop ;
+		rot 1 - )
+	3drop ;
 
 #rdraw r0 r1 0 0 0 0 0 0 
 
