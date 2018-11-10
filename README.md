@@ -6,8 +6,8 @@ Actual Version work in a .html in javascript, without server, but the main image
 
 try in:
 
-https://cdn.jsdelivr.net/gh/r3www/r3/index.html
-https://rawgit.com/r3www/r3/master/index.html
+* https://cdn.jsdelivr.net/gh/r3www/r3/index.html
+* https://rawgit.com/r3www/r3/master/index.html
 
 ## RoadMap
 
