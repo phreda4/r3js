@@ -14,6 +14,7 @@ try in:
 * jit wasm compiler.
 * connect net,sound,gl,cam,mic.
 * deploy in many types.
+* IDE for phones
 
 
 
