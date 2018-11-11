@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>r3</title>
@@ -8,19 +8,11 @@
 <!--	<link rel="stylesheet" href="use/bulma.min.css" /> -->
 	<link rel="stylesheet" href="use/bulmaswatch.min.css" />
 	<link rel="stylesheet" href="use/ico.css" />	
-	<link rel="stylesheet" href="use/vanillatree.css">
 	
-<!--	
-	<link rel="stylesheet" href="use/codemirror.css" />
-	<link rel="stylesheet" href="use/colorforth.css">  
-
-	<script src="use/codemirror.js"></script>
--->
 	<script src="use/ace/ace.js"></script>
 	
 	<script src="use/jszip.min.js"></script>
 	<script src="use/FileSaver.min.js"></script>
-	<script src="use/vanillatree.min.js"></script>
   
     <script src="compiler.js"></script>
 
@@ -29,11 +21,11 @@
 #src { position:absolute;top: 0;right: 0;bottom: 0;left: 0; }
 </style>
 
-</head>	
 </head>
 <body class="has-navbar-fixed-top">
   <nav class="navbar is-fixed-top" role="navigation">
-   <a class="navbar-item">r3&nbsp; 
+   <a class="navbar-item"> 
+&nbsp;:r3&nbsp;
 	<button id="mainbtn" class="button is-success is-outlined is-small" onclick="r3RunState();">
 	  <i id="mainico" class="ico icon-play"></i>
 	</button>
@@ -44,50 +36,45 @@
 <!--
 	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i>
 	</button>
--->	
+
 	<button class="button is-primary is-outlined is-small" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i>
 	</button>
-  </a> 
+-->		
 
-    </div>
+  </a> 
   </nav>
 
-  <div id="modedit" >
-  <div class="columns">
-  
-    <div class="column is-three-quarters">
-      <nav class="tabs is-boxed" style="margin:0">
-        <div class="container" id="codetabs">
-        </div>
-      </nav>
-      <div id="src"></div> 
-    </div>
+<div id="modedit" >
+ <div class="columns">
+
+  <div class="column is-three-quarters">
+   <div id="src"></div> 
+  </div>
 
   <div class="column">
-  
-<div class="card">
-  <header class="card-header">
-    <p class="card-header-title">
-r3.zip
-&nbsp;
-<span class="tag is-link">C</span>
-<span class="tag is-link">D</span>		
-    </p>
-    <a class="card-header-icon" aria-label="more options" onclick="openmodal('modalfile');">
-      <span class="icon">
-        <i class="ico icon-cog" aria-hidden="true"></i>
-      </span>
+   <div class="card">
+    <header class="card-header">
+     <p class="card-header-title" style="padding:4px">
+	 <span id="imagename">r3.zip</span>:
+	 <span id="filename"></span>
+	 </p>
+    <a class="card-header-icon" aria-label="more options" style="padding:0" onclick="openmodal('modalfile');">
+      <span class="icon"><i class="ico icon-cog" aria-hidden="true"></i></span>
     </a>
-  </header>
+    </header>
+	
   <div class="card-content" style="padding:4px">
-    <div class="content">
-		<div id="filelist"></div>
-    </div>
+  
+  
+
+    <div class="content" id="filelist"></div>
+	
+	
   </div>
   <footer class="card-footer">
-    <a class="card-footer-item" style="padding:8px" onclick="saveimage();">Save</a>
-    <a class="card-footer-item" style="padding:8px" onclick="loadimage();">Load</a>
-    <a class="card-footer-item" style="padding:8px" onclick="newimage();">New</a>
+    <a class="card-footer-item" style="padding:4px" onclick="saveimage();">Save</a>
+    <a class="card-footer-item" style="padding:4px" onclick="loadimage();">Load</a>
+    <a class="card-footer-item" style="padding:4px" onclick="newimage();">New</a>
   </footer>
 </div>	
 	  
@@ -109,17 +96,18 @@ r3.zip
     </div>
 	
 	</div>
-    <div class="column">	
+	
+    <div class="column" style="display:none;">	
 	
 	<div> IP:<span id="ip" class="tag is-warning"></span></div>
 	<div>R:<span id="cs"></span><br></div>
 MEMCODE:<div id="mc" style="font-family:Monospace;font-size:xx-small"></div><br>
 MEMDATA:<div id="md" style="font-family:Monospace;font-size:xx-small"></div><br>
 	<div id="dic"></div><br>
+
+	</div>
 	
 	</div>
-	</div>
-		
   </div>
 
 
@@ -178,6 +166,7 @@ document.body.removeChild(x);
 }
 
 function newimage() {
+makeimage();
 }
 </script> 
  
@@ -325,11 +314,13 @@ function r3RunState() {
   dumpVM();  
   }
   
-//  Examples
+  
 //----------------------------------------------------
+var filename="";
 function codeload(name) {
-  sessionStorage.setItem(nametab,editor.getValue("\n"));
+  //sessionStorage.setItem(nametab,editor.getValue("\n"));
   editor.setValue(sessionStorage.getItem(name));
+  
   n=name.split("/");
   nametab=n[1];
   addtab(n[1]);
@@ -379,16 +370,8 @@ var nametab="";
 var codetabs=[];
 
 function gentab(name) {
-var d=document.getElementById("codetabs");
-var s="<ul>";
-for(var i=0;i<codetabs.length;i++) {
-  s+="<li class='tab";
-  if (codetabs[i]==name) { s+=" is-active"; }  
-  s+="' onclick='openTab(event,"+'"'+codetabs[i]+'"'+")'><a>"+codetabs[i];
-  s+="&nbsp;<button class='delete is-small' onclick='deltab("+'"'+codetabs[i]+'"'+");'></button></a></li>";
-  }
-s+="</ul>";
-d.innerHTML=s;
+var d=document.getElementById("filename");
+d.innerTEXT=name;
 }
 
 function newempty() {
@@ -433,37 +416,19 @@ function openTab(evt, tabName) {
   editor.focus();
 }
 
-//------------------------------------------
+///////////
 // IMAGEN
-
-function inifilelist() {
-  sessionStorage.clear();
-  filelist.removeChild(filelist.firstChild);  
-  tree=new VanillaTree(filelist, {
-    contextmenu: 
-	[{ label: 'Include', action: function(id) { alert('Hey ' + id); } },
- 	{ label: 'Delete', action: function(id) { alert('Blah ' + id); } }]
-    });
-  filelist.addEventListener('vtree-select',function(evt) { codeload(evt.detail.id); });  
-}
-
+///////////
 
 function addfile(name,s) {
-var path=name.split("/");
-if (path[1]!="") {
-	tree.add({ label:path[1],parent:path[0],id:name });
-	sessionStorage.setItem(name,s);
-  } else {
-	tree.add({ label:name,id:path[0]});
-  }
-}
-
-function savefilelist() {
+if (s!="" && name!="") { sessionStorage.setItem(name,s); }
 }
 
 //---------------------- URL
 function fromURL(name) {
-  inifilelist();
+
+  sessionStorage.clear();
+  
   fetch(name)
   .then(function (response) { if (response.status === 200 || response.status===0) { 
     return Promise.resolve(response.blob());
@@ -472,11 +437,12 @@ function fromURL(name) {
     }
   })
   .then(JSZip.loadAsync)
-  .then( function (zip) {
+  .then(function (zip) {
     zip.forEach(function (name,file){
       file.async("string").then(function (s) { addfile(name,s); });
       });
   });
+  
 }
 
 function toURL(name) {
@@ -484,7 +450,9 @@ function toURL(name) {
 
 //---------------------- Local file
 function fromFILE(f){
-  inifilelist(); 
+
+  sessionStorage.clear();
+  
   JSZip.loadAsync(f).then( function(zip) {
     zip.forEach(function (name, file) {
       file.async("string").then(function (s) { addfile(name,s); });
@@ -502,15 +470,38 @@ for(var i=0;i<sessionStorage.length;i++) {
 zip.generateAsync({type:"blob"}).then(function (blob) { saveAs(blob,f); });
 }
 
-//---------------------- DUMP
-function versess() {
-var $result =document.getElementById("result");
-$result.innerHTML='';
+//----------------------
+function makeimage()
+{
+var filelist=document.getElementById('filelist');
+var s="";
+var path,folder="";
 for(var i=0;i<sessionStorage.length;i++){
-	var name=sessionStorage.key(i);
-	var cont="..";
-	$result.innerHTML += '<div>'+name+' - '+cont+'</div>';
+  var name=sessionStorage.key(i);
+  var path=name.trim().split("/");
+  if (path[1]!==undefined) {
+	if (folder!=path[0]) { 
+	  if (folder!="") { s+="</div></article>"; }
+	  s+='<article class="message" style="margin:0"><div class="message-header" onclick="togglef(this)" style="padding:0px">'+path[0]+'</div><div class="message-body" style="padding:0;display:none">';
+	  }
+    s+="<button class='button is-small is-fullwidth' onclick='codeload("+'"'+name+'"'+");' style='justify-content:left;'>"+path[1]+"</button>";  
+	folder=path[0];
+  } else {
+    if (folder!="") { s+="</div></article>";folder=""; }  
+    s+="<button class='button is-small is-fullwidth' onclick='codeload("+'"'+name+'"'+");' style='justify-content:left;'>"+name+"</button>";
+  }
 	}
+if (folder!="") { s+="</div></article>"; }	
+filelist.innerHTML=s;
+}
+
+function togglef(evt) {
+evt.parentElement.classList.toggle("is-primary");
+if (evt.nextElementSibling.style.display=='none') {
+evt.nextElementSibling.style.display = 'block';
+} else { 
+evt.nextElementSibling.style.display = 'none';
+}
 }
 
 /////////
@@ -518,14 +509,15 @@ for(var i=0;i<sessionStorage.length;i++){
 /////////
 
 var editor=ace.edit("src");
-editor.setOptions({ theme: "ace/theme/twilight",minLines: 4,maxLines: 30 });
-
-// editor.resize(true);
-	
-var filelist=document.getElementById('filelist');
-var tree=new VanillaTree(filelist);
+editor.setOptions({ 
+	theme:"ace/theme/twilight",
+	minLines:4,
+	maxLines:30,
+	fontSize:18
+	});
 
 fromURL('r3.zip');
-newempty();
 
+//newempty();
+makeimage();
 </script>
