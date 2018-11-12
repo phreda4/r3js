@@ -1,102 +1,98 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>r3</title>
-	
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>r3</title>
 <!--	<link rel="stylesheet" href="use/bulma.min.css" /> -->
-	<link rel="stylesheet" href="use/bulmaswatch.min.css" />
-	<link rel="stylesheet" href="use/ico.css" />	
-	
-	<script src="use/ace/ace.js"></script>
-	
-	<script src="use/jszip.min.js"></script>
-	<script src="use/FileSaver.min.js"></script>
-  
-    <script src="compiler.js"></script>
+ <link rel="stylesheet" href="use/bulmaswatch.min.css" />
+ <link rel="stylesheet" href="use/materialdesignicons.min.css" />	
+ <script src="use/ace/ace.js"></script>
+ <script src="use/jszip.min.js"></script>
+ <script src="use/FileSaver.min.js"></script>
 
-<style rel="stylesheet" type="text/css" media="screen"> 
-#filelist ul { margin: 0px; } // vanillatree
-#src { position:absolute;top: 0;right: 0;bottom: 0;left: 0; }
-</style>
-
+ <script src="compiler.js"></script>
 </head>
 <body class="has-navbar-fixed-top">
-  <nav class="navbar is-fixed-top" role="navigation">
-   <a class="navbar-item"> 
-&nbsp;:r3&nbsp;
-	<button id="mainbtn" class="button is-success is-outlined is-small" onclick="r3RunState();">
-	  <i id="mainico" class="ico icon-play"></i>
-	</button>
-	&nbsp;
-	<button id="debugbtn" class="button is-primary is-outlined is-small" onclick="r3Compile();">
-	  <i class="ico icon-cog"></i>
-	</button>
-<!--
-	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i>
-	</button>
 
-	<button class="button is-primary is-outlined is-small" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i>
-	</button>
--->		
+<nav class="navbar is-fixed-top" role="navigation">
+ <a class="navbar-item"> 
 
-  </a> 
-  </nav>
+<button class="button" id="filename">main.r3</button>
 
+<button class="button is-success is-outlined" onclick="modesrc();"> 
+ <i class="mdi mdi-playlist-edit"></i></button>
+<button class="button is-link is-outlined" onclick="modeimg();">
+ <i class="mdi mdi-cube-outline"></i></button>
+<button class="button is-warning is-outlined" onclick="modeseta();">
+ <i class="mdi mdi-cogs"></i></button>
+
+<button id="mainbtn" class="button is-success" onclick="r3runEditor();">
+ <i id="mainico" class="mdi mdi-play"></i></button>
+ 
+ </a> 
+</nav>
+
+<!-- ------------------ -->
 <div id="modedit" >
+ <div class="column">
+  <div id="src"></div> 
+ </div>
+</div>
+
+<!-- ------------------ -->
+<div id="modeimg" style="display:none;">
+
  <div class="columns">
-
-  <div class="column is-three-quarters">
-   <div id="src"></div> 
-  </div>
-
   <div class="column">
    <div class="card">
     <header class="card-header">
-     <p class="card-header-title" style="padding:4px">
+     <p class="card-header-title" style="padding:2px">
 	 <span id="imagename">r3.zip</span>:
 	 <span id="filename"></span>
 	 </p>
-    <a class="card-header-icon" aria-label="more options" style="padding:0" onclick="openmodal('modalfile');">
-      <span class="icon"><i class="ico icon-cog" aria-hidden="true"></i></span>
-    </a>
     </header>
 	
   <div class="card-content" style="padding:4px">
-  
-  
-
     <div class="content" id="filelist"></div>
-	
-	
-  </div>
-  <footer class="card-footer">
-    <a class="card-footer-item" style="padding:4px" onclick="saveimage();">Save</a>
-    <a class="card-footer-item" style="padding:4px" onclick="loadimage();">Load</a>
-    <a class="card-footer-item" style="padding:4px" onclick="newimage();">New</a>
-  </footer>
-</div>	
-	  
-  </div>
-    </div>
-	
-	</div>
   </div>
   
-  <div id="moderun" style="display:none;">
+   <footer class="card-footer">
+    <a class="card-footer-item" onclick="saveimage();">Save</a>
+    <a class="card-footer-item" onclick="loadimage();">Load</a>
+    <a class="card-footer-item" onclick="newimage();">New</a>
+   </footer>
+  </div>	
+  </div>
 
+  <div class="column">
+  Imagen
+  </div>
+ </div>
+
+</div>
+
+<!-- ------------------ -->
+<div id="moderun" style="display:none;">
+
+<!--
+	<button class="button is-success" onclick="playintab();"><i class="ico icon-play"></i>
+	</button>
+	<button class="button is-primary is-outlined is-small" onclick="r3step();dumpVM();redraw();"><i class="ico icon-right-open"></i>
+	</button>
+-->		
+  
    <div class="columns">
      <div class="column">
  
-	<div>D:<span id="ds"></span><br></div> 
+	<span id="ds"></span><br>
     <div id="r3dom"></div>
     <div id="r3canvas">
     <canvas id="canvas" width="512" height="512" ></canvas>
     </div>
 	
 	</div>
-	
+<!--	
     <div class="column" style="display:none;">	
 	
 	<div> IP:<span id="ip" class="tag is-warning"></span></div>
@@ -106,21 +102,16 @@ MEMDATA:<div id="md" style="font-family:Monospace;font-size:xx-small"></div><br>
 	<div id="dic"></div><br>
 
 	</div>
-	
+-->	
 	</div>
+	
   </div>
 
-
-<!-- ///////////////////////////////////////////// -->
+<!-- ------------------ -->  
+<div id="modeset" style="display:none;">
+ <div class="columns">
+  <div class="column">
   
-<div class="modal" id="modalfile">
-  <div class="modal-background"></div>
-  <div class="modal-card">
-    <header class="modal-card-head">
-      <p class="modal-card-title">r3 Image - Settings</p>
-      <button class="delete" aria-label="close" onclick="closemodal('modalfile');"></button>
-    </header>
-    <section class="modal-card-body">
 		<button class="button" onclick="toggle(this);">Canvas</button>
 		<div class="columns">
 		<div class="column">
@@ -132,22 +123,99 @@ MEMDATA:<div id="md" style="font-family:Monospace;font-size:xx-small"></div><br>
 		</div>
 		<button class="button" onclick="toggle(this);">Dom</button>		
 		<button class="button" onclick="toggle(this);">Console</button>				
-		
-    </section>
-    <footer class="modal-card-foot">
-      <button class="button is-success" onclick="closemodal('modalfile');">Save changes</button>
-      <button class="button" onclick="closemodal('modalfile');">Cancel</button>
-    </footer>
+
   </div>
+  <div class="column">
+  </div>  
+  
+ </div>
 </div>
 
   </body>
 </html>
-
 <!-- ///////////////////////////////////////////// -->
-
-
 <script>
+
+// VM
+//----------------------------------------------------
+function dumpError(){
+editor.getSession().setAnnotations([{ row:lerror,column:cerror,text:" Word not Found:"+werror,type:"error"}]);
+editor.gotoLine(lerror+1,cerror);
+editor.focus();
+}
+
+function modesrc() {
+document.getElementById('modeimg').style.display = 'none';
+document.getElementById('modedit').style.display = 'block';
+document.getElementById('moderun').style.display = 'none';
+document.getElementById('modeset').style.display = 'none';
+}
+
+function moderun() {
+document.getElementById('modeimg').style.display = 'none';
+document.getElementById('modedit').style.display = 'none';
+document.getElementById('moderun').style.display = 'block';
+document.getElementById('modeset').style.display = 'none';
+
+document.getElementById('mainbtn').onclick = r3Stop;
+document.getElementById('mainbtn').classList.remove('is-success');
+document.getElementById('mainbtn').classList.add('is-danger');
+document.getElementById('mainico').className = "mdi mdi-stop";
+}
+
+function modeedit() {
+document.getElementById('modeimg').style.display = 'none';
+document.getElementById('moderun').style.display = 'none';
+document.getElementById('modedit').style.display = 'block';
+document.getElementById('modeset').style.display = 'none';
+
+document.getElementById('mainbtn').onclick = r3runEditor;
+document.getElementById('mainbtn').classList.remove('is-danger');
+document.getElementById('mainbtn').classList.add('is-success');
+document.getElementById('mainico').className = "mdi mdi-play";
+}
+
+function modeimg() {
+document.getElementById('modeset').style.display = 'none';
+document.getElementById('moderun').style.display = 'none';
+if (document.getElementById('modeimg').style.display=='block') {
+ document.getElementById('modeimg').style.display = 'none';
+ document.getElementById('modedit').style.display = 'block';
+} else {
+ makeimage();
+ document.getElementById('modeimg').style.display = 'block';
+ document.getElementById('modedit').style.display = 'none';
+ }
+}
+
+function modeseta() {
+document.getElementById('modeimg').style.display = 'none';
+document.getElementById('modedit').style.display = 'none';
+document.getElementById('moderun').style.display = 'none';
+document.getElementById('modeset').style.display = 'block';
+
+}
+
+function r3runEditor() {
+
+  var cc=r3compile(editor.getValue("\n"));
+  if (cc>-1) {// error
+	dumpError();
+    dumpVM();
+    return;
+    }
+  moderun();
+  canvasini();    
+  
+  r3reset();
+  r3run();
+  
+  redraw();
+  document.getElementById("r3dom").innerHTML=r3echo;
+  dumpVM();  
+  }
+
+////////////////////////////////////////////////////////////////////  
 function toggle(evt) {
 evt.classList.toggle("is-primary");
 }
@@ -165,22 +233,6 @@ x.click();
 document.body.removeChild(x);  
 }
 
-function newimage() {
-makeimage();
-}
-</script> 
- 
-    </section>
-  </div>
-</div>
-
-
-  </body>
-</html>
-
-<script>
-function openmodal(name) { document.getElementById(name).classList.add('is-active'); }
-function closemodal(name) { document.getElementById(name).classList.remove('is-active'); }
 
 // DEBUG
 //----------------------------------------------------
@@ -206,8 +258,8 @@ function dumpinc() { var s="";
   
 function dumpd() { var s="";
   if (NOS==0) {return s;}
-  s+='<span class="tag is-success">'+TOS+'</span>';
-  for (var i=NOS;i>1;i--) { s+='<span class="tag is-success">'+stack[i]+'</span>';}
+  s+='<span class="tag is-dark is-large">'+TOS+'</span>';
+  for (var i=NOS;i>1;i--) { s+='&nbsp;<span class="tag is-dark is-large">'+stack[i]+'</span>';}
   return s;
   }
 
@@ -239,32 +291,8 @@ function dumpVM() {
   setDiv("md", dumpmd());
   }
 
-// VM
-//----------------------------------------------------
-function dumpError(){
-editor.getSession().setAnnotations([{ row:lerror,column:cerror,text:" Word not Found:"+werror,type:"error"}]);
-editor.gotoLine(lerror+1,cerror);
-editor.focus();
-}
 
-function moderun() {
-document.getElementById('modedit').style.display = 'none';
-document.getElementById('moderun').style.display = 'block';
-document.getElementById('mainbtn').onclick = r3Stop;
-document.getElementById('mainbtn').classList.remove('is-success');
-document.getElementById('mainbtn').classList.add('is-danger');
-document.getElementById('mainico').className = "ico icon-stop";
-}
-
-function modeedit() {
-document.getElementById('moderun').style.display = 'none';
-document.getElementById('modedit').style.display = 'block';
-document.getElementById('mainbtn').onclick = r3RunState;
-document.getElementById('mainbtn').classList.remove('is-danger');
-document.getElementById('mainbtn').classList.add('is-success');
-document.getElementById('mainico').className = "ico icon-play";
-}
-
+  
 function r3Compile() {
   var src=editor.getValue("\n");
   var cc=r3compile(src);
@@ -313,107 +341,17 @@ function r3RunState() {
   document.getElementById("r3dom").innerHTML=r3echo;
   dumpVM();  
   }
+
   
   
 //----------------------------------------------------
 var filename="";
+
 function codeload(name) {
+ modeedit();
   //sessionStorage.setItem(nametab,editor.getValue("\n"));
-  editor.setValue(sessionStorage.getItem(name));
-  
-  n=name.split("/");
-  nametab=n[1];
-  addtab(n[1]);
-}
-
-//----------------------------------------------------
-// PLAY IN TAB
-//----------------------------------------------------
-function playintab() {
-  var wcanvas=512;
-  var hcanvas=512;
-  var pag=window.open();
-
-  var srccode=editor.getValue("\n");
-  
-  r3includes(srccode);
-
-  var presource="";
-  for (var i=0;i<includes.length;i++) {
-    presource+=sessionStorage.getItem(includes[i]);
-    }
-
-  var pagsource = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>r3</title>
-    <script src="./compiler.js"><\/script>
-    <script type="text/r3">${presource}
-	${srccode}<\/script>
-  <\/head>
-  <body bgcolor="#000"><center>
-    <div id="r3dom"></div>
-    <canvas id="canvas" width="${wcanvas}" height="${hcanvas}" ></canvas>
-	</center>
-    <script>r3scanrun();<\/script>
-  <\/body>
-<\/html>`;
-
-  pag.document.write(pagsource);
-  }
-
-
-//-------------------------
-var nametab="";
-var codetabs=[];
-
-function gentab(name) {
-var d=document.getElementById("filename");
-d.innerTEXT=name;
-}
-
-function newempty() {
-nametab='new';
-addtab(nametab);
-sessionStorage.setItem(nametab,"");
-editor.setValue(sessionStorage.getItem(nametab));
-editor.focus();
-}
-
-function addtab(name) {
-var index=codetabs.indexOf(name);
-if (index==-1) {
-  codetabs.push(name);
-  gentab(name);
-  }
-}
-
-function deltab(name) {
-var index=codetabs.indexOf(name);
-if (index>-1) {
-  codetabs.splice(index,1);
-  if (codetabs.length==0) { newempty();return; } 
-  if (index>0) index--;
-  gentab(codetabs[index]);
-  editor.setValue(sessionStorage.getItem(codetabs[index]));
-  }
-return false;
-}
-
-function openTab(evt, tabName) {
-  var i, tablinks;
-  tablinks = document.getElementsByClassName("tab");
-  for (i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" is-active", "");
-  }
-  evt.currentTarget.className += " is-active";
-  
-  sessionStorage.setItem(nametab,editor.getValue("\n"));
-  nametab=tabName;  
-  editor.setValue(sessionStorage.getItem(tabName));
-  editor.focus();
+ editor.setValue(sessionStorage.getItem(name));
+ editor.focus();
 }
 
 ///////////
@@ -442,7 +380,6 @@ function fromURL(name) {
       file.async("string").then(function (s) { addfile(name,s); });
       });
   });
-  
 }
 
 function toURL(name) {
@@ -482,7 +419,7 @@ for(var i=0;i<sessionStorage.length;i++){
   if (path[1]!==undefined) {
 	if (folder!=path[0]) { 
 	  if (folder!="") { s+="</div></article>"; }
-	  s+='<article class="message" style="margin:0"><div class="message-header" onclick="togglef(this)" style="padding:0px">'+path[0]+'</div><div class="message-body" style="padding:0;display:none">';
+	  s+='<article class="message" style="margin:2px"><div class="message-header" onclick="togglef(this)" style="padding:0px">&nbsp;'+path[0]+'/</div><div class="message-body" style="padding:2px;display:none">';
 	  }
     s+="<button class='button is-small is-fullwidth' onclick='codeload("+'"'+name+'"'+");' style='justify-content:left;'>"+path[1]+"</button>";  
 	folder=path[0];
@@ -509,15 +446,16 @@ evt.nextElementSibling.style.display = 'none';
 /////////
 
 var editor=ace.edit("src");
+
 editor.setOptions({ 
 	theme:"ace/theme/twilight",
-	minLines:4,
-	maxLines:30,
+	minLines:4,maxLines:25,
 	fontSize:18
 	});
+editor.focus();
 
 fromURL('r3.zip');
 
 //newempty();
-makeimage();
+
 </script>
