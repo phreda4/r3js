@@ -461,18 +461,18 @@ function r3op(op) { var W,W1;
 	case 58:TOS=stack[NOS]+TOS;NOS--;break;					//SUMA
 	case 59:TOS=stack[NOS]-TOS;NOS--;break;					//RESTA
 	case 60:TOS=stack[NOS]*TOS;NOS--;break;					//MUL
-	case 61:TOS=stack[NOS]/TOS;NOS--;break;					//DIV
-	case 62:TOS=(stack[NOS-1]*stack[NOS])/TOS;NOS-=2;break;	//MULDIV
-	case 63:W=stack[NOS]%TOS;stack[NOS]=stack[NOS]/TOS;TOS=W;break;//DIVMOD
+	case 61:TOS=(stack[NOS]/TOS)|0;NOS--;break;					//DIV
+	case 62:TOS=((stack[NOS-1]*stack[NOS])/TOS)|0;NOS-=2;break;	//MULDIV
+	case 63:W=stack[NOS]%TOS;stack[NOS]=(stack[NOS]/TOS)|0;TOS=W;break;//DIVMOD
 	case 64:TOS=stack[NOS]%TOS;NOS--;break;					//MOD
 	case 65:W=(TOS>>31);TOS=(TOS+W)^W;break;				//ABS
-	case 66:TOS=Math.sqrt(TOS);break;						//CSQRT
+	case 66:TOS=Math.sqrt(TOS)|0;break;						//CSQRT
 	case 67:TOS=Math.clz32(TOS);break;						//CLZ
 	case 68:TOS=stack[NOS]<<TOS;NOS--;break;				//SAR
 	case 69:TOS=stack[NOS]>>TOS;NOS--;break;				//SAL
 	case 70:TOS=stack[NOS]>>TOS;NOS--;break;				//SHL
 	case 71:TOS=(stack[NOS-1]*stack[NOS])>>TOS;NOS-=2;break;//MULSHR
-	case 72:TOS=(stack[NOS-1]<<TOS)/stack[NOS];NOS-=2;break;//CDIVSH
+	case 72:TOS=((stack[NOS-1]<<TOS)/stack[NOS])|0;NOS-=2;break;//CDIVSH
 	
 	case 73:TOS=mem.getInt32(TOS);break;//@
 	case 74:TOS=mem.getInt8(TOS);break;//C@
