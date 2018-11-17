@@ -470,7 +470,7 @@ function r3op(op) { var W,W1;
 	case 67:TOS=Math.clz32(TOS);break;						//CLZ
 	case 68:TOS=stack[NOS]<<TOS;NOS--;break;				//SAR
 	case 69:TOS=stack[NOS]>>TOS;NOS--;break;				//SAL
-	case 70:TOS=stack[NOS]>>TOS;NOS--;break;				//SHL
+	case 70:TOS=stack[NOS]>>>TOS;NOS--;break;				//SHL
 	case 71:TOS=(stack[NOS-1]*stack[NOS])>>TOS;NOS-=2;break;//MULSHR
 	case 72:TOS=((stack[NOS-1]<<TOS)/stack[NOS])|0;NOS-=2;break;//CDIVSH
 	
