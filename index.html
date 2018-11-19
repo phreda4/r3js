@@ -24,8 +24,6 @@
  <i class="mdi mdi-playlist-edit" style="font-size:1.8em;line-height:0em"></i></button>
 <button class="button is-success is-outlined" onclick="moderun();">
  <i class="mdi mdi-play" style="font-size:1.8em;line-height:0em"></i></button>
-<button class="button is-warning is-outlined" onclick="modeseta();">
- <i class="mdi mdi-cogs" style="font-size:1.8em;line-height:0em"></i></button>
 <button class="button is-link is-outlined" onclick="modeimg();">
  <i class="mdi mdi-cube-outline" style="font-size:1.8em;line-height:0em"></i></button>
 
@@ -75,7 +73,24 @@
   </div>
 
   <div class="column">
-  Imagen
+
+	<div id="libsincludes">
+	</div>
+	
+	<button class="button" onclick="toggle(this);">Canvas</button>
+	<button class="button" onclick="toggle(this);">Dom</button>		
+	<button class="button" onclick="toggle(this);">Console</button>				
+	
+<!--	
+	<div class="columns">
+		<div class="column">
+		Width:<input class="input" type="text" value="512"/>
+		</div>
+		<div class="column">
+		Height:<input class="input" type="text" value="512"/>
+		</div>
+	</div>
+ -->
   </div>
  </div>
 
@@ -94,55 +109,37 @@
 	
 </div>
 
-<!-- ------------------ -->  
-<div id="modeset" style="display:none;">
-<br>
- <div class="columns">
-  <div class="column">
-  
-		<button class="button" onclick="toggle(this);">Canvas</button>
-		<div class="columns">
-		<div class="column">
-		Width:<input class="input" type="text" value="512"/>
-		</div>
-		<div class="column">
-		Height:<input class="input" type="text" value="512"/>
-		</div>
-		</div>
-		<button class="button" onclick="toggle(this);">Dom</button>		
-		<button class="button" onclick="toggle(this);">Console</button>				
-
-  </div>
-  <div class="column">
-  </div>  
-  
- </div>
-</div>
-
   </body>
 </html>
 <!-- ///////////////////////////////////////////// -->
 <script>
-
+"use strict";
 // VM
 //----------------------------------------------------
 function dumpError(){
-editor.getSession().setAnnotations([{ row:lerror,column:cerror,text:" Word not Found:"+werror,type:"error"}]);
-
+var inin=ininclude(werror);
+/*
+if (inin!="") {
+	editor.add("^"+inin+"");
+	editor.focus();
+	return;
+	}*/
+editor.getSession().setAnnotations([{ row:lerror,column:cerror,text:" Word not Found:"+werror+" "+inin,type:"error"}]);
 editor.gotoLine(lerror+1,cerror);
 editor.focus();
 }
 
 function modeselect(value) {
 function modeactiva(name) { document.getElementById(name).style.display =(name==value)?'block':'none'; }
-var modes=['modedit','moderun','modeset','modeimg']
+var modes=['modedit','moderun','modeimg']
 modes.forEach(modeactiva);
 }
 
 function modesrc() { 
-modeselect('modedit'); 
-editor.focus();
-}
+ r3showx=-1;
+ modeselect('modedit'); 
+ editor.focus();
+ }
 
 function moderun() {
  saveprev();
@@ -159,21 +156,18 @@ function moderun() {
   
  r3reset();
  r3run();
-  
+ animate(); 
  redraw();
  document.getElementById("r3dom").innerHTML=r3echo;
  dumpVM();  
-}
+ }
 
 
 function modeimg() {
+ r3showx=-1;
  modeselect('modeimg');
  makeimage();
  }
-
-function modeseta() {
-modeselect('modeset');
-}
 
 ////////////////////////////////////////////////////////////////////  
 function toggle(evt) {
@@ -210,58 +204,6 @@ function dumpVM() {
   setDivH("ds", dumpd());
   }
 
-///////////////////////////////////////
-  
-function r3Compile() {
-  var src=editor.getValue("\n");
-  var cc=r3compile(src);
-  if (cc>-1) {
-	dumpError();
-    }
-  moderun();
-  dumpVM();
-  }
-
-function r3Run() {
-  if (r3compile(editor.getValue("\n"))>-1) {// error
-	dumpError();
-    dumpVM();
-    return;
-    }
-	
-  r3reset();
-  r3run();
-  
-  redraw();
-  document.getElementById("r3dom").innerHTML=r3echo;
-  dumpVM();  
-  }
-
-function r3Stop() {
-  eventDel();
-  modedit();
-  editor.focus();
-  }
-
-function r3RunState() {
-  var cc=r3compile(editor.getValue("\n"));
-  if (cc>-1) {// error
-	dumpError();
-    dumpVM();
-    return;
-    }
-  moderun();
-  canvasini();    
-  
-  r3reset();
-  r3run();
-  
-  redraw();
-  document.getElementById("r3dom").innerHTML=r3echo;
-  dumpVM();  
-  }
-
-  
   
 //----------------------------------------------------
 var filename="";
@@ -283,8 +225,72 @@ function codeload(name) {
 // IMAGEN
 ///////////
 
+var includelibs=[];
+var wordlibs=[];
+
+function definitions(str) {
+  var w='';
+  var wc=0;
+  
+  var now=0;
+  var ini;	
+	str=str.trim();
+	while(now<str.length) {
+		while (str.charCodeAt(now)<33) { now++; }
+		if(str[now]==="^") {					// include
+			ini=++now;
+			while (str.charCodeAt(now)>32) { now++; }
+			var name=str.slice(ini,now);
+			continue;
+			}
+		if(str[now]==="|") {					// comments	
+			now=str.indexOf("\n",now)+1;
+			if (now<=0) { now=str.length;}
+			continue; }
+		if(str[now]=== "\"") {					// strings		
+			ini=++now;
+			while (str.charCodeAt(now)!=0) { 
+				if (str[now]=== "\"") { if (str[now+1]!="\"") { break; } now++; }
+				now++; }	
+			now+=2;
+			continue; } 
+		else {
+			ini=now;
+			while (str.charCodeAt(now)>32) { now++; }
+			if((str[ini]===':'&&str[ini+1]===':')
+			||(str[ini]==='#'&&str[ini+1]==='#')) 
+				{ wc++;w+="|"+str.slice(ini+2,now); }
+			}
+		}
+ return w+"|";
+ }
+
+
+function ininclude(word) {
+word="|"+word.trim()+"|";
+var nl=wordlibs.length;
+for (var i=0;i<nl;i++) {
+ if (wordlibs[i].indexOf(word)>-1) { return includelibs[i];}
+ }
+return "";
+}
+ 
+function includelib(name,s) {
+includelibs.push(name);
+const wordlist=definitions(s)
+wordlibs.push(wordlist);
+/* debug
+const pname=name.slice(4);
+document.getElementById('libsincludes').innerText+=pname+" "+wordlist+"\n";
+*/
+}
+
 function addfile(name,s) {
-if (s!="" && name!="") { sessionStorage.setItem(name,s); }
+if (s=="" || name=="") { return; }
+sessionStorage.setItem(name,s);
+if (name.indexOf('lib/')!=-1) { includelib(name,s);return; }
+if (name.indexOf('/')!=-1) { return; }
+codeload(name);
 }
 
 //---------------------- URL
@@ -359,11 +365,7 @@ filelist.innerHTML=s;
 
 function togglef(evt) {
 evt.parentElement.classList.toggle("is-primary");
-if (evt.nextElementSibling.style.display=='none') {
-evt.nextElementSibling.style.display = 'block';
-} else { 
-evt.nextElementSibling.style.display = 'none';
-}
+evt.nextElementSibling.style.display=(evt.nextElementSibling.style.display=='none')?'block':'none';
 }
 
 /////////

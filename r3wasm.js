@@ -289,6 +289,12 @@ function createSection(sectionType, ...data) {
  return [section[sectionType], ...intToVaruint(flatData.length), ...flatData];
  }
  
+function getStrBytes(str) {
+ const bytes = [];
+ for (let i=0;i<str.length;i+=1) { bytes.push(str.charCodeAt(i)); }
+ return bytes;
+ }
+ 
 function compileToWasm(instrs) {
  const magicNumber = [0x00, 0x61, 0x73, 0x6d];
  const version = [0x01, 0x00, 0x00, 0x00];
@@ -311,11 +317,15 @@ function compileToWasm(instrs) {
  
  const localEntriesCount = 0x01;
  const i32VarCount = 0x02;
- const initOutputIndex = [wasmInstr.i32const, ...intToVarint(PAGE_SIZE), wasmInstr.setLocal, 0x00];
- const functionBody = instrs.reduce((res, instr) => res.concat(instr.toWasm(...instr.extraParams)), initOutputIndex);
+ 
+ const initOutputIndex = [wasmInstr.i32const, ...intToVarint(PAGE_SIZE),wasmInstr.setLocal, 0x00];
+ 
+ const functionBody=instrs.reduce((res,instr)=>res.concat(instr.toWasm(...instr.extraParams)), initOutputIndex);
  functionBody.push(wasmInstr.end);
+ 
  const functionLength = intToVaruint(functionBody.length + 3);
- const codeSection = createSection('code', functionsCount, ...functionLength, localEntriesCount, i32VarCount, type.i32, functionBody);
+ 
+ const codeSection=createSection('code',functionsCount,...functionLength,localEntriesCount,i32VarCount,type.i32,functionBody);
  
  const buffer = [
  ...magicNumber, 
