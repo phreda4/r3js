@@ -378,10 +378,10 @@ function error(str,now) {
 	while (n1>0 && str.charCodeAt(n1)>32) {n1--;}
 	
 	lerror=0;
-	for(var i=0;i<now;i++){ if(str[i]=="\n") {lerror++;cerror=i+1;} }
+	for(var i=0;i<now;i++){ if(str[i]=="\n"||str[i]=="\r") {lerror++;i++;cerror=i;if (str[i]=="\n"||str[i]=="\r") { i++; } } }
 	cerror=now-cerror;
 	
-	werror=str.slice(n1,n2);
+	werror=str.slice(n1,n2).trim();
 	}
 
 /*------RUNER------*/
@@ -681,6 +681,7 @@ function eventDel() {
 function canvasini() {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
+	ctx.scale(2, 2)
 	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
 	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
 	
@@ -690,6 +691,14 @@ function canvasini() {
 	}
 
 function redraw() { 
+
+/*	ctx.save();
+    ctx.translate(-((newWidth-width)/2), -((newHeight-height)/2));
+    ctx.scale(scale, scale);
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(copiedCanvas, 0, 0);
+    ctx.restore();
+*/	
 	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
 	}
 

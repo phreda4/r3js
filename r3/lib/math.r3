@@ -200,7 +200,7 @@
 ::bswap
 	dup 8 >> $ff00ff and 
 	swap 8 << $ff00ff00 and or
-	dup 16 0>> 
+	dup 16 >>>
 	swap 16 << or ;
 
 | next pow2

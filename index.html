@@ -117,13 +117,17 @@
 // VM
 //----------------------------------------------------
 function dumpError(){
+if (werror[0]=="'") { 
+ werror=werror.slice(1); 
+ }
 var inin=ininclude(werror);
-/*
+
 if (inin!="") {
-	editor.add("^"+inin+"");
+	editor.gotoLine(1,0);
+	editor.insert("^"+inin+"\n")
 	editor.focus();
 	return;
-	}*/
+	}
 editor.getSession().setAnnotations([{ row:lerror,column:cerror,text:" Word not Found:"+werror+" "+inin,type:"error"}]);
 editor.gotoLine(lerror+1,cerror);
 editor.focus();
@@ -267,7 +271,7 @@ function definitions(str) {
 
 
 function ininclude(word) {
-word="|"+word.trim()+"|";
+word="|"+word+"|";
 var nl=wordlibs.length;
 for (var i=0;i<nl;i++) {
  if (wordlibs[i].indexOf(word)>-1) { return includelibs[i];}
