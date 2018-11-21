@@ -29,9 +29,9 @@
 	411769 + *.u ;
 
 ::cos | v -- r
-	$8000 + $8000 nand? ( sinp ; ) sinp neg ;
+	$8000 + $8000 na? ( sinp ; ) sinp neg ;
 ::sin | v -- r
-	$4000 + $8000 nand? ( sinp ; ) sinp neg ;
+	$4000 + $8000 na? ( sinp ; ) sinp neg ;
 
 ::tan | v -- f
 	$4000 +
@@ -71,12 +71,12 @@
 
 ::distfast | dx dy -- dis
 	abs swap abs over <? ( swap ) | min max
-	dup 8 << over 3 << + over 4 << - swap 2* -
-	over 7 << + over 5 << - over 3 << + swap 2* -
+	dup 8 << over 3 << + over 4 << - swap 1 << -
+	over 7 << + over 5 << - over 3 << + swap 1 << -
 	8 >> ;
 
 ::average | x y -- v
-	2dup xor 2/ rot rot and + ;
+	2dup xor 1 >> rot rot and + ;
 
 ::min	| a b -- m
 	over - dup 31 >> and + ;
@@ -99,19 +99,30 @@
 ::between | v min max -- -(out)/+(in)
 	pick2 - rot rot - or ;
 
+:sq
+	pick2 <=? ( swap 1 + >r - r> ; ) drop ;
+
 ::sqrt. | n -- v
 	1 <? ( drop 0 ; )
 	0 0 rot | root remhi remlo | 15 + bits/2+1
-	24 ( 1? 1- >r
+	24 ( 1? 1 - >r
 		dup 30 >> $3 and	| ro rh rl rnh
 		rot 2 << or			| ro rl rh
 		swap 2 << swap
-		rot 2* dup 2* 1+		| rl rh ro td
-		pick2 <=? ( swap 1+ >r - r> )( drop ) | rl rh ro
+		rot 1 << dup 1 << 1 +		| rl rh ro td
+		sq | rl rh ro
 		swap rot r> )
     3drop ;
 
 | http://www.quinapalus.com/efunc.html
+
+:l1 over dup 1 >> + +? ( rot drop swap $67cd - ; ) drop ;
+:l2 over dup 2 >> + +? ( rot drop swap $3920 - ; ) drop ;
+:l3 over dup 3 >> + +? ( rot drop swap $1e27 - ; ) drop ;
+:l4 over dup 4 >> + +? ( rot drop swap $f85 - ; ) drop ;
+:l5 over dup 5 >> + +? ( rot drop swap $7e1 - ; ) drop ;
+:l6 over dup 6 >> + +? ( rot drop swap $3f8 - ; ) drop ;
+:l7 over dup 7 >> + +? ( rot drop swap $1fe - ; ) drop ;
 
 ::ln. | x --r
 	-? ( $80000000 nip ; )
@@ -120,58 +131,49 @@
 	$800000 <? ( 8 << swap $58b91 - swap )
 	$8000000 <? ( 4 << swap $2c5c8 - swap )
 	$20000000 <? ( 2 << swap $162e4 - swap )
-	$40000000 <? ( 2* swap $b172 - swap ) | y x
+	$40000000 <? ( 1 << swap $b172 - swap ) | y x
 	swap | x y
-	over dup 1 >> + +? ( rot drop swap $67cd - )( drop )
-	over dup 2 >> + +? ( rot drop swap $3920 - )( drop )
-	over dup 3 >> + +? ( rot drop swap $1e27 - )( drop )
-	over dup 4 >> + +? ( rot drop swap $f85 - )( drop )
-	over dup 5 >> + +? ( rot drop swap $7e1 - )( drop )
-	over dup 6 >> + +? ( rot drop swap $3f8 - )( drop )
-	over dup 7 >> + +? ( rot drop swap $1fe - )( drop )
+	l1 l2 l3 l4 l5 l6 l7
 	$80000000 rot -
 	15 >> - ;
 
+:ex1 over $58b91 - +? ( rot drop swap 8 << ; ) drop ;
+:ex2 over $2c5c8 - +? ( rot drop swap 4 << ; ) drop ;
+:ex3 over $162e4 - +? ( rot drop swap 2 << ; ) drop ;
+:ex4 over $b172 - +? ( rot drop swap 1 << ; ) drop ;
+:ex5 over $67cd - +? ( rot drop swap dup 1 >> + ; ) drop ;
+:ex6 over $3920 - +? ( rot drop swap dup 2 >> + ; ) drop ;
+:ex7 over $1e27 - +? ( rot drop swap dup 3 >> + ; ) drop ;
+:ex8 over $f85 - +? ( rot drop swap dup 4 >> + ; ) drop ;
+:ex9 over $7e1 - +? ( rot drop swap dup 5 >> + ; ) drop ;
+:exa over $3f8 - +? ( rot drop swap dup 6 >> + ; ) drop ;
+:exb over $1fe - +? ( rot drop swap dup 7 >> + ; ) drop ;
+
+:xp
+	swap -? ( $b1721 + swap 16 >> ; ) swap ;
+
 ::exp. | x --  r	; sin *.
 	$10000	| x y
-	swap -? ( $b1721 + swap 16 >> )( swap )
-	over $58b91 - +? ( rot drop swap 8 << )( drop )
-	over $2c5c8 - +? ( rot drop swap 4 << )( drop )
-	over $162e4 - +? ( rot drop swap 2 << )( drop )
-	over $b172 - +? ( rot drop swap 2* )( drop )
-	over $67cd - +? ( rot drop swap dup 2/ + )( drop )
-	over $3920 - +? ( rot drop swap dup 2 >> + )( drop )
-	over $1e27 - +? ( rot drop swap dup 3 >> + )( drop )
-	over $f85 - +? ( rot drop swap dup 4 >> + )( drop )
-	over $7e1 - +? ( rot drop swap dup 5 >> + )( drop )
-	over $3f8 - +? ( rot drop swap dup 6 >> + )( drop )
-	over $1fe - +? ( rot drop swap dup 7 >> + )( drop )
+	xp
+	ex1 ex2 ex3 ex4 ex5 ex6
+	ex7 ex8 ex9 exa exb
 	swap
-	$100 and? ( swap dup 8 >> + swap )
-	$80 and? ( swap dup 9 >> + swap )
-	$40 and? ( swap dup 10 >> + swap )
-	$20 and? ( swap dup 11 >> + swap )
-	$10 and? ( swap dup 12 >> + swap )
-	$8 and? ( swap dup 13 >> + swap )
-	$4 and? ( swap dup 14 >> + swap )
-	$2 and? ( swap dup 15 >> + swap )
-	$1 and? ( swap dup 16 >> + swap )
+	$100 an? ( swap dup 8 >> + swap )
+	$80 an? ( swap dup 9 >> + swap )
+	$40 an? ( swap dup 10 >> + swap )
+	$20 an? ( swap dup 11 >> + swap )
+	$10 an? ( swap dup 12 >> + swap )
+	$8 an? ( swap dup 13 >> + swap )
+	$4 an? ( swap dup 14 >> + swap )
+	$2 an? ( swap dup 15 >> + swap )
+	$1 an? ( swap dup 16 >> + swap )
 	drop ;
 
 ::exp. | x --  r
 	$10000	| x y
-	swap -? ( $b1721 + swap 16 >> )( swap )
-	over $58b91 - +? ( rot drop swap 8 << )( drop )
-	over $2c5c8 - +? ( rot drop swap 4 << )( drop )
-	over $162e4 - +? ( rot drop swap 2 << )( drop )
-	over $b172 - +? ( rot drop swap 1 << )( drop )
-	over $67cd - +? ( rot drop swap dup 1 >> + )( drop )
-	over $3920 - +? ( rot drop swap dup 2 >> + )( drop )
-	over $1e27 - +? ( rot drop swap dup 3 >> + )( drop )
-	over $f85 - +? ( rot drop swap dup 4 >> + )( drop )
-	over $7e1 - +? ( rot drop swap dup 5 >> + )( drop )
-	over $3f8 - +? ( rot drop swap dup 6 >> + )( drop )
-	over $1fe - +? ( rot drop swap dup 7 >> + )( drop )
+	xp
+	ex1 ex2 ex3 ex4 ex5 ex6
+	ex7 ex8 ex9 exa exb
 	swap | y x
 	over 8 >> *. 8 >> + ;
 
@@ -179,15 +181,15 @@
 	rot - abs | w x
 	over >? ( 2drop 0 ; )
 	swap /.
-	3.0 over 2* -
+	3.0 over 1 << -
 	swap dup *. *.
 	1.0 swap - ;
 
 ::pow | base exp -- r
 	1 swap | base r exp
-	( 1? )(
-		1 and? ( >r over * r> )
-		2/ rot dup * rot rot )
+	( 1?
+		1 an? ( >r over * r> )
+		1 >> rot dup * rot rot )
 	drop nip
 	;
 
@@ -205,11 +207,11 @@
 
 | next pow2
 ::nextpow2 | v -- p2
-	1-
-	dup 2/ or
+	1 -
+	dup 1 >> or
 	dup 2 >> or
 	dup 4 >> or
 	dup 8 >> or
 	dup 16 >> or
-	1+
+	1 +
 	;

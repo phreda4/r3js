@@ -72,7 +72,7 @@ var r3base=[
 0 ];
 
 function isNro(tok) { 
-	var sign;
+	let sign;
 	if (tok[0]=="-") { tok=tok.slice(1);sign=-1; } else { sign=1;}
 	nro=tok.match(/^\d+$/); // integer
 	if (nro!=null) { nro=parseInt(tok)*sign;return true; }
@@ -106,13 +106,12 @@ function isBas(tok) {
 	return true;
 	}
 
-function isWord(tok) { var i=dicc.length;
+function isWord(tok) { let i=dicc.length;
 	while (i--) { if (dicc[i]===tok && ((dicci[i]&1)==1 || i>=dicclocal)) { break; } }
 	return i;
 	}
 
 function codetok(nro) { 
-	if (modo==0 && boot==-1) { boot=memc; }
 	memcode[memc++]=nro; 
 	}
 
@@ -125,14 +124,14 @@ function datanro(nro) {
 		}
 	}
 
-function datasave(str) {  var r=memd;
-	for(var i=0;i<str.length;i++) 
+function datasave(str) { let r=memd;
+	for(let i=0;i<str.length;i++) 
 		{ if (str.charCodeAt(i)==34) {i++;} mem.setInt8(memd++,str.charCodeAt(i)); }
 	mem.setInt8(memd++,0);	
 	return r;
 	}
 	
-function datastr(n) { var s="";
+function datastr(n) { let s="";
 	while (mem.getInt8(n)!=0) { s+=String.fromCharCode(mem.getInt8(n++)); }
 	return s;
 	}
@@ -144,7 +143,7 @@ function closevar() {
 	mem.setInt32(memd,0);memd+=4;
 }
 
-function compilaDATA(name) { var ex=0;
+function compilaDATA(name) { let ex=0;
 	closevar();
 	if (name[1]=="#") { ex=1; }
 	dicc.push(name.slice(ex+1,name.length).toUpperCase());
@@ -161,9 +160,10 @@ function dataMAC(n){
 	if (n==4) {modo=2;} // ]
 	}
 	
-function compilaCODE(name) { var ex=0;
+function compilaCODE(name) { let ex=0;
 	closevar();
 	if (name[1]==":") { ex=1; }
+	if (name==":") { boot=memc; }
 	dicc.push(name.slice(ex+1,name.length).toUpperCase());
 	dicca.push(memc);
 	dicci.push(ex);
@@ -188,7 +188,7 @@ function compilaLIT(n) {
 	}
 
 function compilaSTR(str) {
-	var ini=datasave(str);	
+	let ini=datasave(str);	
 	if (modo<2) {codetok((ini<<7)+11);}
 	}
 	
@@ -199,9 +199,9 @@ function blockIn(){
 	}
 
 function solvejmp(from,to) {
-	var whi=false;
-	for (var i=from;i<to;i++) {
-		var op=memcode[i]&0x7f;
+	let whi=false;
+	for (let i=from;i<to;i++) {
+		let op=memcode[i]&0x7f;
 		if (op>21 && op<35 && (memcode[i]>>7)==0) {
 			memcode[i]+=(memc-i)<<7;	// patch while
 			whi=true;
@@ -211,8 +211,8 @@ function solvejmp(from,to) {
 	}
 
 function blockOut(){
-	var from=stacka.pop();
-	var dist=memc-from;
+	let from=stacka.pop();
+	let dist=memc-from;
 	if (solvejmp(from,memc)) { // salta
 		codetok((-(dist+1)<<7)+18); 	// jmpr
 	} else {
@@ -239,9 +239,9 @@ function compilaWORD(n) {
 function r3token(str) {
 
 	level=0;
-	var now=0;
-	var ini;
-	var ntoken;
+	let now=0;
+	let ini;
+	let ntoken;
 	str=str.trim();
 	while(now<str.length) {
 		while (str.charCodeAt(now)<33) { now++; }
@@ -287,15 +287,14 @@ function r3token(str) {
 				}
 			}		
 		}	        
-	ip=boot;	 
 	if (memcode[memc-1]!=16) { memcode[memc++]=16; } // last;
 	return 0;
 	}
 
 
 function r3includes(str) {
-	var now=0;
-	var ini;	
+	let now=0;
+	let ini;	
 	str=str.trim();
 	while(now<str.length) {
 		while (str.charCodeAt(now)<33) { now++; }
@@ -345,7 +344,7 @@ function r3compile(str) {
 	memd=meminidata;
 	
 // tokenize
-	for (var i=0;i<includes.length;i++) {
+	for (let i=0;i<includes.length;i++) {
 		if (r3token(sessionStorage.getItem(includes[i]))) return nerror;
 		dicclocal=dicc.length;
 		}
@@ -373,31 +372,32 @@ function r3copilewi(str) {
 	
 function error(str,now) {
 	nerror=now;
-	var n2=now;
-	var n1=now-1;
+	let n2=now;
+	let n1=now-1;
 	while (n1>0 && str.charCodeAt(n1)>32) {n1--;}
 	
 	lerror=0;
-	for(var i=0;i<now;i++){ if(str[i]=="\n"||str[i]=="\r") {lerror++;i++;cerror=i;if (str[i]=="\n"||str[i]=="\r") { i++; } } }
+	for(let i=0;i<now;i++){ if(str[i]=="\n"||str[i]=="\r") {lerror++;i++;cerror=i;if (str[i]=="\n"||str[i]=="\r") { i++; } } }
 	cerror=now-cerror;
 	
 	werror=str.slice(n1,n2).trim();
 	}
 
 /*------RUNER------*/
-
-var ip;
-
-var TOS=0;
-var NOS=0;
-var REGA=0,REGB=0;
-var RTOS=254;
+var TOSEX=0;
 var stack=new Int32Array(256); 
+
 //---------------------------//
 // TOS..DSTACK--> <--RSTACK  //
 //---------------------------//
-
-function r3op(op) { var W,W1;
+function runr3(adr) {
+  let ip=adr|0;
+  let TOS=0,NOS=0;
+  let REGA=0,REGB=0;
+  let RTOS=255;stack[255]=0;
+  let op=0,W=0,W1=0; 
+  while(ip!=0) { 
+	op=memcode[ip++]; 
 	switch(op&0x7f){
 	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		// LIT9
 	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// LITres
@@ -504,11 +504,11 @@ function r3op(op) { var W,W1;
 
 	case 95:REGB=TOS;TOS=stack[NOS];NOS--;break; //>B
 	case 96:NOS++;stack[NOS]=TOS;TOS=REGB;break; //B> 
-	case 97:NOS++;stack[NOS]=TOS;TOS==mem.getInt64(REGB);break;//B@
-	case 98:mem.setInt64(REGB,TOS);TOS=stack[NOS];NOS--;break;//B! 
+	case 97:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGB);break;//B@
+	case 98:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;break;//B! 
 	case 99:REGB+=TOS;TOS=stack[NOS];NOS--;break;//B+ 
-	case 100:NOS++;stack[NOS]=TOS;TOS==mem.getInt64(REGB);REGB+=8;break;//B@+ 
-	case 101:mem.setInt64(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=8;break;//B!+
+	case 100:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGB);REGB+=8;break;//B@+ 
+	case 101:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=8;break;//B!+
 
 	case 102://MOVE 
 		W=stack[NOS-1];W1=stack[NOS];
@@ -553,6 +553,10 @@ function r3op(op) { var W,W1;
 	}
 	//op>>=8;}
 	}
+  NOS++;stack[NOS]=TOS;
+  TOSEX=NOS;
+  }
+	
 
 function systemcall(TOS,NOS) {
 	switch(TOS) {
@@ -589,31 +593,11 @@ function systemmem(TOS)	{
 		
 //---------------------------------------	
 function r3reset(){
-	NOS=0;TOS=0;
 	r3domx=-1;
 	r3showx=-1
 	r3echo="";
 	}
 
-	
-function r3step() {
-	if (ip==0) { return; }
-	r3op(memcode[ip++]);	
-	}
-
-function r3run() {
-	if (boot==-1) { return; }
-	r3showx!=-1
-	RTOS=255;stack[255]=0;
-	ip=boot;
-	while(ip!=0) { r3op(memcode[ip++]); }
-	}
-
-function r3runa(adr) {
-	RTOS=255;stack[255]=0;
-	ip=adr;
-	while(ip!=0) { r3op(memcode[ip++]); }
-	}
 	
 /*------CANVAS------*/
 var canvas;
@@ -622,7 +606,7 @@ var imageData;
 var buf8;
 
 function getMouse(e) {
-  var rect = canvas.getBoundingClientRect();
+  const rect = canvas.getBoundingClientRect();
   xm=(e.clientX - rect.left) / (rect.right - rect.left) * canvas.width;
   ym=(e.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height;
   }
@@ -634,7 +618,7 @@ function getMouse(e) {
 //	canvas.addEventListener('contextmenu',function(e) { return false; }, false);	
 */  
 
-function getWindowStyleButton(e){ var button = 0;
+function getWindowStyleButton(e){ let button = 0;
   if (e) {
 	if (e.button === 0) button = 1;
 	else if (e.button === 1) button = 4;
@@ -654,25 +638,31 @@ function eventIni() {
 	canvas.addEventListener('mousedown', DownMouse, false);
 	canvas.addEventListener('mouseup', UpMouse, false);	
 
-	document.addEventListener("keydown", function(event) { ke=event.key;kc=event.code;
+	document.addEventListener("keydown", function(event) { 
+	
+	ke=event.key;kc=event.code;
 	//event.preventDefault(); 
 	}, false);
-	document.addEventListener("keyup", function(event) { ke=event.key;kc=event.code;
+	document.addEventListener("keyup", function(event) { 
+	
+	ke=event.key;kc=event.code;
 	//event.preventDefault();  
 	}, false);	
 }
 
-function eventDel() {
+function eventRem() {
 	canvas.removeEventListener('mousemove', getMouse, false);
 	canvas.removeEventListener('mouseenter', getMouse, false);	
 
 	canvas.removeEventListener('mousedown', DownMouse, false);
 	canvas.removeEventListener('mouseup', UpMouse, false);	
 
-	document.removeEventListener("keydown", function(event) { ke=event.key;kc=event.code;
+	document.removeEventListener("keydown", function(event) { 
+		ke=event.key;kc=event.code;
 	//event.preventDefault(); 
 	}, false);
-	document.removeEventListener("keyup", function(event) { ke=event.key;kc=0x10000|event.code;
+	document.removeEventListener("keyup", function(event) { 
+		ke=event.key;kc=0x10000|event.code;
 	//event.preventDefault();  
 	}, false);	
 	
@@ -730,9 +720,9 @@ var reqAnimFrame=
 
 function animate() {
 	if (r3showx!=-1) {
-		r3runa(r3showx);
+		runr3(r3showx);
 		redraw();
-		reqAnimFrame(animate);
+//		reqAnimFrame(animate);
 		}
 	}
 
@@ -749,7 +739,7 @@ function numct(tok) // cte
 { return memcode[tok>>7];}
 
 function printmr3(tok) {
-var s="";
+let s="";
 switch(tok&0x7f){
 		case 7:s+=num9(tok);break
 		case 8:	

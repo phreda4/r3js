@@ -4,10 +4,10 @@
 | pal-type-w-h
 | 4-4-12-12
 
-^r4/lib/gr.txt
+^lib/gr.r3
 
-#pal0 
-$000000ff $808080ff $C0C0C0ff $FFFFFFff $800000ff $FF0000ff $808000ff $FFFF00ff 
+#pal0
+$000000ff $808080ff $C0C0C0ff $FFFFFFff $800000ff $FF0000ff $808000ff $FFFF00ff
 $008000ff $00FF00ff $008080ff $00FFFFff $000080ff $0000FFff $800080ff $FF00FFff
 
 #pal8
@@ -48,7 +48,7 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 
 :clipw
 	sw >? ( sw pick2 - ; ) wb ;
-	
+
 :negw
 	-? ( dup 'wi +! neg 'addm ! 0 ; ) 0 'addm ! ;
 
@@ -67,11 +67,13 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	addm 2 << + >b
 	wb wi - 2 <<
    	sw wi - 2 <<
-	hi ( 1? )(
-		wi ( 1? )( b@+ a!+ 1- ) drop
+	hi ( 1?
+		wi ( 1? 
+			b@+ a!+ 
+			1 - ) drop
 		over a+
 		pick2 b+
-		1- ) 3drop ;
+		1 - ) 3drop ;
 :d1 | adr -- ;8		
 :d2 | adr -- ;4
 :d3 | adr -- ;2
@@ -83,13 +85,13 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 ::sprite | x y 'spr  --
 	0? ( 3drop ; )
 	@+ dup
-	dup $fff and 'wb ! 
+	dup $fff and 'wb !
 	12 >> $fff and 'hb !
 	2swap clip | adr h x y
 	wi hi or -? ( drop 4drop ; ) drop
 	xy>v >a
 	dup 28 >> 1? ( rot @+ 'paleta ! rot rot ) drop
-	24 >> $f and 2 << 'odraw + @ exec ;
+	24 >> $f and 2 << 'odraw + @ ex ;
 
 |----- DRAW ROT 1:1
 :rotlim
@@ -133,9 +135,9 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	wi hi or -? ( 3drop ; ) drop
 	xy>v >a
 	sx sy
-	hi ( 1? )(
+	hi ( 1?
 		pick2 pick2
-		wi ( 1? )(
+		wi ( 1? 
 			dotrot point0
 			rot xa + rot ya +
 			rot 1 - ) 3drop
@@ -153,9 +155,9 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	wi hi or -? ( 3drop ; ) drop
 	xy>v >a
 	sx sy
-	hi ( 1? )(
+	hi ( 1?
 		pick2 pick2
-		wi ( 1? )(
+		wi ( 1?
 			dotrot point1
 			rot xa + rot ya +
 			rot 1 - ) 3drop
@@ -175,4 +177,4 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	wi hi or -? ( drop 4drop ; ) drop
 	xy>v >a
 	dup 28 >> 1? ( rot @+ 'paleta ! rot rot ) drop
-	24 >> $7 and 2 << 'rdraw + @ exec ;
+	24 >> $7 and 2 << 'rdraw + @ ex ;

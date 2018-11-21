@@ -156,10 +156,11 @@ function moderun() {
     }
 	
  modeselect('moderun');	
+ 
  canvasini();    
   
  r3reset();
- r3run();
+ if (boot!=-1) { runr3(boot); }
  animate(); 
  redraw();
  document.getElementById("r3dom").innerHTML=r3echo;
@@ -196,9 +197,7 @@ document.body.removeChild(x);
 //----------------------------------------------------
 
 function dumpd() { var s="";
-  if (NOS==0) {return s;}
-  s+='<span class="tag is-dark is-large">'+TOS+'</span>';
-  for (var i=NOS;i>1;i--) { s+='&nbsp;<span class="tag is-dark is-large">'+stack[i]+'</span>';}
+  for (var i=TOSEX;i>1;i--) { s+='&nbsp;<span class="tag is-dark is-large">'+stack[i]+'</span>';}
   return s;
   }
 

@@ -202,29 +202,29 @@
 
 |-----------------------------
 ::2dmode | --
-	sw 2/ 'ox !
-	sh 2/ 'oy !
+	sw 1 >> 'ox !
+	sh 1 >> 'oy !
 	;
 
 ::3dmode | fov --
 	sh *. dup 'yf ! 'xf !
-	sw 2/ 'ox !
-	sh 2/ 'oy !
+	sw 1 >> 'ox !
+	sh 1 >> 'oy !
 	matini
 	;
 
 |----------------------------
 ::Omode | --
-	sw dup 2/ 'ox !
-	sh dup 2/ 'oy !
+	sw dup 1 >> 'ox !
+	sh dup 1 >> 'oy !
 	min dup 'xf ! 'yf !
 	matini
 	;
 
 |----------------------------
 ::o3dmode | w h --
-	dup 2/ 'oy !
-	over 2/ 'ox !
+	dup 1 >> 'oy !
+	over 1 >> 'ox !
 	min dup 'xf ! 'yf !
 	matini ;
 
@@ -317,22 +317,22 @@
 
 |------------- divisionless
 ::3dini
-	1024 sw - 2/ neg 'ox !
-	1024 sh - 2/ neg 'oy !
+	1024 sw - 1 >> neg 'ox !
+	1024 sh - 1 >> neg 'oy !
 	matini ;
 
 :c10 | x z -- x'
-	2/ 0 swap over | x 0 z 0
-	pick3 >? ( over - rot )( over + rot 512 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 256 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 128 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 64 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 32 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 16 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 8 + ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 4+ ) rot 2/ rot
-	pick3 >? ( over - rot )( over + rot 2 + ) rot 2/ rot
-	pick3 >? ( 2drop )( 2drop 1+ )
+	1 >> 0 swap over | x 0 z 0
+	pick3 >? ( over - rot )( over + rot 512 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 256 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 128 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 64 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 32 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 16 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 8 + ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 4+ ) rot 1 >> rot
+	pick3 >? ( over - rot )( over + rot 2 + ) rot 1 >> rot
+	pick3 >? ( 2drop )( 2drop 1 + )
 	nip ;
 
 ::3dproject | x y z -- x y
