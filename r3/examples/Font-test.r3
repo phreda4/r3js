@@ -7,4 +7,6 @@
   ( c@+ 1? char8i )
   2drop ;
 
+:
 "Hola Mundo!" print
+;

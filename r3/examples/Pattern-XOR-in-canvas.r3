@@ -12,6 +12,7 @@
     ) drop
   ) drop ;
 
+:
  patternxor
 | 'patternxor onshow
-
+;

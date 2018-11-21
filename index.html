@@ -18,8 +18,7 @@
 <nav class="navbar is-fixed-top" role="navigation">
  <a class="navbar-item"> 
 
-<button class="button" id="filename">main.r3</button>
-
+<button class="button" id="filename">--</button>
 <button class="button is-danger is-outlined" onclick="modesrc();"> 
  <i class="mdi mdi-playlist-edit" style="font-size:1.8em;line-height:0em"></i></button>
 <button class="button is-success is-outlined" onclick="moderun();">
@@ -27,16 +26,6 @@
 <button class="button is-link is-outlined" onclick="modeimg();">
  <i class="mdi mdi-cube-outline" style="font-size:1.8em;line-height:0em"></i></button>
 
- <!-- botoneras para modos
-<div id="menuedit" style="padding:0px 8px">
-</div>
- 
- <div id="menuimg" style="padding:0px 8px">
-</div>
- 
-<div id="menuset" style="padding:0px 8px">
-</div>
--->  
  </a> 
 </nav>
 
@@ -151,17 +140,17 @@ function moderun() {
  var cc=r3compile(editor.getValue("\n"));
  if (cc>-1) {// error
 	dumpError();
-    dumpVM();
+    //dumpVM();
+	modeselect('modesrc');		
     return;
     }
 	
  modeselect('moderun');	
  
- canvasini();    
-  
  r3reset();
  if (boot!=-1) { runr3(boot); }
  animate(); 
+ 
  redraw();
  document.getElementById("r3dom").innerHTML=r3echo;
  dumpVM();  
@@ -197,7 +186,7 @@ document.body.removeChild(x);
 //----------------------------------------------------
 
 function dumpd() { var s="";
-  for (var i=TOSEX;i>1;i--) { s+='&nbsp;<span class="tag is-dark is-large">'+stack[i]+'</span>';}
+  for (let i=TOSEX;i>1;i--) { s+='&nbsp;<span class="tag is-dark is-large">'+stack[i]+'</span>';}
   return s;
   }
 
@@ -272,7 +261,7 @@ function definitions(str) {
 function ininclude(word) {
 word="|"+word+"|";
 var nl=wordlibs.length;
-for (var i=0;i<nl;i++) {
+for (let i=0;i<nl;i++) {
  if (wordlibs[i].indexOf(word)>-1) { return includelibs[i];}
  }
 return "";
@@ -314,6 +303,8 @@ function fromURL(name) {
       file.async("string").then(function (s) { addfile(name,s); });
       });
   });
+  
+  document.getElementById('filename').innerText=name;
 }
 
 function toURL(name) {
@@ -332,9 +323,9 @@ function fromFILE(f){
 }
 
 function toFILE(f) {
-var zip = new JSZip();
-var namea,namefile;
-for(var i=0;i<sessionStorage.length;i++) { 
+let zip = new JSZip();
+let namea,namefile;
+for(let i=0;i<sessionStorage.length;i++) { 
 	namefile=sessionStorage.key(i);
 	zip.file(namefile,sessionStorage.getItem(namefile));
 	}
@@ -344,12 +335,12 @@ zip.generateAsync({type:"blob"}).then(function (blob) { saveAs(blob,f); });
 //----------------------
 function makeimage()
 {
-var filelist=document.getElementById('filelist');
-var s="";
-var path,folder="";
-for(var i=0;i<sessionStorage.length;i++){
-  var name=sessionStorage.key(i);
-  var path=name.trim().split("/");
+let filelist=document.getElementById('filelist');
+let s="";
+let folder="";
+for(let i=0;i<sessionStorage.length;i++){
+  let name=sessionStorage.key(i);
+  let path=name.trim().split("/");
   if (path[1]!==undefined) {
 	if (folder!=path[0]) { 
 	  if (folder!="") { s+="</div></article>"; }

@@ -80,7 +80,7 @@ function isNro(tok) {
 	if (nro!=null) { 
 		var n=tok.split(".");
 		var n1=parseInt(n[0]),v=1;
-		for (var i=0;i<n[1].length;i++) { v*=10; }
+		for (let i=0;i<n[1].length;i++) { v*=10; }
 		var n2=0x10000*parseInt(n[1])/v;
 		nro=((n1<<16)|(n2&0xffff))*sign;
 		return true; 
@@ -118,7 +118,7 @@ function codetok(nro) {
 function datanro(nro) { 
 	switch(modo){
 		case 2:mem.setInt32(memd,nro);memd+=4;break;
-		case 3:for(var i=0;i<nro;i++) { mem.setInt8(memd++,0); };break;
+		case 3:for(let i=0;i<nro;i++) { mem.setInt8(memd++,0); };break;
 		case 4:mem.setInt8(memd,nro);memd+=1;break;
 		case 5:mem.setInt64(memd,nro);memd+=8;break;
 		}
@@ -328,14 +328,16 @@ function r3includes(str) {
 
 
 function r3compile(str) {	
-	includes.splice(0,includes.length);
+	includes=[]
 	
 // load includes
 	r3includes(str);
 
-	dicc.splice(0,dicc.length);
-	dicca.splice(0,dicca.length);
-	dicci.splice(0,dicci.length);
+	canvasini();
+	
+	dicc=[]
+	dicca=[]
+	dicci=[]
 	dicclocal=0;
 	
 	boot=-1
@@ -355,9 +357,9 @@ function r3compile(str) {
 	}
 
 function r3copilewi(str) {
-	dicc.splice(0,dicc.length);
-	dicca.splice(0,dicca.length);
-	dicci.splice(0,dicci.length);
+	dicc=[]
+	dicca=[]
+	dicci=[]
 	
 	boot=-1
 
@@ -397,7 +399,7 @@ function runr3(adr) {
   let RTOS=255;stack[255]=0;
   let op=0,W=0,W1=0; 
   while(ip!=0) { 
-	op=memcode[ip++]; 
+   op=memcode[ip++]; 
 	switch(op&0x7f){
 	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		// LIT9
 	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// LITres
@@ -549,10 +551,8 @@ function runr3(adr) {
 
 	case 111:systemcall(TOS,stack[NOS]);TOS=stack[NOS-1];NOS-=2;break; //SYSCALL | nro int -- 
 	case 112:TOS=systemmem(TOS);break;//SYSMEM | nro -- ini
-	
 	}
-	//op>>=8;}
-	}
+   }
   NOS++;stack[NOS]=TOS;
   TOSEX=NOS;
   }
@@ -670,9 +670,14 @@ function eventRem() {
 
 function canvasini() {
 	canvas = document.getElementById('canvas');
-	ctx = canvas.getContext('2d',{alpha:false,preserveDrawingBuffer:true});
-	ctx.scale(2, 2)
+	ctx = canvas.getContext('2d',{
+		alpha:false,
+		imageSmoothingEnabled:false,
+		preserveDrawingBuffer:true
+		});
+	
 	imageData=ctx.getImageData(0,0,canvas.width, canvas.height);
+	
 	buf8=new Uint8ClampedArray(memdata,0,imageData.data.length);
 	
 	meminidata=imageData.data.length;// dinamic???
@@ -681,15 +686,14 @@ function canvasini() {
 	}
 
 function redraw() { 
-
-/*	ctx.save();
-    ctx.translate(-((newWidth-width)/2), -((newHeight-height)/2));
-    ctx.scale(scale, scale);
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(copiedCanvas, 0, 0);
-    ctx.restore();
-*/	
-	imageData.data.set(buf8);ctx.putImageData(imageData,0,0); 
+	imageData.data.set(buf8);
+/*	
+//ctx.msImageSmoothingEnabled = false;
+ctx.imageSmoothingEnabled = false;
+ctx.scale(2,2);
+ctx.drawImage(imageData,0,0);
+*/
+	ctx.putImageData(imageData,0,0); 
 	}
 
 
@@ -700,14 +704,14 @@ function domini() {
 	}
 	
 function r3go(a) {	
-	r3runa(a);
+	runr3(a);
 	redom();
 	}
 	
 function redom() {
 	if (r3domx==-1) { return; }
 	r3echo="";
-	r3runa(r3domx);
+	runr3(r3domx);
 	document.getElementById('r3dom').innerHTML=r3echo;
 	}
 
@@ -722,55 +726,6 @@ function animate() {
 	if (r3showx!=-1) {
 		runr3(r3showx);
 		redraw();
-//		reqAnimFrame(animate);
+		reqAnimFrame(animate);
 		}
 	}
-
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-
-function num9(tok) // 9 bits
-{ return (tok<<16)>>23; }
-function numr(tok) // r bits
-{ return (tok>>7);}
-function numrn(tok) // r bits neg
-{ return -(tok>>7);}
-function numct(tok) // cte
-{ return memcode[tok>>7];}
-
-function printmr3(tok) {
-let s="";
-switch(tok&0x7f){
-		case 7:s+=num9(tok);break
-		case 8:	
-		case 12:case 13:case 14:case 15:
-		case 17:case 18:
-		case 22:case 23:case 24:case 25:
-		case 26:case 27:case 28:case 29:case 30:case 31:
-		case 32:case 33:case 34:
-			s+=numr(tok);break
-		case 9:s+=tok&0xffffff80;break
-		case 10:s+=(tok>>7)&0x7f;break
-//		default:
-	}
-if ((tok&0x7f)>20) { return r3base[(tok&0x7f)-16]+s; }
-return r3machine[tok&0x7f]+s;
-}
-
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-
-function Run(code) {
-  if (r3compilewi(code)!=0) { return; }
-  r3run();redraw();redom();
-}
-function r3scanrun() {
-
-  canvasini();
-  domini();
-  r3reset();	
-
-  Array.from(document.getElementsByTagName("script"))
-    .filter(({type}) => type === "text/r3")
-    .forEach(({text}) => Run(text));
-}

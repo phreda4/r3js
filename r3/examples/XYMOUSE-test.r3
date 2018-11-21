@@ -12,4 +12,6 @@
   	; ) drop
   xymouse line ;
 
+:
 'show onshow
+;
