@@ -19,7 +19,7 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 #paleta 'pal0
 
 |-- internas para clip
-#addm 
+#addm
 #wi #hi
 
 |-- internas para scale
@@ -84,9 +84,9 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 
 ::sprite | x y 'spr  --
 	0? ( 3drop ; )
-	@+ dup
+	@+
 	dup $fff and 'wb !
-	12 >> $fff and 'hb !
+	dup 12 >> $fff and 'hb !
 	2swap clip | adr h x y
 	wi hi or -? ( drop 4drop ; ) drop
 	xy>v >a
@@ -96,10 +96,10 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 |----- DRAW ROT 1:1
 :rotlim
 	rot -? ( min ; ) rot max swap ;
-	
+
 :neglim
 	-? ( 0 swap ; ) 0 ;
-	
+
 :inirot | x y r -- x y
 	sincos 'xa ! 'ya !	| calc w&h
 	xa wb * ya hb * neg 2dup +
@@ -137,7 +137,7 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	sx sy
 	hi ( 1?
 		pick2 pick2
-		wi ( 1? 
+		wi ( 1?
 			dotrot point0
 			rot xa + rot ya +
 			rot 1 - ) 3drop
@@ -178,3 +178,19 @@ $FF004Dff $FFA300ff $FFEC27ff $00E436ff $29ADFFff $83769Cff $FF77A8ff $FFCCAAff
 	xy>v >a
 	dup 28 >> 1? ( rot @+ 'paleta ! rot rot ) drop
 	24 >> $7 and 2 << 'rdraw + @ ex ;
+
+
+#nav32 $008008 | 8x8 32bits
+$. $. $. $ffff $. $. $. $.
+$. $. $. $ffff $. $. $. $.
+$. $. $ffff $ffff $ffff $. $. $.
+$. $. $ffff $ffff $ffff $. $. $.
+$. $ffff $ffff $ffff $ffff $ffff $. $.
+$. $ffff $ffff $ffff $ffff $ffff $. $.
+$. $. $. $. $. $. $. $.
+$. $. $. $. $. $. $. $.
+
+:
+cls
+10 10 'nav32 sprite
+;

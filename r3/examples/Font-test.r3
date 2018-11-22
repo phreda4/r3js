@@ -1,12 +1,13 @@
-| Example 2
+| Example PRINT
 
-^lib/fonti.r3
-
-:print | str --
-  0 0 xy>v >a
-  ( c@+ 1? char8i )
-  2drop ;
+^lib/print.r3
 
 :
-"Hola Mundo!" print
+cls
+$ff0000ff 'ink !
+"Hello Word!" print cr
+$ff00ff 'ink !
+"Hola Mundo!" print cr
+$ffff 'ink !
+"r3" print cr
 ;

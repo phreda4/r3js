@@ -1,15 +1,15 @@
 ^lib/sys.r3
-^lib/fontj.r3
+^lib/fontpc.r3
 |---------------
 | PRINT LIB
 | PHREDA 2018
 |---------------
 
 ##ccx 0 ##ccy 0
-##cch 8 ##ccw 8
+##cch 16 ##ccw 8
 
-#_charemit 'char8j
-#_charsize 'size8j
+#_charemit 'char8pc
+#_charsize 'size8pc
 
 ::font! | 'vemit 'vsize --
   '_charsize ! '_charemit ! ;
@@ -27,4 +27,4 @@
     emit ) 2drop ;
 
 ::cr
-  cch 'ccy ! 0 'ccx ! ;
+  cch 'ccy +! 0 'ccx ! ;

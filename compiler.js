@@ -37,6 +37,7 @@ var r3echo="";
 var r3domx=-1;
 var r3showx=-1;
 
+var sw,sh;
 var xm=0;
 var ym=0;
 var bm=0;
@@ -63,8 +64,8 @@ var r3base=[
 "@","C@","Q@","@+","C@+","Q@+", 							// 65
 "!","C!","Q!","!+","C!+","Q!+", 							// 71
 "+!","C+!","Q+!", 											// 74
-">A","A>","A@","A!","A+","A@+","A!+",						// 81 32bits
-">B","B>","B@","B!","B+","B@+","B!+",						// 88 64bits
+">A","A>","A@","A!","A+","A@+","A!+",						// 81 
+">B","B>","B@","B!","B+","B@+","B!+",						// 88 
 "MOVE","MOVE>","FILL",										// 91
 "CMOVE","CMOVE>","CFILL",									// 94
 "DMOVE","DMOVE>","DFILL",									// 97
@@ -277,11 +278,10 @@ function r3token(str) {
 					compilaADDR(nro);break;		
 				default:
 					ntoken=ntoken.toUpperCase();
-					if (isNro(ntoken)) { 
-						compilaLIT(nro);break; }
-					if (isBas(ntoken)) { 
-						compilaMAC(nro);break; }
+					if (isNro(ntoken)) { compilaLIT(nro);break; }
+					if (isBas(ntoken)) { compilaMAC(nro);break; }
 					nro=isWord(ntoken);if (nro<0) { error(str,now);return 1; }
+					if (modo==2) { compilaADDR(nro);break; }
 					compilaWORD(nro);
 					break;
 				}
@@ -396,7 +396,8 @@ function runr3(adr) {
   let ip=adr|0;
   let TOS=0,NOS=0;
   let REGA=0,REGB=0;
-  let RTOS=255;stack[255]=0;
+  let RTOS=255;
+  stack[255]=0;
   let op=0,W=0,W1=0; 
   while(ip!=0) { 
    op=memcode[ip++]; 
@@ -498,19 +499,19 @@ function runr3(adr) {
 	
 	case 88:REGA=TOS;TOS=stack[NOS];NOS--;break; //>A
 	case 89:NOS++;stack[NOS]=TOS;TOS=REGA;break; //A> 
-	case 90:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGA);break;//A@
+	case 90:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);break;//A@
 	case 91:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;break;//A! 
 	case 92:REGA+=TOS;TOS=stack[NOS];NOS--;break;//A+ 
-	case 93:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGA);REGA+=4;break;//A@+ 
+	case 93:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);REGA+=4;break;//A@+ 
 	case 94:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;REGA+=4;break;//A!+
 
 	case 95:REGB=TOS;TOS=stack[NOS];NOS--;break; //>B
 	case 96:NOS++;stack[NOS]=TOS;TOS=REGB;break; //B> 
-	case 97:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGB);break;//B@
+	case 97:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);break;//B@
 	case 98:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;break;//B! 
 	case 99:REGB+=TOS;TOS=stack[NOS];NOS--;break;//B+ 
-	case 100:NOS++;stack[NOS]=TOS;TOS==mem.getInt32(REGB);REGB+=8;break;//B@+ 
-	case 101:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=8;break;//B!+
+	case 100:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);REGB+=4;break;//B@+ 
+	case 101:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=4;break;//B!+
 
 	case 102://MOVE 
 		W=stack[NOS-1];W1=stack[NOS];
