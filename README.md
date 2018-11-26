@@ -45,7 +45,15 @@ Like ColorForth, not have ELSE!!, but this can be done with code factorization, 
 
 * for now are slow.
 
+### Memory organization
 
+The WASM limitation in memory make me rethink this subject. :r4 have no limits to memory, r3 have a invisible chunk when the code has and the visible, linear 0 based memory where the framebuffer, variables and free memory exist.
+
+The words SYSCALL and SYSMEM can disapear if I allocate in this memory too, add interact like old microcomputers.
+
+I try the organization like this. 0 to framebuffer size, the canvas memory, then variables then free.
+
+I like to use 0 like null or nill and the this adreess don't exist for variable.
 
 
 
