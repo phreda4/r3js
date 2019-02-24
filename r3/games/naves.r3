@@ -30,7 +30,7 @@ $. $. $. $. $. $. $. $.
 
 :player
 	xn yn 'nav32 spr
-	xymouse 'nav4 spr
+	xymouse 'nav4 spr	
 	;
 
 :ongame

@@ -687,6 +687,7 @@ function canvasini() {
 	}
 
 function redraw() { 
+	ctx.save();
 	imageData.data.set(buf8);
 /*	
 //ctx.msImageSmoothingEnabled = false;
@@ -695,6 +696,7 @@ ctx.scale(2,2);
 ctx.drawImage(imageData,0,0);
 */
 	ctx.putImageData(imageData,0,0); 
+	ctx.restore();
 	}
 
 
@@ -725,8 +727,8 @@ var reqAnimFrame=
 
 function animate() {
 	if (r3showx!=-1) {
+		reqAnimFrame(animate);		
 		runr3(r3showx);
 		redraw();
-		reqAnimFrame(animate);
 		}
 	}
