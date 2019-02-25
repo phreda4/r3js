@@ -6,6 +6,7 @@ Actual Version work in a .html in javascript, without server, but the main image
 
 try in:
 
+* https://raw.githack.com/r3www/r3/master/index.html
 * https://rawgit.com/r3www/r3/master/index.html
 
 ## RoadMap
@@ -55,7 +56,10 @@ I try the organization like this. 0 to framebuffer size, the canvas memory, then
 
 I like to use 0 like null or nill and the this adreess don't exist for variable.
 
+### Waiting for WASM advance
 
+Then I start make an advance compiler in :r4.
+I hope get a IDE with advance compiler only, not interpreter.
 
 
 
