@@ -723,7 +723,8 @@ var reqAnimFrame=
 	window.mozRequestAnimationFrame||
 	window.webkitRequestAnimationFrame||
 	window.msRequestAnimationFrame||
-	window.oRequestAnimationFrame;
+	window.oRequestAnimationFrame||
+        window.requestAnimationFrame ;     // for firefox (needed at least in Linux)
 
 function animate() {
 	if (r3showx!=-1) {
