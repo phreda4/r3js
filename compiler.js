@@ -53,23 +53,34 @@ var r3machine=[
 ];
 var r3base=[
 ";","(",")","[","]","EX","0?","1?","+?","-?",				// 10
-"<?",">?","=?",">=?","<=?","<>?","AN?","NA?","BTW?",		// 19
+"<?",">?","=?",">=?","<=?","<>?","AND?","NAND?","IN?",		// 19
 "DUP","DROP","OVER","PICK2","PICK3","PICK4","SWAP","NIP",	// 27
-"ROT","2DUP","2DROP","3DROP","4DROP","2OVER","2SWAP",		// 34
-">R","R>","R@",												// 37
-"AND","OR","XOR","NOT","NEG",								// 42
-"+","-","*","/","*/",										// 47
-"/MOD","MOD","ABS","SQRT","CLZ",							// 52
-"<<",">>",">>>","*>>","<</",								// 57
-"@","C@","Q@","@+","C@+","Q@+", 							// 65
-"!","C!","Q!","!+","C!+","Q!+", 							// 71
-"+!","C+!","Q+!", 											// 74
-">A","A>","A@","A!","A+","A@+","A!+",						// 81 
-">B","B>","B@","B!","B+","B@+","B!+",						// 88 
-"MOVE","MOVE>","FILL",										// 91
-"CMOVE","CMOVE>","CFILL",									// 94
-"DMOVE","DMOVE>","DFILL",									// 97
-"SYSCALL","SYSMEM",											// 99
+"ROT","-ROT","2DUP","2DROP","3DROP","4DROP","2OVER","2SWAP",	// 35
+">R","R>","R@",												// 38
+"AND","OR","XOR","NAND",									// 42
+"+","-","*","/",											// 46
+"<<",">>",">>>",											// 49
+"MOD","/MOD","*/","*>>","<</",								// 54
+"NOT","NEG","ABS","SQRT","CLZ",							// 59
+"@","C@","W@","D@", 										// 63
+"@+","C@+","W@+","D@+", 									// 67
+"!","C!","W!","D!", 										// 71
+"!+","C!+","W!+","D!+", 									// 75
+"+!","C+!","W+!","D+!", 									// 79
+">A","A>","A+",											// 82
+"A@","A!","A@+","A!+",										// 86
+"CA@","CA!","CA@+","CA!+",									// 90
+"DA@","DA!","DA@+","DA!+",									// 94
+">B","B>","B+",											// 97
+"B@","B!","B@+","B!+",										// 101
+"CB@","CB!","CB@+","CB!+",									// 105
+"DB@","DB!","DB@+","DB!+",									// 109
+"AB[","]BA",												// 111
+"MOVE","MOVE>","FILL",										// 114
+"CMOVE","CMOVE>","CFILL",									// 117
+"DMOVE","DMOVE>","DFILL",									// 120
+"MEM",														// 121
+"SYSCALL","SYSMEM",										// 123
 0 ];
 
 function isNro(tok) { 
@@ -173,24 +184,22 @@ function compilaCODE(name) { let ex=0;
 
 function compilaADDR(n) {
 	if (modo>1) { datanro(dicca[n]);return; }
-	codetok((dicca[n]<<7)+14+((dicci[n]>>4)&1)); 
+	codetok((dicca[n]<<8)+14+((dicci[n]>>4)&1)); 
 	}
 
 function compilaLIT(n) {
 	if (modo>1) { datanro(n);return; }
-//	if (n>-257 && n<256) { codetok(((n<<7)&0xff80)+7);return; }
-	if (n==(n<<6)>>6) { // un bit mas por signo (token 8 y 9)
-//		codetok((n<<7)+8+((n>>25)&1));
-		codetok((n<<7)+8);
+	if (n==(n<<7)>>7) { // un bit mas por signo (token 8 y 9), ahora opcode ocupa 8 bits
+		codetok((n<<8)+8);
 		return;
 		} 
-	codetok((n&0xffffff80)+9); // falta cte en mem
-	codetok(((n&0x7f)<<7)+10); // falta cte en mem	
+	codetok((n&0xffffff00)+9); // falta cte en mem
+	codetok(((n&0xff)<<8)+10); // falta cte en mem	
 	}
 
 function compilaSTR(str) {
 	let ini=datasave(str);	
-	if (modo<2) {codetok((ini<<7)+11);}
+	if (modo<2) {codetok((ini<<8)+11);}
 	}
 	
 
@@ -202,9 +211,9 @@ function blockIn(){
 function solvejmp(from,to) {
 	let whi=false;
 	for (let i=from;i<to;i++) {
-		let op=memcode[i]&0x7f;
-		if (op>21 && op<35 && (memcode[i]>>7)==0) {
-			memcode[i]+=(memc-i)<<7;	// patch while
+		let op=memcode[i]&0xff;
+		if (op>21 && op<35 && (memcode[i]>>8)==0) {
+			memcode[i]+=(memc-i)<<8;	// patch while
 			whi=true;
 			}
 		}
@@ -215,9 +224,9 @@ function blockOut(){
 	let from=stacka.pop();
 	let dist=memc-from;
 	if (solvejmp(from,memc)) { // salta
-		codetok((-(dist+1)<<7)+18); 	// jmpr
+		codetok((-(dist+1)<<8)+18); 	// jmpr
 	} else {
-		memcode[from-1]+=(dist<<7);		// patch if
+		memcode[from-1]+=(dist<<8);		// patch if
 	}
 	level--;
 	}
@@ -234,7 +243,7 @@ function compilaMAC(n) {
 
 function compilaWORD(n) {
 	if (modo>1) { datanro(n);return; }
-	codetok((dicca[n]<<7)+12+((dicci[n]>>4)&1));
+	codetok((dicca[n]<<8)+12+((dicci[n]>>4)&1));
 	}
 
 function r3token(str) {
@@ -401,38 +410,38 @@ function runr3(adr) {
   let op=0,W=0,W1=0; 
   while(ip!=0) { 
    op=memcode[ip++]; 
-	switch(op&0x7f){
-	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<16)>>23;break;		// LIT9
-	case 8: NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// LITres
-	case 9: NOS++;stack[NOS]=TOS;TOS=(op&0xffffff80);break;		// LIT1
-	case 10:TOS|=(op>>7)&0x7f;break;		// LIT2
-	case 11:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// STR
-	case 12:RTOS--;stack[RTOS]=ip;ip=op>>7;break;				// CALL
-	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>7);break;	// VAR
-	case 14:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// DWORD
-	case 15:NOS++;stack[NOS]=TOS;TOS=op>>7;break;				// DVAR
+	switch(op&0xff){
+	case 7: NOS++;stack[NOS]=TOS;TOS=(op<<15)>>23;break;		// LIT9 (opcode 8bit + literal 9bit con signo)
+	case 8: NOS++;stack[NOS]=TOS;TOS=op>>8;break;				// LITres
+	case 9: NOS++;stack[NOS]=TOS;TOS=(op&0xffffff00);break;		// LIT1
+	case 10:TOS|=(op>>8)&0xff;break;		// LIT2
+	case 11:NOS++;stack[NOS]=TOS;TOS=op>>8;break;				// STR
+	case 12:RTOS--;stack[RTOS]=ip;ip=op>>8;break;				// CALL
+	case 13:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(op>>8);break;	// VAR
+	case 14:NOS++;stack[NOS]=TOS;TOS=op>>8;break;				// DWORD
+	case 15:NOS++;stack[NOS]=TOS;TOS=op>>8;break;				// DVAR
 	case 16:ip=stack[RTOS];RTOS++;break; 						// ;
-	case 17:ip=(op>>7);break;//JMP
-	case 18:ip+=(op>>7);break;//JMPR
+	case 17:ip=(op>>8);break;//JMP
+	case 18:ip+=(op>>8);break;//JMPR
 	case 19:break;
 	case 20:break;
 	case 21:W=TOS;TOS=stack[NOS];NOS--;RTOS--;stack[RTOS]=ip;ip=W;break;//EX
 
-	case 22:if (TOS!=0) {ip+=(op>>7);}; break;//ZIF
-	case 23:if (TOS==0) {ip+=(op>>7);}; break;//UIF
-	case 24:if (TOS<0) {ip+=(op>>7);}; break;//PIF
-	case 25:if (TOS>=0) {ip+=(op>>7);}; break;//NIF
-	
-	case 26:if (TOS<stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFGE
-	case 27:if (TOS>stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFLE
-	case 28:if (TOS!=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFN
-	case 29:if (TOS>=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFG
-	case 30:if (TOS<=stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFL
-	case 31:if (TOS==stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNO
-	case 32:if (!(TOS&stack[NOS])) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFNA
-	case 33:if (TOS&stack[NOS]) {ip+=(op>>7);} TOS=stack[NOS];NOS--;break;//IFAN
-	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>7);} 
-				TOS=stack[NOS-1];NOS-=2;break;//BTW (need bit trick)
+	case 22:if (TOS!=0) {ip+=(op>>8);}; break;//ZIF	0?
+	case 23:if (TOS==0) {ip+=(op>>8);}; break;//UIF	1?
+	case 24:if (TOS<0) {ip+=(op>>8);}; break;//PIF		+?
+	case 25:if (TOS>=0) {ip+=(op>>8);}; break;//NIF	-?
+
+	case 26:if (TOS<stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//<?
+	case 27:if (TOS>stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//>?
+	case 28:if (TOS!=stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//=?
+	case 29:if (TOS>=stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//>=?
+	case 30:if (TOS<=stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//<=?
+	case 31:if (TOS==stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//<>?
+	case 32:if (!(TOS&stack[NOS])) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//AND?
+	case 33:if (TOS&stack[NOS]) {ip+=(op>>8);} TOS=stack[NOS];NOS--;break;//NAND?
+	case 34:if (TOS<=stack[NOS]&&stack[NOS]<=stack[NOS]) {ip+=(op>>8);} 
+				TOS=stack[NOS-1];NOS-=2;break;//IN? (need bit trick)
 
 	case 35:NOS++;stack[NOS]=TOS;break;						//DUP
 	case 36:TOS=stack[NOS];NOS--;break;						//DROP
@@ -443,115 +452,154 @@ function runr3(adr) {
 	case 41:W=stack[NOS];stack[NOS]=TOS;TOS=W;break;		//SWAP
 	case 42:NOS--;break; 									//NIP
 	case 43:W=TOS;TOS=stack[NOS-1];stack[NOS-1]=stack[NOS];stack[NOS]=W;break;//ROT
-	case 44:W=stack[NOS];NOS++;stack[NOS]=TOS;NOS++;stack[NOS]=W;break;//DUP2
-	case 45:NOS--;TOS=stack[NOS];NOS--;break;				//DROP2
-	case 46:NOS-=2;TOS=stack[NOS];NOS--;break;				//DROP3
-	case 47:NOS-=3;TOS=stack[NOS];NOS--;break;				//DROP4
-	case 48:NOS++;stack[NOS]=TOS;TOS=stack[NOS-3];
-			NOS++;stack[NOS]=TOS;TOS=stack[NOS-3];break;	//OVER2
-	case 49:W=stack[NOS];stack[NOS]=stack[NOS-2];stack[NOS-2]=W;
-			W=TOS;TOS=stack[NOS-1];stack[NOS-1]=W;break;	//SWAP2
-	
-	case 50:RTOS--;stack[RTOS]=TOS;TOS=stack[NOS];NOS--;break;	//>r
-	case 51:NOS++;stack[NOS]=TOS;TOS=stack[RTOS];RTOS++;break;	//r>
-	case 52:NOS++;stack[NOS]=TOS;TOS=stack[RTOS];break;			//r@
-	
-	case 53:TOS&=stack[NOS];NOS--;break;					//AND
-	case 54:TOS|=stack[NOS];NOS--;break;					//OR
-	case 55:TOS^=stack[NOS];NOS--;break;					//XOR
-	case 56:TOS=~TOS;break;									//NOT
-	case 57:TOS=-TOS;break;									//NEG
-	case 58:TOS=stack[NOS]+TOS;NOS--;break;					//SUMA
-	case 59:TOS=stack[NOS]-TOS;NOS--;break;					//RESTA
-	case 60:TOS=stack[NOS]*TOS;NOS--;break;					//MUL
-	case 61:TOS=(stack[NOS]/TOS)|0;NOS--;break;					//DIV
-	case 62:TOS=((stack[NOS-1]*stack[NOS])/TOS)|0;NOS-=2;break;	//MULDIV
-	case 63:W=stack[NOS]%TOS;stack[NOS]=(stack[NOS]/TOS)|0;TOS=W;break;//DIVMOD
-	case 64:TOS=stack[NOS]%TOS;NOS--;break;					//MOD
-	case 65:W=(TOS>>31);TOS=(TOS+W)^W;break;				//ABS
-	case 66:TOS=Math.sqrt(TOS)|0;break;						//CSQRT
-	case 67:TOS=Math.clz32(TOS);break;						//CLZ
-	case 68:TOS=stack[NOS]<<TOS;NOS--;break;				//SAR
-	case 69:TOS=stack[NOS]>>TOS;NOS--;break;				//SAL
-	case 70:TOS=stack[NOS]>>>TOS;NOS--;break;				//SHL
-	case 71:TOS=(stack[NOS-1]*stack[NOS])>>TOS;NOS-=2;break;//MULSHR
-	case 72:TOS=((stack[NOS-1]<<TOS)/stack[NOS])|0;NOS-=2;break;//CDIVSH
-	
-	case 73:TOS=mem.getInt32(TOS);break;//@
-	case 74:TOS=mem.getInt8(TOS);break;//C@
-	case 75:TOS=mem.getInt64(TOS);break;//Q@	
+	case 44:W=TOS;TOS=stack[NOS];stack[NOS]=stack[NOS-1];stack[NOS-1]=W;break;//-ROT
 
-	case 76:NOS++;stack[NOS]=TOS+4;TOS=mem.getInt32(TOS);break;//@+
-	case 77:NOS++;stack[NOS]=TOS+1;TOS=mem.getInt8(TOS);break;// C@+
-	case 78:NOS++;stack[NOS]=TOS+8;TOS=mem.getInt64(TOS);break;//Q@+		
-			
-	case 79:mem.setInt32(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;// !
-	case 80:mem.setInt8(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C!
-	case 81:mem.setInt64(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//Q!
-	
-	case 82:mem.setInt32(TOS,stack[NOS]);NOS--;TOS+=4;break;// !+
-	case 83:mem.setInt8(TOS,stack[NOS]);NOS--;TOS++;break;//C!+
-	case 84:mem.setInt64(TOS,stack[NOS]);NOS--;TOS+=8;break;//Q!+
-	
-	case 85:mem.setInt32(TOS,mem.getInt32(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//+!
-	case 86:mem.setInt8(TOS,mem.getInt8(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C+!
-	case 87:mem.setInt64(TOS,mem.getInt64(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//Q+!
-	
-	case 88:REGA=TOS;TOS=stack[NOS];NOS--;break; //>A
-	case 89:NOS++;stack[NOS]=TOS;TOS=REGA;break; //A> 
-	case 90:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);break;//A@
-	case 91:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;break;//A! 
-	case 92:REGA+=TOS;TOS=stack[NOS];NOS--;break;//A+ 
-	case 93:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);REGA+=4;break;//A@+ 
-	case 94:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;REGA+=4;break;//A!+
+	case 45:W=stack[NOS];NOS++;stack[NOS]=TOS;NOS++;stack[NOS]=W;break;//2DUP
+	case 46:NOS--;TOS=stack[NOS];NOS--;break;				//2DROP
+	case 47:NOS-=2;TOS=stack[NOS];NOS--;break;				//3DROP
+	case 48:NOS-=3;TOS=stack[NOS];NOS--;break;				//4DROP
+	case 49:NOS++;stack[NOS]=TOS;TOS=stack[NOS-3];
+			NOS++;stack[NOS]=TOS;TOS=stack[NOS-3];break;	//2OVER
+	case 50:W=stack[NOS];stack[NOS]=stack[NOS-2];stack[NOS-2]=W;
+			W=TOS;TOS=stack[NOS-1];stack[NOS-1]=W;break;	//2SWAP
 
-	case 95:REGB=TOS;TOS=stack[NOS];NOS--;break; //>B
-	case 96:NOS++;stack[NOS]=TOS;TOS=REGB;break; //B> 
-	case 97:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);break;//B@
-	case 98:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;break;//B! 
-	case 99:REGB+=TOS;TOS=stack[NOS];NOS--;break;//B+ 
-	case 100:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);REGB+=4;break;//B@+ 
-	case 101:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=4;break;//B!+
+	case 51:RTOS--;stack[RTOS]=TOS;TOS=stack[NOS];NOS--;break;	//>R
+	case 52:NOS++;stack[NOS]=TOS;TOS=stack[RTOS];RTOS++;break;	//R>
+	case 53:NOS++;stack[NOS]=TOS;TOS=stack[RTOS];break;			//R@
 
-	case 102://MOVE 
+	case 54:TOS&=stack[NOS];NOS--;break;					//AND
+	case 55:TOS|=stack[NOS];NOS--;break;					//OR
+	case 56:TOS^=stack[NOS];NOS--;break;					//XOR
+	case 57:TOS=~(stack[NOS]&TOS);NOS--;break;				//NAND
+
+	case 58:TOS=stack[NOS]+TOS;NOS--;break;					//+
+	case 59:TOS=stack[NOS]-TOS;NOS--;break;					//-
+	case 60:TOS=stack[NOS]*TOS;NOS--;break;					//*
+	case 61:TOS=(stack[NOS]/TOS)|0;NOS--;break;				//DIV
+
+	case 62:TOS=stack[NOS]<<TOS;NOS--;break;				//<<
+	case 63:TOS=stack[NOS]>>TOS;NOS--;break;				//>>
+	case 64:TOS=stack[NOS]>>>TOS;NOS--;break;				//>>>
+
+	case 65:TOS=stack[NOS]%TOS;NOS--;break;					//MOD
+	case 66:W=stack[NOS]%TOS;stack[NOS]=(stack[NOS]/TOS)|0;TOS=W;break;//DIVMOD
+	case 67:TOS=((stack[NOS-1]*stack[NOS])/TOS)|0;NOS-=2;break;	//*/
+	case 68:TOS=(stack[NOS-1]*stack[NOS])>>TOS;NOS-=2;break;//*>>
+	case 69:TOS=((stack[NOS-1]<<TOS)/stack[NOS])|0;NOS-=2;break;//<</
+
+	case 70:TOS=~TOS;break;									//NOT
+	case 71:TOS=-TOS;break;									//NEG
+	case 72:W=(TOS>>31);TOS=(TOS+W)^W;break;				//ABS
+	case 73:TOS=Math.sqrt(TOS)|0;break;						//SQRT
+	case 74:TOS=Math.clz32(TOS);break;						//CLZ
+
+	case 75:TOS=mem.getInt32(TOS);break;//@ (64bit en spec; placeholder 32bit, TOS es Number no BigInt)
+	case 76:TOS=mem.getInt8(TOS);break;//C@ (8bit)
+	case 77:TOS=mem.getInt16(TOS);break;//W@ (16bit)
+	case 78:TOS=mem.getInt32(TOS);break;//D@ (32bit)
+
+	case 79:NOS++;stack[NOS]=TOS+4;TOS=mem.getInt32(TOS);break;//@+ (placeholder: avanza 4, ver nota @ )
+	case 80:NOS++;stack[NOS]=TOS+1;TOS=mem.getInt8(TOS);break;//C@+
+	case 81:NOS++;stack[NOS]=TOS+2;TOS=mem.getInt16(TOS);break;//W@+
+	case 82:NOS++;stack[NOS]=TOS+4;TOS=mem.getInt32(TOS);break;//D@+
+
+	case 83:mem.setInt32(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//! (placeholder 32bit)
+	case 84:mem.setInt8(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C!
+	case 85:mem.setInt16(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//W!
+	case 86:mem.setInt32(TOS,stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//D!
+
+	case 87:mem.setInt32(TOS,stack[NOS]);NOS--;TOS+=4;break;//!+ (placeholder)
+	case 88:mem.setInt8(TOS,stack[NOS]);NOS--;TOS++;break;//C!+
+	case 89:mem.setInt16(TOS,stack[NOS]);NOS--;TOS+=2;break;//W!+
+	case 90:mem.setInt32(TOS,stack[NOS]);NOS--;TOS+=4;break;//D!+
+
+	case 91:mem.setInt32(TOS,mem.getInt32(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//+! (placeholder)
+	case 92:mem.setInt8(TOS,mem.getInt8(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//C+!
+	case 93:mem.setInt16(TOS,mem.getInt16(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//W+!
+	case 94:mem.setInt32(TOS,mem.getInt32(TOS)+stack[NOS]);NOS--;TOS=stack[NOS];NOS--;break;//D+!
+
+	case 95:REGA=TOS;TOS=stack[NOS];NOS--;break; //>A
+	case 96:NOS++;stack[NOS]=TOS;TOS=REGA;break; //A>
+	case 97:REGA+=TOS;TOS=stack[NOS];NOS--;break;//A+
+
+	case 98:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);break;//A@
+	case 99:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;break;//A!
+	case 100:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);REGA+=4;break;//A@+
+	case 101:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;REGA+=4;break;//A!+
+
+	case 102:NOS++;stack[NOS]=TOS;TOS=mem.getInt8(REGA);break;//CA@
+	case 103:mem.setInt8(REGA,TOS);TOS=stack[NOS];NOS--;break;//CA!
+	case 104:NOS++;stack[NOS]=TOS;TOS=mem.getInt8(REGA);REGA+=1;break;//CA@+
+	case 105:mem.setInt8(REGA,TOS);TOS=stack[NOS];NOS--;REGA+=1;break;//CA!+
+
+	case 106:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);break;//DA@ (placeholder 32bit, spec=64)
+	case 107:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;break;//DA!
+	case 108:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGA);REGA+=4;break;//DA@+
+	case 109:mem.setInt32(REGA,TOS);TOS=stack[NOS];NOS--;REGA+=4;break;//DA!+
+
+	case 110:REGB=TOS;TOS=stack[NOS];NOS--;break; //>B
+	case 111:NOS++;stack[NOS]=TOS;TOS=REGB;break; //B>
+	case 112:REGB+=TOS;TOS=stack[NOS];NOS--;break;//B+
+
+	case 113:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);break;//B@
+	case 114:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;break;//B!
+	case 115:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);REGB+=4;break;//B@+
+	case 116:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=4;break;//B!+
+
+	case 117:NOS++;stack[NOS]=TOS;TOS=mem.getInt8(REGB);break;//CB@
+	case 118:mem.setInt8(REGB,TOS);TOS=stack[NOS];NOS--;break;//CB!
+	case 119:NOS++;stack[NOS]=TOS;TOS=mem.getInt8(REGB);REGB+=1;break;//CB@+
+	case 120:mem.setInt8(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=1;break;//CB!+
+
+	case 121:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);break;//DB@ (placeholder 32bit, spec=64)
+	case 122:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;break;//DB!
+	case 123:NOS++;stack[NOS]=TOS;TOS=mem.getInt32(REGB);REGB+=4;break;//DB@+
+	case 124:mem.setInt32(REGB,TOS);TOS=stack[NOS];NOS--;REGB+=4;break;//DB!+
+
+	case 125:RTOS--;stack[RTOS]=REGA;RTOS--;stack[RTOS]=REGB;break;	//AB[ push A,B a RSTACK (B queda en el tope)
+	case 126:REGB=stack[RTOS];RTOS++;REGA=stack[RTOS];RTOS++;break;	//]BA pop RSTACK a B,A (B primero, luego A)
+
+	case 127://MOVE (placeholder 32bit, spec=64bit words)
 		W=stack[NOS-1];W1=stack[NOS];
 		while (TOS--) { mem.setInt32(W,mem.getInt32(W1));W+=4;W1+=4; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 103://MOVE> 
+	case 128://MOVE>
 		W=stack[NOS-1]+(TOS<<2);W1=stack[NOS]+(TOS<<2);
 		while (TOS--) { W-=4;W1-=4;mem.setInt32(W,mem.getInt32(W1)); }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 104://FILL
+	case 129://FILL
 		W1=stack[NOS-1];W=stack[NOS];
 		while (TOS--) { mem.setInt32(W,W1);W+=4; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 105://CMOVE 
+	case 130://CMOVE
 		W=stack[NOS-1];W1=stack[NOS];
 		while (TOS--) { mem.setInt8(W,mem.getInt8(W1));W++;W1++; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 106://CMOVE> 
+	case 131://CMOVE>
 		W=stack[NOS-1]+TOS;W1=stack[NOS]+TOS;
 		while (TOS--) { W--;W1--;mem.setInt8(W,mem.getInt8(W1)); }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 107://CFILL
+	case 132://CFILL
 		W1=stack[NOS-1];W=stack[NOS];
 		while (TOS--) { mem.setInt8(W,W1);W++; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 108://QMOVE 
+	case 133://DMOVE (32bit words)
 		W=stack[NOS-1];W1=stack[NOS];
-		while (TOS--) { mem.setInt64(W,mem.getInt64(W1));W+=8;W1+=8; }
+		while (TOS--) { mem.setInt32(W,mem.getInt32(W1));W+=4;W1+=4; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 109://MOVE> 
-		W=stack[NOS-1]+(TOS<<3);W1=stack[NOS]+(TOS<<3);
-		while (TOS--) { W-=8;W1-=8;mem.setInt64(W,mem.getInt64(W1)); }
+	case 134://DMOVE>
+		W=stack[NOS-1]+(TOS<<2);W1=stack[NOS]+(TOS<<2);
+		while (TOS--) { W-=4;W1-=4;mem.setInt32(W,mem.getInt32(W1)); }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
-	case 110://QFILL
+	case 135://DFILL
 		W1=stack[NOS-1];W=stack[NOS];
-		while (TOS--) { mem.setInt64(W,W1);W+=8; }
+		while (TOS--) { mem.setInt32(W,W1);W+=4; }
 		NOS-=2;TOS=stack[NOS];NOS--;break;
 
-	case 111:systemcall(TOS,stack[NOS]);TOS=stack[NOS-1];NOS-=2;break; //SYSCALL | nro int -- 
-	case 112:TOS=systemmem(TOS);break;//SYSMEM | nro -- ini
+	case 136:NOS++;stack[NOS]=TOS;TOS=memd;break;//MEM (revisar semantica exacta vs .c)
+
+	case 137:systemcall(TOS,stack[NOS]);TOS=stack[NOS-1];NOS-=2;break; //SYSCALL | nro int --
+	case 138:TOS=systemmem(TOS);break;//SYSMEM | nro -- ini
 	}
    }
   NOS++;stack[NOS]=TOS;

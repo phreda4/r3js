@@ -68,6 +68,15 @@ function modeimg() {
     makeimage();
 }
 
+function newimage() {
+    sessionStorage.clear();
+    includelibs=[];
+    wordlibs=[];
+    filename="";
+    document.getElementById('filename').innerText="";
+    makeimage();
+}
+
 ////////////////////////////////////////////////////////////////////  
 function toggle(evt) {
     evt.classList.toggle("is-primary");
@@ -116,8 +125,13 @@ function saveprev() {
 
 function codeload(name) {
     saveprev();
+    let src = sessionStorage.getItem(name);
+    if (src === null) {
+        console.error("codeload: archivo no encontrado en sessionStorage:", name);
+        return;
+    }
     filename=name;
-    editor.setValue(sessionStorage.getItem(filename));
+    editor.setValue(src);
     editor.clearSelection(); 
     modesrc();
 }
@@ -170,9 +184,8 @@ function definitions(str) {
             while (str.charCodeAt(now)>32) {
                 now++;
             }
-            const str = str[ini] + str[ini + 1];
-            if((str === '::') || (str === '##')) {
-                wc++;
+            const pfx = str[ini] + str[ini + 1];
+            if((pfx === '::') || (pfx === '##')) {
                 w += "|" + str.slice(ini + 2, now);
             }
         }
@@ -239,7 +252,11 @@ function fromURL(name) {
     fetch(name)
         .then(processResponse)
         .then(JSZip.loadAsync)
-        .then(processZip);
+        .then(processZip)
+        .catch(err => {
+            console.error("fromURL failed:", err);
+            alert("No se pudo cargar la imagen: " + name + "\n" + err.message);
+        });
 
     document.getElementById('filename').innerText= name;
 }
@@ -253,6 +270,9 @@ function fromFILE(f){
         zip.forEach((name, file) => {
             file.async("string").then(s => addfile(name,s));
         });
+    }).catch(err => {
+        console.error("fromFILE failed:", err);
+        alert("No se pudo abrir el archivo .zip: " + err.message);
     });
 }
 
@@ -310,8 +330,10 @@ function togglef(evt) {
 // BOOT//
 /////////
 
+var editor;
+
 document.addEventListener("DOMContentLoaded", () => {
-    const editor = ace.edit("src");
+    editor = ace.edit("src");
 
     editor.setOptions({ 
         theme:"ace/theme/twilight",
@@ -319,6 +341,16 @@ document.addEventListener("DOMContentLoaded", () => {
         fontSize:18
         });
     editor.focus();
+
+    if (location.protocol === "file:") {
+        // fetch() esta bloqueado por CORS al abrir el html directo (sin server).
+        // Mostramos el modo imagen para que el usuario cargue r3.zip a mano
+        // con el boton "Load" (evita depender de un picker auto-disparado,
+        // que algunos navegadores bloquean si no hay gesto de usuario previo).
+        modeselect('modeimg');
+        makeimage();
+        return;
+    }
     
     fromURL('r3.zip');
 });

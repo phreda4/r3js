@@ -2315,7 +2315,7 @@
 )
 
 :setpix | val mask -- val
-	na? ( 4 a+ ; )
+	NAND? ( 4 a+ ; )
 	ink a!+ ;
 
 ::char8i | c --
