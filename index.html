@@ -13,91 +13,197 @@
 
  <script src="compiler.js"></script>
  <script src="editor.js"></script>
-</head>
-<body class="has-navbar-fixed-top">
 
-<nav class="navbar is-fixed-top" role="navigation">
+ <style>
+  html, body { height:100%; margin:0; overflow:hidden; }
+  body { display:flex; flex-direction:column; }
+
+  #topbar { flex:0 0 auto; }
+
+  #workspace {
+    flex:1 1 auto;
+    display:flex;
+    min-height:0; /* permite que los hijos con overflow funcionen dentro de flex */
+  }
+
+  /* --------- IZQUIERDA: editor, siempre visible --------- */
+  #panel-src {
+    flex:1 1 55%;
+    min-width:280px;
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid rgba(255,255,255,0.1);
+  }
+  #src { flex:1 1 auto; }
+
+  #stackbar {
+    flex:0 0 auto;
+    padding:4px 8px;
+    font-family:monospace;
+    font-size:0.85em;
+    background:#111;
+    border-top:1px solid rgba(255,255,255,0.1);
+    white-space:nowrap;
+    overflow-x:auto;
+  }
+  #stackbar .stacklabel { opacity:0.5; margin-right:6px; }
+  #stackbar .stackitem {
+    display:inline-block;
+    background:#2a2a2a;
+    border-radius:3px;
+    padding:1px 6px;
+    margin-right:3px;
+  }
+  #stackbar .stackitem.tos { background:#2f6f4f; }
+
+  /* --------- DERECHA: canvas / dom / consola / archivos, con tabs --------- */
+  #panel-right {
+    flex:1 1 45%;
+    min-width:260px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  #righttabs {
+    flex:0 0 auto;
+    display:flex;
+  }
+  #righttabs button {
+    flex:1 1 auto;
+    border-radius:0;
+  }
+
+  #rightviews { flex:1 1 auto; min-height:0; position:relative; }
+  .rightview {
+    position:absolute; inset:0;
+    overflow:auto;
+    display:none;
+  }
+  .rightview.active { display:block; }
+
+  #r3canvas { display:flex; align-items:center; justify-content:center; height:100%; background:#000; }
+  #canvas { max-width:100%; max-height:100%; image-rendering:pixelated; }
+
+  #r3dom { padding:8px; }
+  #r3console { padding:8px; font-family:monospace; font-size:0.85em; white-space:pre-wrap; }
+
+  #view-files { padding:8px; }
+
+  #view-help { padding:0; }
+  #help-layout { display:flex; height:100%; }
+  #help-list {
+    flex:0 0 150px;
+    overflow-y:auto;
+    border-right:1px solid rgba(255,255,255,0.1);
+    padding:6px;
+  }
+  #help-list button {
+    display:block;
+    width:100%;
+    text-align:left;
+    margin-bottom:2px;
+  }
+  #help-content {
+    flex:1 1 auto;
+    overflow-y:auto;
+    padding:12px 18px;
+  }
+  #help-content pre {
+    background:#111;
+    padding:8px;
+    border-radius:4px;
+    overflow-x:auto;
+  }
+  #help-content code { background:#111; padding:1px 4px; border-radius:3px; }
+  #help-content h1, #help-content h2, #help-content h3 { margin-top:1em; }
+
+  /* mobile: apilar en vez de lado a lado */
+  @media (max-width:800px) {
+    #workspace { flex-direction:column; overflow-y:auto; }
+    #panel-src, #panel-right { flex:none; width:100%; min-height:45vh; }
+    #panel-src { border-right:none; border-bottom:1px solid rgba(255,255,255,0.1); }
+  }
+ </style>
+</head>
+<body>
+
+<nav id="topbar" class="navbar" role="navigation">
  <a class="navbar-item"> 
 
 <button class="button" id="filename">--</button>
-<button class="button is-danger is-outlined" onclick="modesrc();"> 
- <i class="mdi mdi-playlist-edit" style="font-size:1.8em;line-height:0em"></i></button>
-<button class="button is-success is-outlined" onclick="moderun();">
+<button class="button is-success is-outlined" onclick="moderun();" title="Compilar y ejecutar (Ctrl+Enter)">
  <i class="mdi mdi-play" style="font-size:1.8em;line-height:0em"></i></button>
-<button class="button is-link is-outlined" onclick="modeimg();">
+<button class="button is-link is-outlined" onclick="toggleFiles();" title="Files">
  <i class="mdi mdi-cube-outline" style="font-size:1.8em;line-height:0em"></i></button>
 
  </a> 
 </nav>
 
-<!-- ------------------ -->
-<div id="modedit" >
- <div class="column">
-  <div id="src"></div> 
- </div>
-</div>
+<div id="workspace">
 
-<!-- ------------------ -->
-<div id="modeimg" style="display:none;">
-<br>
- <div class="columns">
-  <div class="column">
-   <div class="card">
-    <header class="card-header">
-     <p class="card-header-title" style="padding:2px">
-	 <span id="imagename">Sin imagen cargada</span>
-	 <span id="filename"></span>
-	 </p>
-    </header>
-	
-  <div class="card-content" style="padding:4px">
-    <div class="content" id="filelist"></div>
-  </div>
-  
-   <footer class="card-footer">
-    <a class="card-footer-item" onclick="saveimage();">Save</a>
-    <a class="card-footer-item" onclick="loadimage();">Load</a>
-    <a class="card-footer-item" onclick="newimage();">New</a>
-   </footer>
-  </div>	
-  </div>
-
-  <div class="column">
-
-	<div id="libsincludes">
-	</div>
-	
-	<button class="button" onclick="toggle(this);">Canvas</button>
-	<button class="button" onclick="toggle(this);">Dom</button>		
-	<button class="button" onclick="toggle(this);">Console</button>				
-	
-<!--	
-	<div class="columns">
-		<div class="column">
-		Width:<input class="input" type="text" value="512"/>
-		</div>
-		<div class="column">
-		Height:<input class="input" type="text" value="512"/>
-		</div>
-	</div>
- -->
-  </div>
+ <!-- ------------------ IZQUIERDA: código, siempre visible ------------------ -->
+ <div id="panel-src">
+  <div id="src"></div>
+  <div id="stackbar"><span class="stacklabel">stack:</span><span id="ds"></span></div>
  </div>
 
-</div>
+ <!-- ------------------ DERECHA: canvas / dom / consola / archivos ------------------ -->
+ <div id="panel-right">
 
-<!-- ------------------ -->
-<div id="moderun" style="display:none;">
-
- <center>
-  <span id="ds"></span><br>
-  <div id="r3dom"></div>
-  <div id="r3canvas">
-   <canvas id="canvas" width="512" height="512" ></canvas>
+  <div id="righttabs">
+   <button class="button is-small" onclick="showRightView('canvas',this);">Canvas</button>
+   <button class="button is-small" onclick="showRightView('dom',this);">Dom</button>
+   <button class="button is-small" onclick="showRightView('console',this);">Console</button>
+   <button class="button is-small" id="tab-files" onclick="showRightView('files',this);">Files</button>
+   <button class="button is-small" id="tab-help" onclick="showRightView('help',this);">Help</button>
   </div>
- </center>	
-	
+
+  <div id="rightviews">
+
+   <div id="view-canvas" class="rightview active">
+    <div id="r3canvas">
+     <canvas id="canvas" width="512" height="512"></canvas>
+    </div>
+   </div>
+
+   <div id="view-dom" class="rightview">
+    <div id="r3dom"></div>
+   </div>
+
+   <div id="view-console" class="rightview">
+    <div id="r3console"></div>
+   </div>
+
+   <div id="view-files" class="rightview">
+    <div class="card">
+     <header class="card-header">
+      <p class="card-header-title" style="padding:2px">
+       <span id="imagename">Sin imagen cargada</span>
+      </p>
+     </header>
+     <div class="card-content" style="padding:4px">
+      <div class="content" id="filelist"></div>
+     </div>
+     <footer class="card-footer">
+      <a class="card-footer-item" onclick="saveimage();">Save</a>
+      <a class="card-footer-item" onclick="loadimage();">Load</a>
+      <a class="card-footer-item" onclick="newimage();">New</a>
+     </footer>
+    </div>
+   </div>
+
+   <div id="view-help" class="rightview">
+    <div id="help-layout">
+     <div id="help-list"></div>
+     <div id="help-content" class="content"></div>
+    </div>
+   </div>
+
+  </div>
+
+ </div>
+
 </div>
 
-  </body>
+</body>
 </html>

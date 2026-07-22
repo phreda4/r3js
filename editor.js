@@ -25,48 +25,151 @@ function dumpError() {
     editor.focus();
 }
 
-function modeselect(value) {
-    function modeactiva(name) {
-        document.getElementById(name).style.display = (name == value) ? 'block' : 'none';
+////////////////////////////////////////////////////////////////////
+// HELP: lista y renderiza documentos de la carpeta doc/ (cargados
+// junto con el resto de la imagen .zip, igual que lib/ o examples/).
+////////////////////////////////////////////////////////////////////
+
+function helpDocs() {
+    const docs = [];
+    for (let i=0; i<sessionStorage.length; i++) {
+        const name = sessionStorage.key(i);
+        if (name.indexOf('doc/') === 0 && name.slice(-3) === '.md') {
+            docs.push(name);
+        }
     }
-    var modes = ['modedit', 'moderun', 'modeimg'];
-    modes.forEach(modeactiva);
+    return docs.sort();
 }
 
-function modesrc() { 
-    r3showx = -1;
-    modeselect('modedit'); 
+function mdEscape(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// mini-renderer markdown: encabezados, negrita/italica, code inline,
+// bloques de codigo con fences, listas y parrafos. Alcanza para docs
+// tecnicos simples sin traer una libreria externa.
+function mdRender(src) {
+    const lines = src.replace(/\r\n/g,'\n').split('\n');
+    let html = '';
+    let inCode = false, codeBuf = [];
+    let inList = false;
+
+    function closeList() { if (inList) { html += '</ul>'; inList = false; } }
+
+    function inlineMd(s) {
+        s = mdEscape(s);
+        s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+        s = s.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+        return s;
+    }
+
+    for (const raw of lines) {
+        const line = raw;
+
+        if (line.trim().slice(0,3) === '```') {
+            if (!inCode) { inCode = true; codeBuf = []; }
+            else { html += '<pre><code>' + mdEscape(codeBuf.join('\n')) + '</code></pre>'; inCode = false; }
+            continue;
+        }
+        if (inCode) { codeBuf.push(line); continue; }
+
+        if (line.trim() === '') { closeList(); continue; }
+
+        const h = line.match(/^(#{1,4})\s+(.*)$/);
+        if (h) {
+            closeList();
+            const lvl = h[1].length;
+            html += '<h' + lvl + '>' + inlineMd(h[2]) + '</h' + lvl + '>';
+            continue;
+        }
+
+        const li = line.match(/^\s*[-*]\s+(.*)$/);
+        if (li) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + inlineMd(li[1]) + '</li>';
+            continue;
+        }
+
+        closeList();
+        html += '<p>' + inlineMd(line) + '</p>';
+    }
+    closeList();
+    if (inCode) { html += '<pre><code>' + mdEscape(codeBuf.join('\n')) + '</code></pre>'; }
+    return html;
+}
+
+function helpOpen(name) {
+    const src = sessionStorage.getItem(name);
+    document.getElementById('help-content').innerHTML =
+        (src === null) ? '<p>(no se pudo leer ' + name + ')</p>' : mdRender(src);
+    document.querySelectorAll('#help-list button').forEach(b => b.classList.remove('is-primary'));
+    const btn = document.getElementById('help-btn-' + name);
+    if (btn) { btn.classList.add('is-primary'); }
+}
+
+function helpRefresh() {
+    const docs = helpDocs();
+    const list = document.getElementById('help-list');
+    if (docs.length === 0) {
+        list.innerHTML = '<p style="opacity:0.6;padding:6px">Sin documentos en doc/</p>';
+        document.getElementById('help-content').innerHTML = '';
+        return;
+    }
+    let s = '';
+    for (const name of docs) {
+        const base = name.slice(4, -3);
+        s += '<button id="help-btn-' + name + '" class="button is-small is-fullwidth" ' +
+             'onclick="helpOpen(\'' + name + '\');">' + base + '</button>';
+    }
+    list.innerHTML = s;
+    helpOpen(docs[0]);
+}
+
+////////////////////////////////////////////////////////////////////
+// PANEL DERECHO: canvas / dom / consola / archivos como tabs,
+// todos coexisten con el editor (que ahora es siempre visible).
+////////////////////////////////////////////////////////////////////
+
+function showRightView(name, btn) {
+    document.querySelectorAll('.rightview').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('#righttabs button').forEach(b => b.classList.remove('is-primary'));
+    if (btn) { btn.classList.add('is-primary'); }
+    if (name === 'help') { helpRefresh(); }
+}
+
+function toggleFiles() {
+    showRightView('files', document.getElementById('tab-files'));
+    makeimage();
+}
+
+function modesrc() {
+    // se mantiene por compatibilidad: enfocar el editor (ya siempre visible)
     editor.focus();
 }
 
 function moderun() {
     saveprev();
+    editor.getSession().clearAnnotations();
 
     var cc=r3compile(editor.getValue("\n"));
     if (cc>-1) {// error
         dumpError();
-        //dumpVM();
-        modeselect('modesrc');		
         return;
     }
-	
-    modeselect('moderun');	
-    
+
     r3reset();
     if (boot!=-1) { runr3(boot); }
     animate(); 
     
     redraw();
     document.getElementById("r3dom").innerHTML=r3echo;
-    dumpVM();  
+    document.getElementById("r3console").textContent=r3echo;
+    dumpVM();
+    showRightView('canvas', document.querySelector('#righttabs button'));
 }
 
-
-function modeimg() {
-    r3showx=-1;
-    modeselect('modeimg');
-    makeimage();
-}
 
 function newimage() {
     sessionStorage.clear();
@@ -104,10 +207,13 @@ function loadimage() {
 // DEBUG
 //----------------------------------------------------
 
-function dumpd() { var s="";
+function dumpd() {
+    var s="";
     for (let i=TOSEX;i>1;i--) {
-        s+='&nbsp;<span class="tag is-dark is-large">'+ stack[i] + '</span>';
+        const cls = (i==TOSEX) ? "stackitem tos" : "stackitem";
+        s+='<span class="'+cls+'">'+ stack[i] + '</span>';
     }
+    if (s=="") { s='<span style="opacity:0.4">(vacío)</span>'; }
     return s;
 }
 
@@ -115,6 +221,20 @@ const setDivH = (id,value) => document.getElementById(id).innerHTML = value;
 
 function dumpVM() {
     setDivH("ds", dumpd());
+}
+
+function r3log(msg) {
+    const el = document.getElementById('r3console');
+    if (!el) { return; }
+    const line = document.createElement('div');
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+}
+
+function clearConsole() {
+    const el = document.getElementById('r3console');
+    if (el) { el.innerHTML = ""; }
 }
 
   
@@ -136,6 +256,7 @@ function codeload(name) {
         return;
     }
     filename=name;
+    document.getElementById('filename').innerText = name;
     editor.setValue(src);
     editor.clearSelection(); 
     modesrc();
@@ -263,6 +384,7 @@ function fromURL(name) {
         .then(() => {
             document.getElementById('imagename').innerText = name;
             makeimage();
+            if (document.getElementById('view-help').classList.contains('active')) { helpRefresh(); }
         })
         .catch(err => {
             console.error("fromURL failed:", err);
@@ -287,6 +409,7 @@ function fromFILE(f){
     }).then(() => {
         document.getElementById('imagename').innerText = f.name;
         makeimage();
+        if (document.getElementById('view-help').classList.contains('active')) { helpRefresh(); }
     }).catch(err => {
         console.error("fromFILE failed:", err);
         alert("No se pudo abrir el archivo .zip: " + err.message);
@@ -364,18 +487,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     editor.setOptions({ 
         theme:"ace/theme/twilight",
-        minLines:4,maxLines:25,
         fontSize:18
         });
     editor.focus();
 
+    editor.commands.addCommand({
+        name: "run",
+        bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
+        exec: () => moderun()
+    });
+
     if (location.protocol === "file:") {
         // fetch() esta bloqueado por CORS al abrir el html directo (sin server).
-        // Mostramos el modo imagen para que el usuario cargue r3.zip a mano
+        // Mostramos el panel de archivos para que el usuario cargue r3.zip a mano
         // con el boton "Load" (evita depender de un picker auto-disparado,
         // que algunos navegadores bloquean si no hay gesto de usuario previo).
-        modeselect('modeimg');
-        makeimage();
+        toggleFiles();
         return;
     }
     
