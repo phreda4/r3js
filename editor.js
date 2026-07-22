@@ -74,6 +74,7 @@ function newimage() {
     wordlibs=[];
     filename="";
     document.getElementById('filename').innerText="";
+    document.getElementById('imagename').innerText="Sin imagen cargada";
     makeimage();
 }
 
@@ -89,10 +90,14 @@ function saveimage() {
 function loadimage() {
     var x = document.createElement("INPUT");
     x.setAttribute("type", "file");
+    x.setAttribute("accept", ".zip");
+    x.style.display = "none";
     document.body.appendChild(x);
-    x.addEventListener("change", function(evt) { fromFILE(evt.target.files[0]); },false);
+    x.addEventListener("change", function(evt) {
+        fromFILE(evt.target.files[0]);
+        document.body.removeChild(x);
+    }, false);
     x.click();
-    document.body.removeChild(x);  
 }
 
 
@@ -244,17 +249,24 @@ function fromURL(name) {
     };
 
     const processZip = zip => {
+        const jobs = [];
         zip.forEach((name,file) => {
-            file.async("string").then(s => addfile(name,s));
+            jobs.push(file.async("string").then(s => addfile(name,s)));
         });
+        return Promise.all(jobs);
     };
 
     fetch(name)
         .then(processResponse)
         .then(JSZip.loadAsync)
         .then(processZip)
+        .then(() => {
+            document.getElementById('imagename').innerText = name;
+            makeimage();
+        })
         .catch(err => {
             console.error("fromURL failed:", err);
+            document.getElementById('imagename').innerText = "Sin imagen cargada (falló " + name + ")";
             alert("No se pudo cargar la imagen: " + name + "\n" + err.message);
         });
 
@@ -267,9 +279,14 @@ function fromFILE(f){
     sessionStorage.clear();
 
     JSZip.loadAsync(f).then(zip => {
+        const jobs = [];
         zip.forEach((name, file) => {
-            file.async("string").then(s => addfile(name,s));
+            jobs.push(file.async("string").then(s => addfile(name,s)));
         });
+        return Promise.all(jobs);
+    }).then(() => {
+        document.getElementById('imagename').innerText = f.name;
+        makeimage();
     }).catch(err => {
         console.error("fromFILE failed:", err);
         alert("No se pudo abrir el archivo .zip: " + err.message);
@@ -290,33 +307,43 @@ function toFILE(f) {
 //----------------------
 function makeimage() {
     let filelist = document.getElementById('filelist');
-    let s = "";
-    let folder = "";
+
+    // agrupamos primero (una pasada), asi no importa el orden de
+    // iteracion de sessionStorage ni si una carpeta viene interrumpida
+    // por archivos sueltos entremedio (eso duplicaba el header de carpeta)
+    const folders = new Map(); // folder -> [ {name, base} ]
+    const root = [];           // archivos sin carpeta
+
     for (let i=0; i < sessionStorage.length; i++) {
         let name = sessionStorage.key(i);
         let path = name.trim().split("/");
         if (path[1] !== undefined) {
-            if (folder != path[0]) { 
-                if (folder != "") {
-                    s += "</div></article>";
-                }
-                s += '<article class="message" style="margin:2px">';
-                s += '<div class="message-header" onclick="togglef(this)" style="padding:0px">';
-                s += '&nbsp;' + path[0] + '/';
-                s += '</div>';
-                s += '<div class="message-body" style="padding:2px;display:none">';
-            }
-            s += "<button class='button is-small is-fullwidth' onclick='codeload("+'"'+name+'"'+");' style='justify-content:left;'>"+path[1]+"</button>";  
-            folder = path[0];
+            if (!folders.has(path[0])) { folders.set(path[0], []); }
+            folders.get(path[0]).push({ name, base: path[1] });
         } else {
-            if (folder != "") {
-                s+="</div></article>";
-                folder="";
-            }  
-            s += "<button class='button is-small is-fullwidth' onclick='codeload("+'"'+name+'"'+");' style='justify-content:left;'>"+name+"</button>";
+            root.push(name);
         }
     }
-    if (folder!="") { s+="</div></article>"; }	
+
+    let s = "";
+    const folderNames = Array.from(folders.keys()).sort();
+    for (const fname of folderNames) {
+        s += '<article class="message" style="margin:2px">';
+        s += '<div class="message-header" onclick="togglef(this)" style="padding:0px">';
+        s += '&nbsp;' + fname + '/';
+        s += '</div>';
+        s += '<div class="message-body" style="padding:2px;display:none">';
+        const files = folders.get(fname).sort((a,b) => a.base.localeCompare(b.base));
+        for (const f of files) {
+            s += "<button class='button is-small is-fullwidth' onclick='codeload(\"" + f.name + "\");' style='justify-content:left;'>" + f.base + "</button>";
+        }
+        s += "</div></article>";
+    }
+
+    root.sort().forEach(name => {
+        s += "<button class='button is-small is-fullwidth' onclick='codeload(\"" + name + "\");' style='justify-content:left;'>" + name + "</button>";
+    });
+
     filelist.innerHTML = s;
 }
 

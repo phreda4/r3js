@@ -29,8 +29,8 @@ $. $. $. $. $. $. $. $.
 #xv #yv
 
 :player
-	xn yn 'nav32 spr
-	xymouse 'nav4 spr	
+	xn yn 'nav32 sprite
+	xymouse 'nav4 sprite	
 	;
 
 :ongame

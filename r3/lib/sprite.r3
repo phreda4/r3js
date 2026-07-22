@@ -5,6 +5,7 @@
 | 4-4-12-12
 
 ^lib/gr.r3
+^lib/math.r3
 
 #pal0
 $000000ff $808080ff $C0C0C0ff $FFFFFFff $800000ff $FF0000ff $808000ff $FFFF00ff
